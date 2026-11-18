@@ -54,7 +54,7 @@
             <span class="brand-title">ORBIT</span>
             <span class="status-breathing-dot" title="Server Online"></span>
           </div>
-          <span style="font-size: 0.72rem; color: #71717a; font-family: monospace;" id="header-ip-sub">100.72.17.85</span>
+          <span style="font-size: 0.72rem; color: #71717a; font-family: monospace;" id="header-ip-sub">alpha-prod-orbit</span>
         </div>
       </div>
 
@@ -299,7 +299,7 @@
                   <span id="ping-jellyfin">Online · :8096</span>
                 </div>
                 <div class="app-actions">
-                  <button class="btn-card-action" onclick="copyLink(event, 'http://100.72.17.85:8096')" title="Copy Mobile Link">📱</button>
+                  <button class="btn-card-action" onclick="copyLink(event, 'http://' + window.location.hostname + ':8096')" title="Copy Mobile Link">📱</button>
                   <button class="btn-card-action" onclick="openLogsFor(event, 'alpha-prod-jellyfin')" title="View Logs">📜</button>
                   <button class="btn-card-action" onclick="restartService(event, 'alpha-prod-jellyfin')" title="Restart">⟳</button>
                 </div>
@@ -322,7 +322,7 @@
                   <span id="ping-seerr">Online · :5055</span>
                 </div>
                 <div class="app-actions">
-                  <button class="btn-card-action" onclick="copyLink(event, 'http://100.72.17.85:5055')" title="Copy Mobile Link">📱</button>
+                  <button class="btn-card-action" onclick="copyLink(event, 'http://' + window.location.hostname + ':5055')" title="Copy Mobile Link">📱</button>
                   <button class="btn-card-action" onclick="openLogsFor(event, 'alpha-prod-seerr')" title="View Logs">📜</button>
                   <button class="btn-card-action" onclick="restartService(event, 'alpha-prod-seerr')" title="Restart">⟳</button>
                 </div>
@@ -468,10 +468,10 @@
               <div class="app-card-bottom">
                 <div class="latency-indicator">
                   <span class="dot-status-healthy"></span>
-                  <span>100.72.17.85</span>
+                  <span>Mesh Active</span>
                 </div>
                 <div class="app-actions">
-                  <button class="btn-card-action" onclick="copyLink(event, 'http://100.72.17.85:3000')" title="Copy Link">📱</button>
+                  <button class="btn-card-action" onclick="copyLink(event, 'http://' + window.location.hostname + ':3000')" title="Copy Link">📱</button>
                   <button class="btn-card-action" onclick="openLogsFor(event, 'alpha-prod-tailscale')" title="View Logs">📜</button>
                 </div>
               </div>

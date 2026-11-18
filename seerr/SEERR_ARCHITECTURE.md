@@ -128,7 +128,7 @@ The micro-service binds exclusively to `127.0.0.1` (or a local UNIX domain socke
 - Network & Egress Routing:
     - Active VPN Status:
         icon: gluetun.png
-        href: "http://100.72.17.85:3000"
+        href: "http://alpha-prod-orbit:3000"
         description: "Live Egress IP & Gateway Provider"
         widget:
           type: customapi
@@ -400,9 +400,9 @@ services:
 
 | Service | Internal Port | Localhost / Tailscale Port | Network Boundary | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
-| **Homepage** | 3000 | `100.72.17.85:3000` / `localhost:3000` | Core / Tailscale | Unified Dashboard & Control |
-| **Seerr** | 5055 | `100.72.17.85:5055` / `localhost:5055` | Core / Tailscale | Discovery & Auto-Approval |
-| **Jellyfin** | 8096 | `100.72.17.85:8096` / `localhost:8096` | Core / Tailscale | Cinema Streaming Service |
+| **Homepage** | 3000 | `alpha-prod-orbit:3000` / `localhost:3000` | Core / Tailscale | Unified Dashboard & Control |
+| **Seerr** | 5055 | `alpha-prod-orbit:5055` / `localhost:5055` | Core / Tailscale | Discovery & Auto-Approval |
+| **Jellyfin** | 8096 | `alpha-prod-orbit:8096` / `localhost:8096` | Core / Tailscale | Cinema Streaming Service |
 | **VPN Switcher API** | 8001 | `127.0.0.1:8001` (Auth Token Required) | Host Loopback Only | Profile switching controller |
 | **qBittorrent UI** | 8080 | None (Internal Proxy Only) | `seerr-sandbox-net` | Sandboxed Download Engine |
 | **Radarr / Sonarr** | 7878 / 8989 | None (Internal Proxy Only) | `seerr-sandbox-net` | Indexer & Release Management |
