@@ -1,0 +1,16 @@
+{
+  "category": "General",
+  "changelog": "- See the full changelog at [GitHub](https://github.com/streamyfin/jellyfin-plugin-streamyfin/releases/tag/0.68.1.0)\n",
+  "description": "",
+  "guid": "1e9e5d38-6e67-4615-8719-e98a5c34f004",
+  "name": "Streamyfin",
+  "overview": "",
+  "owner": "lostb1t",
+  "targetAbi": "10.11.11",
+  "timestamp": "2026-08-17T08:07:38.0000000Z",
+  "version": "0.68.1.0",
+  "status": "Active",
+  "autoUpdate": true,
+  "imagePath": "/config/plugins/Streamyfin_0.68.1.0/logo.png",
+  "assemblies": []
+}

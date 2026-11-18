@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PluginConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ShuffleInterval>60000</ShuffleInterval>
+  <RetryInterval>500</RetryInterval>
+  <MinSwipeDistance>50</MinSwipeDistance>
+  <LoadingCheckInterval>100</LoadingCheckInterval>
+  <MaxPlotLength>360</MaxPlotLength>
+  <MaxMovies>50</MaxMovies>
+  <MaxTvShows>50</MaxTvShows>
+  <MaxItems>50</MaxItems>
+  <MaxParentalRating>0</MaxParentalRating>
+  <MaxDaysRecent>0</MaxDaysRecent>
+  <MaxDaysRecentRelease>0</MaxDaysRecentRelease>
+  <ReleaseYears />
+  <ExcludedGenres />
+  <ExcludedTags />
+  <PreloadCount>3</PreloadCount>
+  <FadeTransitionDuration>500</FadeTransitionDuration>
+  <MaxPaginationDots>15</MaxPaginationDots>
+  <ShowPaginationDots>true</ShowPaginationDots>
+  <ForceSlideCounter>false</ForceSlideCounter>
+  <SlideAnimationEnabled>true</SlideAnimationEnabled>
+  <EnableVideoBackdrop>true</EnableVideoBackdrop>
+  <UseSponsorBlock>true</UseSponsorBlock>
+  <SponsorBlockCategories>intro,outro,preview</SponsorBlockCategories>
+  <PreferLocalTrailers>false</PreferLocalTrailers>
+  <RandomizeLocalTrailers>false</RandomizeLocalTrailers>
+  <RandomTrailerStartOffset>false</RandomTrailerStartOffset>
+  <RandomTrailerStartMinPercent>10</RandomTrailerStartMinPercent>
+  <RandomTrailerStartMaxPercent>75</RandomTrailerStartMaxPercent>
+  <PreferLocalBackdrops>false</PreferLocalBackdrops>
+  <RandomizeThemeVideos>false</RandomizeThemeVideos>
+  <WaitForTrailerToEnd>true</WaitForTrailerToEnd>
+  <StartMuted>false</StartMuted>
+  <HoverAudioFade>false</HoverAudioFade>
+  <HoverAudioFadeMs>400</HoverAudioFadeMs>
+  <DefaultTrailerVolume>40</DefaultTrailerVolume>
+  <FullWidthVideo>true</FullWidthVideo>
+  <EnableSplitScreenTrailer>false</EnableSplitScreenTrailer>
+  <PauseOnHover>false</PauseOnHover>
+  <EnableMobileVideo>true</EnableMobileVideo>
+  <ShowTrailerButton>true</ShowTrailerButton>
+  <EnableLoadingScreen>true</EnableLoadingScreen>
+  <EnableKeyboardControls>true</EnableKeyboardControls>
+  <AlwaysShowArrows>false</AlwaysShowArrows>
+  <HideArrowsOnMobile>true</HideArrowsOnMobile>
+  <CustomMediaIds />
+  <EnableCustomMediaIds>true</EnableCustomMediaIds>
+  <EnableSeasonalContent>false</EnableSeasonalContent>
+  <ExcludeSeasonalContent>true</ExcludeSeasonalContent>
+  <SeasonalSections>[]</SeasonalSections>
+  <IsEnabled>true</IsEnabled>
+  <EnableClientSideSettings>true</EnableClientSideSettings>
+  <ApplyLimitsToCustomIds>false</ApplyLimitsToCustomIds>
+  <IncludeWatchedContent>true</IncludeWatchedContent>
+  <SortBy>Random</SortBy>
+  <SortOrder>Ascending</SortOrder>
+  <BackdropVideoDelay>0</BackdropVideoDelay>
+  <TrailerStartOffset>0</TrailerStartOffset>
+  <TrailerEndOffset>0</TrailerEndOffset>
+  <ConstrainPlotWidth>false</ConstrainPlotWidth>
+  <EnableCustomOverlay>false</EnableCustomOverlay>
+  <CustomOverlayText />
+  <CustomOverlayImageUrl />
+  <CustomOverlayStyle>Shadowed</CustomOverlayStyle>
+  <CustomOverlayImageStyle>None</CustomOverlayImageStyle>
+  <CustomOverlayPriority>Image</CustomOverlayPriority>
+  <CustomOverlayPositionX>0</CustomOverlayPositionX>
+  <CustomOverlayPositionY>0</CustomOverlayPositionY>
+  <CustomOverlayScale>100</CustomOverlayScale>
+  <MobileCompactMode>Original</MobileCompactMode>
+  <ClientMenuLocation>Navbar</ClientMenuLocation>
+  <ClientMenuLocationMobile>Sidebar</ClientMenuLocationMobile>
+  <TransitionEffect>Fade</TransitionEffect>
+  <ShowProgressBar>true</ShowProgressBar>
+  <ProgressBarLocation>Dots</ProgressBarLocation>
+  <CustomPlaylists>[]</CustomPlaylists>
+  <ExcludedLibraries />
+  <TrailerEnabledLibraries></TrailerEnabledLibraries>
+  <OnlyLocalTrailers>false</OnlyLocalTrailers>
+  <YoYoProgressBar>true</YoYoProgressBar>
+  <SyncPageBackdrop>false</SyncPageBackdrop>
+  <UseRecommendations>false</UseRecommendations>
+  <RequireLogo>false</RequireLogo>
+</PluginConfiguration>

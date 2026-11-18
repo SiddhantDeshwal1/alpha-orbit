@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PluginConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <JellyseerrUrl>http://127.0.0.1:5055</JellyseerrUrl>
+  <ApiKey></ApiKey>
+  <LibraryDirectory>/data/JellyBridge</LibraryDirectory>
+  <IsEnabled>true</IsEnabled>
+  <EnableInMainMenu>true</EnableInMainMenu>
+  <SyncIntervalHours>24</SyncIntervalHours>
+  <EnableStartupSync>true</EnableStartupSync>
+  <StartupDelaySeconds>30</StartupDelaySeconds>
+  <TaskTimeoutMinutes>10</TaskTimeoutMinutes>
+  <Region>US</Region>
+  <MaxDiscoverPages>3</MaxDiscoverPages>
+  <MaxRetentionDays>30</MaxRetentionDays>
+  <ManageJellyBridgeLibrary>true</ManageJellyBridgeLibrary>
+  <ExcludeFromMainLibraries>true</ExcludeFromMainLibraries>
+  <ResponsiveFavoriteRequests>true</ResponsiveFavoriteRequests>
+  <RemoveRequestedFromFavorites>false</RemoveRequestedFromFavorites>
+  <UserPermissionRequest4k>true</UserPermissionRequest4k>
+  <RequestFirstSeason>false</RequestFirstSeason>
+  <UseMixedMediaLibrary>true</UseMixedMediaLibrary>
+  <UseNetworkFolders>false</UseNetworkFolders>
+  <AddDuplicateContent>true</AddDuplicateContent>
+  <NetworkFolderPrefix />
+  <CustomMoviesPromo />
+  <DefaultMoviesPromo>true</DefaultMoviesPromo>
+  <CustomSeriesPromo />
+  <DefaultSeriesPromo>true</DefaultSeriesPromo>
+  <PromoVideoDurationSeconds>10</PromoVideoDurationSeconds>
+  <JellyBridgeTempDirectory />
+  <EnableAutomatedSortTask>true</EnableAutomatedSortTask>
+  <SortTaskIntervalHours>5</SortTaskIntervalHours>
+  <SortOrder>Random</SortOrder>
+  <MarkMediaPlayed>false</MarkMediaPlayed>
+  <EnableSortLibraryRefresh>true</EnableSortLibraryRefresh>
+  <RequestTimeout>60</RequestTimeout>
+  <RetryAttempts>3</RetryAttempts>
+  <EnableDebugLogging>false</EnableDebugLogging>
+  <EnableTraceLogging>false</EnableTraceLogging>
+  <ScheduledTaskTimestamp xsi:nil="true" />
+</PluginConfiguration>

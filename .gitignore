@@ -1,0 +1,75 @@
+# ==============================================================================
+# Alpha Prod Orbit: Git Ignore Rules
+# Strictly prevents leaking credentials, secrets, databases, and runtime state
+# ==============================================================================
+
+# 1. Environment & Cryptographic Secrets
+.env
+*.key
+*.pem
+*.pfx
+*.authkey
+
+# 2. Runtime Persistent Data & Media (External Storage State)
+data/
+data/**
+
+# 3. Jellyfin Runtime Databases, Cache, and Metadata
+jellyfin/data/
+jellyfin/data/**
+jellyfin/metadata/
+jellyfin/metadata/**
+jellyfin/root/
+jellyfin/root/**
+jellyfin/log/
+jellyfin/log/**
+jellyfin/transcodes/
+jellyfin/transcodes/**
+jellyfin/plugins/configurations/Jellyfin.Plugin.JellyfinEnhanced/cdn-cache/
+jellyfin/plugins/configurations/Jellyfin.Plugin.JellyfinEnhanced/cdn-cache/**
+
+# 4. Seerr Runtime Database, Settings & Cache
+seerr/db/
+seerr/db/**
+seerr/cache/
+seerr/cache/**
+seerr/settings.json
+
+# 5. Sandbox Ingestion Engines Runtime State & Databases
+sandbox/radarr/radarr.db*
+sandbox/radarr/MediaCover/
+sandbox/radarr/config.xml
+sandbox/sonarr/sonarr.db*
+sandbox/sonarr/MediaCover/
+sandbox/sonarr/config.xml
+sandbox/prowlarr/prowlarr.db*
+sandbox/prowlarr/config.xml
+sandbox/qbittorrent/
+sandbox/qbittorrent/**
+sandbox/gluetun/servers/
+sandbox/gluetun/servers/**
+sandbox/ntfy/
+sandbox/ntfy/**
+sandbox/fast_servers.json
+
+# 6. Ephemeral Runtime PIDs, Locks, and Logs
+*.pid
+*.lock
+*.log
+*.log.*
+/tmp/
+
+# 7. Python & Build Caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# 8. OS and Editor Artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/

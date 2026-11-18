@@ -1,0 +1,18 @@
+{
+  "category": "MoviesAndShows",
+  "changelog": "- Fix queue handling (#134) @Shadowghost, @crobibero",
+  "description": "Automatically create movie box sets based on TMDb collections",
+  "guid": "bc4aad2e-d3d0-4725-a5e2-fd07949e5b42",
+  "name": "TMDb Box Sets",
+  "overview": "Automatically create movie box sets based on TMDb collections",
+  "owner": "jellyfin",
+  "targetAbi": "12.1.0.0",
+  "timestamp": "2026-09-15T22:42:27.0000000Z",
+  "version": "15.0.0.0",
+  "status": "Active",
+  "autoUpdate": true,
+  "imagePath": "",
+  "assemblies": [
+    "Jellyfin.Plugin.TMDbBoxSets.dll"
+  ]
+}

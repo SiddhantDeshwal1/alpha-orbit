@@ -1,0 +1,469 @@
+# ==============================================================================
+# Alpha Prod Orbit: Sandbox Download Stack
+# Isolated Zero-Trust Media Ingestion Pipeline
+# Run with: podman compose -f compose.sandbox.yaml up -d
+# NEVER run without Gluetun VPN active - kill-switch enforced at iptables level
+# ==============================================================================
+
+name: alpha-prod-sandbox
+
+networks:
+  alpha_prod_sandbox_net:
+    driver: bridge
+    internal: false   # Gluetun needs WAN for VPN tunnel
+    ipam:
+      config:
+        - subnet: 172.31.0.0/24
+  alpha_prod_default:
+    external: true
+
+services:
+
+  # ============================================================================
+  # GLUETUN: VPN Gateway with Hardware Kill-Switch
+  # ALL download containers route traffic exclusively through this container
+  # If VPN drops -> iptables DROP -> zero traffic leak. No fallback to WAN.
+  # ============================================================================
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: alpha-prod-gluetun
+    networks:
+      - alpha_prod_sandbox_net
+      - alpha_prod_default
+    extra_hosts:
+      - "alpha-prod-flaresolverr:172.31.0.19"
+      - "alpha-prod-tailscale:10.89.0.2"
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      # --- Active VPN Profile (switch via vpn_switcher.py API) ---
+      - VPN_SERVICE_PROVIDER=${GLUETUN_VPN_PROVIDER:-custom}
+      - VPN_TYPE=${GLUETUN_VPN_TYPE:-wireguard}
+
+      # --- Cloudflare WARP / Custom WireGuard ---
+      - WIREGUARD_PRIVATE_KEY=${WARP_PRIVATE_KEY:-}
+      - WIREGUARD_ADDRESSES=${WARP_ADDRESS:-172.16.0.2/32}
+      - WIREGUARD_PUBLIC_KEY=${WARP_PUBLIC_KEY:-bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=}
+      - WIREGUARD_ENDPOINT_IP=${WARP_ENDPOINT_IP:-162.159.192.5}
+      - WIREGUARD_ENDPOINT_PORT=${WARP_ENDPOINT_PORT:-2408}
+      - VPN_ENDPOINT_IP=${WARP_ENDPOINT_IP:-162.159.192.5}
+      - VPN_ENDPOINT_PORT=${WARP_ENDPOINT_PORT:-2408}
+
+      # --- ProtonVPN Free (WireGuard / OpenVPN) ---
+      - OPENVPN_USER=${PROTON_USER:-}
+      - OPENVPN_PASSWORD=${PROTON_PASS:-}
+
+      # --- Windscribe Free ---
+      - WINDSCRIBE_USERNAME=${WINDSCRIBE_USER:-}
+      - WINDSCRIBE_PASSWORD=${WINDSCRIBE_PASS:-}
+
+      # --- Mullvad Paid (account number only, no email) ---
+      - MULLVAD_PRIVATE_KEY=${MULLVAD_PRIVATE_KEY:-}
+      - MULLVAD_ADDRESSES=${MULLVAD_ADDRESSES:-}
+
+      # --- AirVPN Paid (WireGuard) ---
+      - AIRVPN_KEY=${AIRVPN_KEY:-}
+
+      # --- DNS Configuration ---
+      # Restrict exclusively to Cloudflare Anycast (WARP blocks foreign DNS port 53)
+      - DNS_UPSTREAM_RESOLVER_TYPE=plain
+      - DNS_UPSTREAM_PLAIN_ADDRESSES=1.1.1.1:53,1.0.0.1:53
+      - DNS_KEEP_NAMESERVER=on
+      - DOT=off
+
+      # --- Internal Healthcheck Hardening ---
+      # Prevents false-positive restarts: test against Cloudflare Anycast instead of github.com
+      - HEALTH_TARGET_ADDRESS=cloudflare.com:443
+      - HEALTH_VPN_DURATION_INITIAL=20s
+      - HEALTH_VPN_DURATION_ADDITION=30s
+      - HEALTH_SUCCESS_WAIT_DURATION=10s
+
+      # --- Kill-Switch: Drop ALL traffic if VPN tunnel is down ---
+      - FIREWALL=on
+      - FIREWALL_OUTBOUND_SUBNETS=172.31.0.0/24,10.89.0.0/24
+      - FIREWALL_INPUT_PORTS=7878,8989,9696,8080,8000,8888
+      - HTTPPROXY=on
+
+      # --- Reverse-path filter: anti-spoofing ---
+      - VPN_INTERFACE=tun0
+
+      # --- Control Server Auth ---
+      - HTTP_CONTROL_SERVER_AUTH_DEFAULT_ROLE={"auth":"none"}
+    ports:
+      # Gluetun control API - localhost ONLY, never Tailscale
+      - "127.0.0.1:8000:8000"
+      # Gluetun HTTP proxy - localhost ONLY (Ultra-fast 4ms TMDb egress)
+      - "127.0.0.1:8888:8888"
+      # qBittorrent WebUI proxy - localhost ONLY for admin access
+      - "127.0.0.1:8081:8080"
+      # Radarr - localhost ONLY
+      - "127.0.0.1:7878:7878"
+      # Sonarr - localhost ONLY
+      - "127.0.0.1:8989:8989"
+      # Prowlarr - localhost ONLY
+      - "127.0.0.1:9696:9696"
+    volumes:
+      - ./sandbox/gluetun:/gluetun:Z
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9999"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+
+  # ============================================================================
+  # QBITTORRENT: Zero-Upload Download Engine
+  # Network: exclusively through Gluetun tunnel. No host NIC access.
+  # ============================================================================
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: alpha-prod-qbittorrent
+    network_mode: "service:gluetun"
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kolkata
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - ./sandbox/qbittorrent:/config:Z
+      - ${SERVER_DATA_DIR:-./data}/seerr/media/download/incomplete:/data/media/incomplete:z
+      - ${SERVER_DATA_DIR:-./data}/seerr/media/download/staging:/data/media/staging:z
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://127.0.0.1:8080/ >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  # ============================================================================
+  # RADARR: Movie Indexer & Library Manager
+  # ============================================================================
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: alpha-prod-radarr
+    network_mode: "service:gluetun"
+    depends_on:
+      gluetun:
+        condition: service_healthy
+      qbittorrent:
+        condition: service_healthy
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kolkata
+    volumes:
+      - ./sandbox/radarr:/config:Z
+      - ${SERVER_DATA_DIR:-./data}:/data:z
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://127.0.0.1:7878/ping >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  # ============================================================================
+  # SONARR: TV Show / Web Series / Anime Manager
+  # ============================================================================
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: alpha-prod-sonarr
+    network_mode: "service:gluetun"
+    depends_on:
+      gluetun:
+        condition: service_healthy
+      qbittorrent:
+        condition: service_healthy
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kolkata
+    volumes:
+      - ./sandbox/sonarr:/config:Z
+      - ${SERVER_DATA_DIR:-./data}:/data:z
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://127.0.0.1:8989/ping >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  # ============================================================================
+  # PROWLARR: Central Indexer / Tracker Aggregator
+  # Pushes tracker configs to Radarr + Sonarr automatically
+  # ============================================================================
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: alpha-prod-prowlarr
+    network_mode: "service:gluetun"
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kolkata
+    volumes:
+      - ./sandbox/prowlarr:/config:Z
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=128m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://127.0.0.1:9696/ping >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # ============================================================================
+  # CLAMAV: Antivirus Daemon Sidecar
+  # Runs in sandbox-net, reachable only via internal bridge
+  # ============================================================================
+  clamav:
+    image: clamav/clamav:latest
+    container_name: alpha-prod-clamav
+    networks:
+      - alpha_prod_default
+      - alpha_prod_sandbox_net
+    environment:
+      - CLAMAV_NO_FRESHCLAMD=false
+      - CLAMAV_NO_CLAMD=false
+      - CLAMAV_NO_MILTERD=true
+    volumes:
+      - ${SERVER_DATA_DIR:-./data}/sandbox/clamav/db:/var/lib/clamav:Z
+      - ${SERVER_DATA_DIR:-./data}/seerr/media/download/staging:/scan/staging:ro,z
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1800M
+        reservations:
+          memory: 1024M
+
+  # ============================================================================
+  # GATEKEEPER: Zero-Trust Media Sanitization Daemon
+  # Runs gatekeeper.sh in a continuous watch loop over /staging
+  # Has FFmpeg + ffprobe + bash. Read access to staging, write to completed.
+  # ============================================================================
+  gatekeeper:
+    image: linuxserver/ffmpeg:latest
+    container_name: alpha-prod-gatekeeper
+    networks:
+      - alpha_prod_default
+      - alpha_prod_sandbox_net
+    depends_on:
+      clamav:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c", "while true; do /scripts/gatekeeper.sh; sleep 30; done"]
+    environment:
+      - JELLYFIN_URL=${JELLYFIN_URL:-http://alpha-prod-tailscale:8096}
+      - JELLYFIN_API_KEY=${JELLYFIN_API_KEY:-}
+      - CLAMAV_HOST=alpha-prod-clamav
+    volumes:
+      - ./sandbox:/scripts:ro,Z
+      - ${SERVER_DATA_DIR:-./data}/seerr/media/download/staging:/data/media/staging:z
+      - ${SERVER_DATA_DIR:-./data}/seerr/media/download/completed:/data/media/completed:z
+      - ${SERVER_DATA_DIR:-./data}/seerr/media/download/incomplete:/data/media/incomplete:ro,z
+      - ${SERVER_DATA_DIR:-./data}/sandbox/clamav/db:/var/lib/clamav:ro,Z
+      - ${SERVER_DATA_DIR:-./data}/sandbox/logs:/data/logs:z
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=1024m
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1024M
+
+  # ============================================================================
+  # RETENTION ENGINE: Jellyfin-Aware Automated Media Purge
+  # Queries Jellyfin REST API; removes watched items >7d, unplayed >30d
+  # ============================================================================
+  retention:
+    image: docker.io/linuxserver/ffmpeg:latest
+    container_name: alpha-prod-retention
+    networks:
+      - alpha_prod_default
+      - alpha_prod_sandbox_net
+    entrypoint: ["/bin/bash", "-c", "while true; do /scripts/retention.sh; sleep 3600; done"]
+    environment:
+      - JELLYFIN_URL=${JELLYFIN_URL:-http://alpha-prod-tailscale:8096}
+      - JELLYFIN_API_KEY=${JELLYFIN_API_KEY:-}
+      - COMPLETED_DIR=/data/media/completed
+      - WATCHED_MAX_AGE_DAYS=7
+      - UNWATCHED_MAX_AGE_DAYS=30
+    volumes:
+      - ./sandbox:/scripts:ro,Z
+      - ${SERVER_DATA_DIR:-./data}/seerr/media/download/completed:/data/media/completed:z
+      - ${SERVER_DATA_DIR:-./data}/sandbox/logs:/data/logs:z
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+
+  # ============================================================================
+  # VPN SWITCHER API: Bearer-Authenticated Profile Switch Micro-Service
+  # Binds ONLY to 127.0.0.1:8001. Never accessible from Tailscale or WAN.
+  # ============================================================================
+  vpn-switcher:
+    image: docker.io/python:3.12-alpine
+    container_name: alpha-prod-vpn-switcher
+    networks:
+      - alpha_prod_sandbox_net
+      - alpha_prod_default
+    entrypoint: ["python3", "/scripts/vpn_switcher.py"]
+    ports:
+      # Strictly localhost only - Cockpit dashboard accesses via this
+      - "127.0.0.1:8001:8001"
+    environment:
+      - SWITCHER_API_KEY=${SWITCHER_API_KEY:-}
+      - GLUETUN_API_URL=http://alpha-prod-gluetun:8000
+      - RATE_LIMIT_PER_MINUTE=3
+    volumes:
+      - ./sandbox:/scripts:ro,Z
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+
+  # ============================================================================
+  # NTFY: Self-hosted Push Notification Service
+  # Used for quality selection and download notifications
+  # ============================================================================
+  ntfy:
+    image: binwiederhier/ntfy:latest
+    container_name: alpha-prod-ntfy
+    networks:
+      - alpha_prod_sandbox_net
+      - alpha_prod_default
+    command: ["serve"]
+    environment:
+      - TZ=Asia/Kolkata
+      - NTFY_BASE_URL=http://localhost:8003
+      - NTFY_UPSTREAM_BASE_URL=https://ntfy.sh
+      - NTFY_USER_DIR=/var/cache/ntfy
+      - NTFY_ATTACHMENT_CACHE_DIR=/var/cache/ntfy/attachments
+      - NTFY_ATTACHMENT_EXPIRY=72h
+      - NTFY_ATTACHMENT_MAX_SIZE=50M
+      - NTFY_VISIT_LOG=1
+      - NTFY_METRICS_LISTEN=0.0.0.0:9090
+    volumes:
+      - ./sandbox/ntfy/cache:/var/cache/ntfy:Z
+    ports:
+      # Localhost only - Dashboard/Orchestrator accesses via this
+      - "127.0.0.1:8003:80"
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+
+  # ============================================================================
+  # FLARESOLVERR: Cloudflare challenge solver for indexers (Prowlarr)
+  # ============================================================================
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: alpha-prod-flaresolverr
+    networks:
+      alpha_prod_sandbox_net:
+        ipv4_address: 172.31.0.19
+    environment:
+      - LOG_LEVEL=info
+      - CAPTCHA_SOLVER=none
+      - TZ=Asia/Kolkata
+    ports:
+      - "127.0.0.1:8191:8191"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 384M

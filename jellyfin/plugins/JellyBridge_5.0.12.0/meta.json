@@ -1,0 +1,18 @@
+{
+  "category": "Metadata",
+  "changelog": "JellyBridge v5.0 - All users should upgrade to 5.0 as soon as possible to apply a major security vulnerability fix by @MoFaye. Minor bug fix for Jellyseerr API by @MoFaye: blocklisted items no longer appear in Discover library, and removing all networks now results in a variety of networks from the Jellyseerr sync.",
+  "description": "Bridge Jellyfin with Jellyseerr for seamless show discovery and download requests",
+  "guid": "8ecc808c-d6e9-432f-9219-b638fbfb37e6",
+  "name": "JellyBridge",
+  "overview": "",
+  "owner": "kinggeorges12",
+  "targetAbi": "12.0.0",
+  "timestamp": "2026-11-15T16:25:34.927Z",
+  "version": "5.0.12.0",
+  "status": "Active",
+  "autoUpdate": true,
+  "imagePath": "/config/plugins/JellyBridge_5.0.12.0/Icon.svg",
+  "assemblies": [
+    "JellyBridge.dll"
+  ]
+}

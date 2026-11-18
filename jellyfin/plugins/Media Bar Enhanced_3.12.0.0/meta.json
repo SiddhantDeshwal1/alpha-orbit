@@ -1,0 +1,16 @@
+{
+  "category": "General",
+  "changelog": "- feat: Add option to pause slideshow and trailers during external media playback (Cast / MPV Shim)\n- feat: Add option to randomize background images when multiple are available",
+  "description": "\u25B6 Feature-rich Media Bar fork that brings your home screen to life. \u2605 100% Web UI control. \u2605 Backdrops: Cinematic full-width videos (YouTube/Local) with SponsorBlock (skip intros/outros (only YT Trailer)) and smart \u0027local-first\u0027 preference. \u2605 Dynamic Content: Display Playlists, Collections (Boxsets), or Seasonal holiday items. Sort by Random, Year, or Premiere Date with Parental Rating \u0026 Release Year filters. \u2605 Customization: Customizable overlays (branding/messages), pagination (dots/counter), and client-side settings to allow per-device overrides. \u2605 Advanced: Many settings for individual configuration. \u26A0 Note: Requires \u0027file-transformation\u0027 plugin if write permissions are restricted.",
+  "guid": "d7e11d57-819b-4bdd-a88d-53c5f5560225",
+  "name": "Media Bar Enhanced",
+  "overview": "Transforms your Jellyfin home screen with an immersive, fully configurable media slideshow featuring video backdrops.",
+  "owner": "CodeDevMLH",
+  "targetAbi": "10.11.0.0",
+  "timestamp": "2026-11-02T01:19:23.0000000Z",
+  "version": "3.12.0.0",
+  "status": "Active",
+  "autoUpdate": true,
+  "imagePath": "/config/plugins/Media Bar Enhanced_3.12.0.0/logo.png",
+  "assemblies": []
+}

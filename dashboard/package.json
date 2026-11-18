@@ -1,0 +1,10 @@
+{
+  "name": "orbit-mission-control",
+  "version": "1.0.0",
+  "description": "Orbit Server: High-Performance Developer Mission Control & Operations Cockpit",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}

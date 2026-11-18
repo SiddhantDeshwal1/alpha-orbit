@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orbit Server</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2224%22 fill=%22%2318181b%22/><text x=%2250%25%22 y=%2255%25%22 font-size=%2260%22 font-family=%22system-ui,-apple-system,sans-serif%22 font-weight=%22800%22 fill=%22white%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>A</text></svg>">
+  <link rel="stylesheet" href="style.css?v=2.3">
+  <style>
+    /* Critical Fallback CSS ensuring zero unstyled content & true OLED Black */
+    body { background-color: #000000; color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", sans-serif; margin: 0; padding: 0; min-height: 100vh; }
+    header { background: rgba(0, 0, 0, 0.9); border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 12px 28px; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(20px); }
+    .header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand-wrap { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .brand-mark { width: 32px; height: 32px; border-radius: 9px; background: #18181b; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; }
+    .brand-title { font-size: 1.05rem; font-weight: 700; letter-spacing: 0.08em; color: #fff; }
+    .status-breathing-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; }
+    .nav-segmented { position: relative; display: flex; background: #0a0a0c; padding: 3px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); }
+    .nav-tab-btn { position: relative; z-index: 2; border: none; background: transparent; color: #a1a1aa; font-size: 0.85rem; font-weight: 500; padding: 6px 16px; border-radius: 7px; cursor: pointer; }
+    .nav-tab-btn.active { color: #fff; font-weight: 600; }
+    .telemetry-group { display: flex; align-items: center; gap: 10px; }
+    .pill-item { display: flex; align-items: center; gap: 8px; padding: 5px 12px; background: #0a0a0c; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; font-size: 0.8rem; color: #a1a1aa; font-family: monospace; }
+    .pill-item strong { color: #fff; }
+    main { max-width: 1400px; margin: 0 auto; padding: 32px 28px; width: 100%; box-sizing: border-box; }
+    .section-category { margin-bottom: 36px; }
+    .section-category-title { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #71717a; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .section-category-title::after { content: ""; flex: 1; height: 1px; background: rgba(255, 255, 255, 0.07); }
+    .app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+    .app-card { background: #0a0a0c; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; text-decoration: none; color: inherit; transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
+    .app-card:hover { transform: translateY(-4px) scale(1.008); background: #131317; border-color: rgba(255, 255, 255, 0.16); box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.8); }
+    .app-card-top { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
+    .app-icon-wrap { width: 52px; height: 52px; border-radius: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3); }
+    .app-icon-img { width: 36px; height: 36px; object-fit: contain; }
+    .app-name { font-size: 1.05rem; font-weight: 600; color: #fff; margin-bottom: 3px; }
+    .app-desc { font-size: 0.8rem; color: #71717a; line-height: 1.35; }
+    .app-card-bottom { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255, 255, 255, 0.04); padding-top: 12px; margin-top: auto; }
+    .latency-indicator { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-family: monospace; color: #a1a1aa; }
+    .dot-status-healthy { width: 6px; height: 6px; border-radius: 50%; background: #10b981; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- Minimalist Header & Navigation -->
+  <header>
+    <div class="header-inner">
+      
+      <!-- Brand Identity -->
+      <div class="brand-wrap" onclick="switchView('apps')">
+        <div class="brand-mark">O</div>
+        <div style="display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="brand-title">ORBIT</span>
+            <span class="status-breathing-dot" title="Server Online"></span>
+          </div>
+          <span style="font-size: 0.72rem; color: #71717a; font-family: monospace;" id="header-ip-sub">100.72.17.85</span>
+        </div>
+      </div>
+
+      <!-- Segmented Navigation with 60fps sliding pill -->
+      <nav class="nav-segmented" id="main-nav">
+        <div class="nav-indicator" id="nav-pill-indicator"></div>
+        <button class="nav-tab-btn active" data-tab="apps" onclick="switchView('apps')">
+          Apps
+        </button>
+        <button class="nav-tab-btn" data-tab="downloads" onclick="switchView('downloads')">
+          Downloads
+          <span id="badge-dl" class="badge-count" style="display:none;">0</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="logs" onclick="switchView('logs')">
+          Logs
+          <span id="badge-err" class="badge-count" style="display:none;">0</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="vpn" onclick="switchView('vpn')">
+          VPN
+        </button>
+        <button class="nav-tab-btn" data-tab="metrics" onclick="switchView('metrics')">
+          Metrics
+        </button>
+        <button class="nav-tab-btn" data-tab="requests" onclick="switchView('requests')">
+          Requests
+          <span id="badge-req" class="badge-count" style="display:none;">0</span>
+        </button>
+      </nav>
+
+      <!-- Clean Telemetry Pills -->
+      <div class="telemetry-group">
+        <div class="pill-item" title="Alpha Hard Drive Free Space">
+          <span>Storage:</span>
+          <strong id="val-storage-free">461 GB Free</strong>
+          <div class="storage-mini-bar">
+            <div class="storage-mini-fill" id="val-storage-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+
+        <div class="pill-item" title="Active VPN Tunnel Profile">
+          <span style="color: #10b981;">●</span>
+          <span id="val-vpn-label">VPN:</span>
+          <strong id="val-vpn-active">Cloudflare WARP</strong>
+        </div>
+
+        <button id="btn-refresh" class="btn-orbit-action" title="Refresh (R)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Viewport Panes -->
+  <main>
+
+    <!-- VIEW 1: HOMARR/CASAOS CLEAN APPS GRID (Pre-rendered for instantaneous zero-wait display) -->
+    <section id="tab-apps" class="tab-pane active">
+
+      <!-- OBSERVABILITY & MONITORING TELEMETRY (HOME TOP) -->
+      <div class="home-observability-wrap">
+        <div class="metrics-toolbar" style="margin-bottom: 16px;">
+          <div class="metrics-summary-strip">
+            <div class="section-category-title" style="margin-bottom: 0; border: none; text-transform: uppercase;">
+              <span class="status-breathing-dot" style="background: #10b981; margin-right: 6px;"></span>
+              Live Observability
+            </div>
+            <div class="metrics-stat-item" style="padding: 6px 12px; min-width: auto;">
+              <span class="stat-label">Peak DL</span>
+              <span class="stat-value" id="home-stat-peak-dl" style="font-size: 0.95rem;">--</span>
+            </div>
+            <div class="metrics-stat-item" style="padding: 6px 12px; min-width: auto;">
+              <span class="stat-label">Streams</span>
+              <span class="stat-value" id="home-stat-peak-streams" style="font-size: 0.95rem; color: #a78bfa;">--</span>
+            </div>
+            <div class="metrics-stat-item" style="padding: 6px 12px; min-width: auto;">
+              <span class="stat-label">Latency</span>
+              <span class="stat-value" id="home-stat-avg-latency" style="font-size: 0.95rem; color: #10b981;">--</span>
+            </div>
+            <div class="metrics-stat-item" style="padding: 6px 12px; min-width: auto;">
+              <span class="stat-label">Uptime</span>
+              <span class="stat-value" id="home-stat-uptime" style="font-size: 0.95rem; color: #38bdf8;">100%</span>
+            </div>
+          </div>
+
+          <div class="metrics-range-group">
+            <button class="metrics-range-btn" data-range="1h" onclick="setMetricsRange('1h')">1H</button>
+            <button class="metrics-range-btn" data-range="6h" onclick="setMetricsRange('6h')">6H</button>
+            <button class="metrics-range-btn active" data-range="24h" onclick="setMetricsRange('24h')">24H</button>
+          </div>
+        </div>
+
+        <!-- 6 Home Observability Graphs in Responsive Grid -->
+        <div class="home-metrics-grid">
+          
+          <!-- 1. Bandwidth Throughput -->
+          <div class="graph-card home-graph-card">
+            <div class="graph-card-header">
+              <div class="graph-title-group">
+                <span class="graph-indicator-dot" style="background: #06b6d4;"></span>
+                <span class="graph-card-title">Bandwidth Throughput</span>
+              </div>
+              <span class="graph-pill-badge" id="home-badge-peak-dl" style="color: #06b6d4;">PEAK: --</span>
+            </div>
+            <div class="graph-canvas-wrap home-canvas-wrap">
+              <canvas id="canvas-home-bandwidth" class="metric-canvas"></canvas>
+            </div>
+            <div class="graph-card-footer">
+              <div class="graph-legend">
+                <span class="legend-chip"><span class="legend-color" style="background: #06b6d4;"></span>DL Speed</span>
+                <span class="legend-chip"><span class="legend-color" style="background: #f59e0b;"></span>UL Speed</span>
+              </div>
+              <span id="home-badge-cur-dl" class="graph-footnote">--</span>
+            </div>
+          </div>
+
+          <!-- 2. Active Streams -->
+          <div class="graph-card home-graph-card">
+            <div class="graph-card-header">
+              <div class="graph-title-group">
+                <span class="graph-indicator-dot" style="background: #8b5cf6;"></span>
+                <span class="graph-card-title">Users & Streams</span>
+              </div>
+              <span class="graph-pill-badge" id="home-badge-peak-streams" style="color: #a78bfa;">PEAK: --</span>
+            </div>
+            <div class="graph-canvas-wrap home-canvas-wrap">
+              <canvas id="canvas-home-streams" class="metric-canvas"></canvas>
+            </div>
+            <div class="graph-card-footer">
+              <div class="graph-legend">
+                <span class="legend-chip"><span class="legend-color" style="background: #8b5cf6;"></span>Streams</span>
+                <span class="legend-chip"><span class="legend-color" style="background: #c084fc;"></span>Users</span>
+              </div>
+              <span id="home-badge-cur-streams" class="graph-footnote">--</span>
+            </div>
+          </div>
+
+          <!-- 3. Service Latency & Outages -->
+          <div class="graph-card home-graph-card">
+            <div class="graph-card-header">
+              <div class="graph-title-group">
+                <span class="graph-indicator-dot" style="background: #10b981;"></span>
+                <span class="graph-card-title">Service Latency</span>
+              </div>
+              <span class="graph-pill-badge" id="home-badge-outages" style="color: #10b981;">0 INCIDENTS</span>
+            </div>
+            <div class="graph-canvas-wrap home-canvas-wrap">
+              <canvas id="canvas-home-latency" class="metric-canvas"></canvas>
+            </div>
+            <div class="graph-card-footer">
+              <div class="graph-legend">
+                <span class="legend-chip"><span class="legend-color" style="background: #10b981;"></span>Avg ms</span>
+                <span class="legend-chip"><span class="legend-color" style="background: #ef4444;"></span>Outage</span>
+              </div>
+              <span id="home-badge-cur-lat" class="graph-footnote">--</span>
+            </div>
+          </div>
+
+          <!-- 4. Pipeline Velocity -->
+          <div class="graph-card home-graph-card">
+            <div class="graph-card-header">
+              <div class="graph-title-group">
+                <span class="graph-indicator-dot" style="background: #3b82f6;"></span>
+                <span class="graph-card-title">Pipeline Velocity</span>
+              </div>
+              <span class="graph-pill-badge" id="home-badge-active-torrents" style="color: #3b82f6;">-- ACTIVE</span>
+            </div>
+            <div class="graph-canvas-wrap home-canvas-wrap">
+              <canvas id="canvas-home-pipeline" class="metric-canvas"></canvas>
+            </div>
+            <div class="graph-card-footer">
+              <div class="graph-legend">
+                <span class="legend-chip"><span class="legend-color" style="background: #3b82f6;"></span>Torrents</span>
+              </div>
+              <span id="home-badge-cur-vel" class="graph-footnote">qBittorrent</span>
+            </div>
+          </div>
+
+          <!-- 5. VPN Stability -->
+          <div class="graph-card home-graph-card">
+            <div class="graph-card-header">
+              <div class="graph-title-group">
+                <span class="graph-indicator-dot" style="background: #14b8a6;"></span>
+                <span class="graph-card-title">VPN Gateway Ping</span>
+              </div>
+              <span class="graph-pill-badge" id="home-badge-vpn-status" style="color: #14b8a6;">CONNECTED</span>
+            </div>
+            <div class="graph-canvas-wrap home-canvas-wrap">
+              <canvas id="canvas-home-vpn" class="metric-canvas"></canvas>
+            </div>
+            <div class="graph-card-footer">
+              <div class="graph-legend">
+                <span class="legend-chip"><span class="legend-color" style="background: #14b8a6;"></span>Egress ms</span>
+              </div>
+              <span id="home-badge-cur-vpn" class="graph-footnote">WireGuard</span>
+            </div>
+          </div>
+
+          <!-- 6. Storage Growth -->
+          <div class="graph-card home-graph-card">
+            <div class="graph-card-header">
+              <div class="graph-title-group">
+                <span class="graph-indicator-dot" style="background: #6366f1;"></span>
+                <span class="graph-card-title">Storage Trajectory</span>
+              </div>
+              <span class="graph-pill-badge" id="home-badge-storage-free" style="color: #818cf8;">-- FREE</span>
+            </div>
+            <div class="graph-canvas-wrap home-canvas-wrap">
+              <canvas id="canvas-home-storage" class="metric-canvas"></canvas>
+            </div>
+            <div class="graph-card-footer">
+              <div class="graph-legend">
+                <span class="legend-chip"><span class="legend-color" style="background: #6366f1;"></span>Free Space</span>
+              </div>
+              <span id="home-badge-cur-storage" class="graph-footnote">/media/alpha</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="apps-container">
+
+        <!-- Category: Media & Streaming -->
+        <div class="section-category">
+          <div class="section-category-title">Media & Streaming</div>
+          <div class="app-grid">
+
+            <div class="app-card" onclick="window.open('http://localhost:8096', '_blank')">
+              <div class="app-card-top">
+                <div class="app-icon-wrap">
+                  <img class="app-icon-img" src="/icons/jellyfin.png" alt="Jellyfin">
+                </div>
+                <div class="app-details">
+                  <div class="app-name">Jellyfin Cinema</div>
+                  <div class="app-desc">Direct-Play cinema, movies, web series & anime.</div>
+                </div>
+              </div>
+              <div class="app-card-bottom">
+                <div class="latency-indicator">
+                  <span class="dot-status-healthy"></span>
+                  <span id="ping-jellyfin">Online · :8096</span>
+                </div>
+                <div class="app-actions">
+                  <button class="btn-card-action" onclick="copyLink(event, 'http://100.72.17.85:8096')" title="Copy Mobile Link">📱</button>
+                  <button class="btn-card-action" onclick="openLogsFor(event, 'alpha-prod-jellyfin')" title="View Logs">📜</button>
+                  <button class="btn-card-action" onclick="restartService(event, 'alpha-prod-jellyfin')" title="Restart">⟳</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="app-card" onclick="window.open('http://localhost:5055', '_blank')">
+              <div class="app-card-top">
+                <div class="app-icon-wrap">
+                  <img class="app-icon-img" src="/icons/seerr.png" alt="Seerr">
+                </div>
+                <div class="app-details">
+                  <div class="app-name">Seerr</div>
+                  <div class="app-desc">Automated media discovery & requests pipeline.</div>
+                </div>
+              </div>
+              <div class="app-card-bottom">
+                <div class="latency-indicator">
+                  <span class="dot-status-healthy"></span>
+                  <span id="ping-seerr">Online · :5055</span>
+                </div>
+                <div class="app-actions">
+                  <button class="btn-card-action" onclick="copyLink(event, 'http://100.72.17.85:5055')" title="Copy Mobile Link">📱</button>
+                  <button class="btn-card-action" onclick="openLogsFor(event, 'alpha-prod-seerr')" title="View Logs">📜</button>
+                  <button class="btn-card-action" onclick="restartService(event, 'alpha-prod-seerr')" title="Restart">⟳</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Category: Download Pipeline (Sandbox) -->
+        <div class="section-category">
+          <div class="section-category-title">Download Pipeline (Sandbox)</div>
+          <div class="app-grid">
+
+            <div class="app-card" onclick="window.open('http://localhost:8081', '_blank')">
+              <div class="app-card-top">
+                <div class="app-icon-wrap">
+                  <img class="app-icon-img" src="/icons/qbittorrent.png" alt="qBittorrent">
+                </div>
+                <div class="app-details">
+                  <div class="app-name">qBittorrent</div>
+                  <div class="app-desc">Zero-upload download engine locked behind kill-switch.</div>
+                </div>
+              </div>
+              <div class="app-card-bottom">
+                <div class="latency-indicator">
+                  <span class="dot-status-healthy"></span>
+                  <span id="ping-qbittorrent">Online · :8081</span>
+                </div>
+                <div class="app-actions">
+                  <button class="btn-card-action" onclick="openLogsFor(event, 'sandbox-qbittorrent')" title="View Logs">📜</button>
+                  <button class="btn-card-action" onclick="restartService(event, 'sandbox-qbittorrent')" title="Restart">⟳</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="app-card" onclick="window.open('http://localhost:7878', '_blank')">
+              <div class="app-card-top">
+                <div class="app-icon-wrap">
+                  <img class="app-icon-img" src="/icons/radarr.png" alt="Radarr">
+                </div>
+                <div class="app-details">
+                  <div class="app-name">Radarr</div>
+                  <div class="app-desc">Automated movie library tracker & downloader.</div>
+                </div>
+              </div>
+              <div class="app-card-bottom">
+                <div class="latency-indicator">
+                  <span class="dot-status-healthy"></span>
+                  <span id="ping-radarr">Online · :7878</span>
+                </div>
+                <div class="app-actions">
+                  <button class="btn-card-action" onclick="openLogsFor(event, 'sandbox-radarr')" title="View Logs">📜</button>
+                  <button class="btn-card-action" onclick="restartService(event, 'sandbox-radarr')" title="Restart">⟳</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="app-card" onclick="window.open('http://localhost:8989', '_blank')">
+              <div class="app-card-top">
+                <div class="app-icon-wrap">
+                  <img class="app-icon-img" src="/icons/sonarr.png" alt="Sonarr">
+                </div>
+                <div class="app-details">
+                  <div class="app-name">Sonarr</div>
+                  <div class="app-desc">Automated TV show & web series tracker.</div>
+                </div>
+              </div>
+              <div class="app-card-bottom">
+                <div class="latency-indicator">
+                  <span class="dot-status-healthy"></span>
+                  <span id="ping-sonarr">Online · :8989</span>
+                </div>
+                <div class="app-actions">
+                  <button class="btn-card-action" onclick="openLogsFor(event, 'sandbox-sonarr')" title="View Logs">📜</button>
+                  <button class="btn-card-action" onclick="restartService(event, 'sandbox-sonarr')" title="Restart">⟳</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="app-card" onclick="window.open('http://localhost:9696', '_blank')">
+              <div class="app-card-top">
+                <div class="app-icon-wrap">
+                  <img class="app-icon-img" src="/icons/prowlarr.png" alt="Prowlarr">
+                </div>
+                <div class="app-details">
+                  <div class="app-name">Prowlarr</div>
+                  <div class="app-desc">Centralized torrent indexer proxy for Radarr & Sonarr.</div>
+                </div>
+              </div>
+              <div class="app-card-bottom">
+                <div class="latency-indicator">
+                  <span class="dot-status-healthy"></span>
+                  <span id="ping-prowlarr">Online · :9696</span>
+                </div>
+                <div class="app-actions">
+                  <button class="btn-card-action" onclick="openLogsFor(event, 'sandbox-prowlarr')" title="View Logs">📜</button>
+                  <button class="btn-card-action" onclick="restartService(event, 'sandbox-prowlarr')" title="Restart">⟳</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Category: Network Gateway & Security -->
+        <div class="section-category">
+          <div class="section-category-title">Network Gateway & Security</div>
+          <div class="app-grid">
+
+            <div class="app-card" onclick="window.open('http://localhost:8000', '_blank')">
+              <div class="app-card-top">
+                <div class="app-icon-wrap">
+                  <img class="app-icon-img" src="/icons/gluetun.png" alt="Gluetun">
+                </div>
+                <div class="app-details">
+                  <div class="app-name">Gluetun VPN</div>
+                  <div class="app-desc">Encrypted WireGuard gateway with hardware kill-switch.</div>
+                </div>
+              </div>
+              <div class="app-card-bottom">
+                <div class="latency-indicator">
+                  <span class="dot-status-healthy"></span>
+                  <span id="ping-gluetun">Online · :8000</span>
+                </div>
+                <div class="app-actions">
+                  <button class="btn-card-action" onclick="openLogsFor(event, 'sandbox-gluetun')" title="View Logs">📜</button>
+                  <button class="btn-card-action" onclick="restartService(event, 'sandbox-gluetun')" title="Restart">⟳</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="app-card" onclick="window.open('http://localhost:3000', '_blank')">
+              <div class="app-card-top">
+                <div class="app-icon-wrap">
+                  <img class="app-icon-img" src="/icons/tailscale.png" alt="Tailscale">
+                </div>
+                <div class="app-details">
+                  <div class="app-name">Tailscale Mesh</div>
+                  <div class="app-desc">Private WireGuard mesh network connecting laptop & phone.</div>
+                </div>
+              </div>
+              <div class="app-card-bottom">
+                <div class="latency-indicator">
+                  <span class="dot-status-healthy"></span>
+                  <span>100.72.17.85</span>
+                </div>
+                <div class="app-actions">
+                  <button class="btn-card-action" onclick="copyLink(event, 'http://100.72.17.85:3000')" title="Copy Link">📱</button>
+                  <button class="btn-card-action" onclick="openLogsFor(event, 'alpha-prod-tailscale')" title="View Logs">📜</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VIEW 2: LIVE DOWNLOADS & BANDWIDTH -->
+    <section id="tab-downloads" class="tab-pane">
+      <div class="bandwidth-row">
+        <div class="bandwidth-card">
+          <div class="bandwidth-label">Download Rate</div>
+          <div class="bandwidth-speed" id="dl-rate-val" style="color: #10b981;">0.0 KB/s</div>
+          <div style="font-size: 0.78rem; color: #71717a; margin-top: 4px;" id="dl-session-val">Session: 0 GB</div>
+        </div>
+
+        <div class="bandwidth-card">
+          <div class="bandwidth-label">Upload Rate</div>
+          <div class="bandwidth-speed" id="up-rate-val" style="color: #38bdf8;">0.0 KB/s</div>
+          <div style="font-size: 0.78rem; color: #71717a; margin-top: 4px;">Zero-upload kill switch active</div>
+        </div>
+
+        <div class="bandwidth-card">
+          <div class="bandwidth-label">Tunnel Guard</div>
+          <div class="bandwidth-speed" id="tunnel-guard-val" style="font-size: 1.4rem; color: #10b981;">Protected</div>
+          <div style="font-size: 0.78rem; color: #71717a; margin-top: 4px;" id="tunnel-ip-sub">Egress via WireGuard</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 28px;">
+        <div style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #71717a; margin-bottom: 14px;">
+          Active Pipeline Downloads
+        </div>
+        <div id="torrent-items-container">
+          <div style="background: #121215; border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 14px; padding: 36px; text-align: center; color: #71717a;">
+            <div style="font-size: 0.95rem; font-weight: 600; color: #fff;">Download Engine Idle</div>
+            <div style="font-size: 0.8rem; margin-top: 4px;">Zero active downloads. Autonomous sandbox pipeline is sleeping to conserve resources.</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <div style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #71717a;">
+            Media Requests Queue (Seerr)
+          </div>
+          <a href="http://localhost:5055" target="_blank" style="font-size: 0.78rem; color: #38bdf8; text-decoration: none;">Browse Seerr ↗</a>
+        </div>
+        <div id="seerr-items-container">
+          <!-- Requests rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: DEVELOPER TERMINAL & LOGS -->
+    <section id="tab-logs" class="tab-pane">
+      <div class="terminal-window">
+        <div class="terminal-header">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <select id="select-log-target" class="input-terminal" style="cursor: pointer;">
+              <option value="alpha-prod-seerr">alpha-prod-seerr</option>
+              <option value="alpha-prod-jellyfin">alpha-prod-jellyfin</option>
+              <option value="alpha-prod-gatekeeper">alpha-prod-gatekeeper</option>
+              <option value="alpha-prod-gluetun">alpha-prod-gluetun</option>
+              <option value="alpha-prod-qbittorrent">alpha-prod-qbittorrent</option>
+            </select>
+
+            <div class="filter-btn-group">
+              <button class="filter-btn active" data-log-filter="all" id="filter-all-btn">ALL</button>
+              <button class="filter-btn" data-log-filter="error" id="filter-error-btn">🚨 ERRORS ONLY</button>
+              <button class="filter-btn" data-log-filter="warn" id="filter-warn-btn">⚠️ WARNINGS</button>
+            </div>
+
+            <select id="select-log-count" class="input-terminal" style="padding: 4px 8px; font-size: 0.75rem;">
+              <option value="50">50 lines</option>
+              <option value="150" selected>150 lines</option>
+              <option value="300">300 lines</option>
+              <option value="500">500 lines</option>
+            </select>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="text" id="log-search-box" class="input-terminal" placeholder="Search filter (/)...">
+
+            <button id="btn-autoscroll" class="btn-orbit-action" style="width: auto; padding: 0 10px; font-size: 0.75rem;" title="Auto-Scroll">
+              Scroll: ON
+            </button>
+
+            <button id="btn-copy-log" class="btn-orbit-action" title="Copy Visible Logs">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+
+            <button id="btn-reload-log" class="btn-orbit-action" title="Reload Logs">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="terminal-logs-viewport" id="terminal-screen">
+          <div style="color: #71717a; text-align: center; padding: 40px;">
+            Select a container to stream live error logs...
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: VPN & SECURITY GATEWAY -->
+    <section id="tab-vpn" class="tab-pane">
+      <div style="background: #121215; border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 14px; padding: 22px 24px; margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #71717a; letter-spacing: 0.06em;">
+              Active Tunnel Status
+            </div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: #fff; margin-top: 2px;" id="active-vpn-title">
+              Cloudflare WARP
+            </div>
+            <div style="font-size: 0.82rem; color: #71717a; margin-top: 2px;" id="active-vpn-desc">
+              Anycast WireGuard · High throughput · Zero credentials required
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 24px; font-family: monospace;">
+            <div>
+              <div style="font-size: 0.72rem; color: #71717a; text-transform: uppercase;">Public Egress IP</div>
+              <div style="font-size: 1.15rem; font-weight: 700; color: #38bdf8;" id="active-vpn-ip">
+                104.28.249.154
+              </div>
+            </div>
+            <div>
+              <div style="font-size: 0.72rem; color: #71717a; text-transform: uppercase;">Country</div>
+              <div style="font-size: 1.15rem; font-weight: 700; color: #fff;" id="active-vpn-country">
+                India
+              </div>
+            </div>
+            <div>
+              <div style="font-size: 0.72rem; color: #71717a; text-transform: uppercase;">Kill-Switch</div>
+              <div style="font-size: 1.15rem; font-weight: 700; color: #10b981;">
+                ENFORCED
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #71717a; margin-bottom: 12px;">
+        Available VPN Profiles (One-Click Switch)
+      </div>
+      <div class="vpn-grid-layout" id="vpn-cards-grid">
+        <!-- Rendered by app.js with official logos -->
+      </div>
+    </section>
+
+    <!-- VIEW 5: OBSERVABILITY & METRICS DASHBOARD (6 ZERO-OVERHEAD HTML5 GRAPHS) -->
+    <section id="tab-metrics" class="tab-pane">
+      
+      <!-- Top Metrics Ribbon & Range Switcher -->
+      <div class="metrics-toolbar">
+        <div class="metrics-summary-strip">
+          <div class="metrics-stat-item">
+            <span class="stat-label">Peak Bandwidth</span>
+            <span class="stat-value" id="stat-peak-dl">--</span>
+          </div>
+          <div class="metrics-stat-item">
+            <span class="stat-label">Active Streams</span>
+            <span class="stat-value" id="stat-peak-streams" style="color: #a78bfa;">--</span>
+          </div>
+          <div class="metrics-stat-item">
+            <span class="stat-label">Avg Latency</span>
+            <span class="stat-value" id="stat-avg-latency" style="color: #10b981;">--</span>
+          </div>
+          <div class="metrics-stat-item">
+            <span class="stat-label">24h Uptime</span>
+            <span class="stat-value" id="stat-uptime" style="color: #38bdf8;">100.0%</span>
+          </div>
+          <div class="metrics-stat-item">
+            <span class="stat-label">Alpha Storage</span>
+            <span class="stat-value" id="stat-alpha-storage" style="color: #818cf8;">--</span>
+          </div>
+        </div>
+
+        <div class="metrics-range-group">
+          <button class="metrics-range-btn" data-range="1h" onclick="setMetricsRange('1h')">1H (High-Res)</button>
+          <button class="metrics-range-btn" data-range="6h" onclick="setMetricsRange('6h')">6H</button>
+          <button class="metrics-range-btn active" data-range="24h" onclick="setMetricsRange('24h')">24H (Full Day)</button>
+        </div>
+      </div>
+
+      <!-- 6 Hardware-Accelerated Observability Graph Cards -->
+      <div class="metrics-grid">
+
+        <!-- Graph 1: Bandwidth Throughput & Peak Speeds -->
+        <div class="graph-card">
+          <div class="graph-card-header">
+            <div>
+              <div class="graph-title-group">
+                <span class="graph-indicator-dot" style="background: #06b6d4;"></span>
+                <span class="graph-card-title">Bandwidth Throughput & Peak Speeds</span>
+              </div>
+              <div class="graph-card-desc">Real-time download/upload curves & peak throughput spikes</div>
+            </div>
+            <div class="graph-badge-group">
+              <span class="graph-pill-badge" id="badge-peak-dl" style="color: #06b6d4;">PEAK: --</span>
+              <span class="graph-pill-badge" id="badge-cur-dl" style="color: #a1a1aa;">LIVE: --</span>
+            </div>
+          </div>
+          <div class="graph-canvas-wrap">
+            <canvas id="canvas-bandwidth" class="metric-canvas"></canvas>
+          </div>
+          <div class="graph-card-footer">
+            <div class="graph-legend">
+              <span class="legend-chip"><span class="legend-color" style="background: #06b6d4;"></span>Download Speed</span>
+              <span class="legend-chip"><span class="legend-color" style="background: #f59e0b;"></span>Upload Speed</span>
+            </div>
+            <div class="graph-footnote" id="footnote-bandwidth">Sampling: 10s · Zero CPU Ring Buffer</div>
+          </div>
+        </div>
+
+        <!-- Graph 2: Active User Sessions & Concurrent Streams -->
+        <div class="graph-card">
+          <div class="graph-card-header">
+            <div>
+              <div class="graph-title-group">
+                <span class="graph-indicator-dot" style="background: #8b5cf6;"></span>
+                <span class="graph-card-title">Active Users & Concurrent Streams</span>
+              </div>
+              <div class="graph-card-desc">Jellyfin DirectPlay cinema sessions, client devices & viewing spikes</div>
+            </div>
+            <div class="graph-badge-group">
+              <span class="graph-pill-badge" id="badge-peak-streams" style="color: #a78bfa;">PEAK: --</span>
+              <span class="graph-pill-badge" id="badge-cur-streams" style="color: #a1a1aa;">NOW: --</span>
+            </div>
+          </div>
+          <div class="graph-canvas-wrap">
+            <canvas id="canvas-streams" class="metric-canvas"></canvas>
+          </div>
+          <div class="graph-card-footer">
+            <div class="graph-legend">
+              <span class="legend-chip"><span class="legend-color" style="background: #8b5cf6;"></span>Active Streams</span>
+              <span class="legend-chip"><span class="legend-color" style="background: #c084fc;"></span>Connected Users</span>
+            </div>
+            <div class="graph-footnote" id="footnote-streams">Diurnal peak: 19:00 - 23:00</div>
+          </div>
+        </div>
+
+        <!-- Graph 3: Service Latency & Downtime Radar -->
+        <div class="graph-card">
+          <div class="graph-card-header">
+            <div>
+              <div class="graph-title-group">
+                <span class="graph-indicator-dot" style="background: #10b981;"></span>
+                <span class="graph-card-title">Service Health, Latency & Downtimes</span>
+              </div>
+              <div class="graph-card-desc">Average response latency across 8 microservices with outage pins</div>
+            </div>
+            <div class="graph-badge-group">
+              <span class="graph-pill-badge" id="badge-outages" style="color: #10b981;">0 INCIDENTS</span>
+              <span class="graph-pill-badge" id="badge-cur-latency" style="color: #a1a1aa;">AVG: --</span>
+            </div>
+          </div>
+          <div class="graph-canvas-wrap">
+            <canvas id="canvas-latency" class="metric-canvas"></canvas>
+          </div>
+          <div class="graph-card-footer">
+            <div class="graph-legend">
+              <span class="legend-chip"><span class="legend-color" style="background: #10b981;"></span>Avg Response (ms)</span>
+              <span class="legend-chip"><span class="legend-color" style="background: #ef4444;"></span>Downtime Event</span>
+            </div>
+            <div class="graph-footnote" id="footnote-latency">8 Endpoints Monitored</div>
+          </div>
+        </div>
+
+        <!-- Graph 4: Download Pipeline Queue & Velocity -->
+        <div class="graph-card">
+          <div class="graph-card-header">
+            <div>
+              <div class="graph-title-group">
+                <span class="graph-indicator-dot" style="background: #3b82f6;"></span>
+                <span class="graph-card-title">Download Pipeline Velocity & Queue</span>
+              </div>
+              <div class="graph-card-desc">Active torrent state, processing pipeline & request throughput</div>
+            </div>
+            <div class="graph-badge-group">
+              <span class="graph-pill-badge" id="badge-active-torrents" style="color: #3b82f6;">-- ACTIVE</span>
+              <span class="graph-pill-badge" id="badge-cur-velocity" style="color: #a1a1aa;">RATE: --</span>
+            </div>
+          </div>
+          <div class="graph-canvas-wrap">
+            <canvas id="canvas-pipeline" class="metric-canvas"></canvas>
+          </div>
+          <div class="graph-card-footer">
+            <div class="graph-legend">
+              <span class="legend-chip"><span class="legend-color" style="background: #3b82f6;"></span>Active Torrents</span>
+              <span class="legend-chip"><span class="legend-color" style="background: #60a5fa;"></span>Queue Size</span>
+            </div>
+            <div class="graph-footnote">qBittorrent + Seerr Orchestrator</div>
+          </div>
+        </div>
+
+        <!-- Graph 5: VPN Gateway Latency & Stability -->
+        <div class="graph-card">
+          <div class="graph-card-header">
+            <div>
+              <div class="graph-title-group">
+                <span class="graph-indicator-dot" style="background: #14b8a6;"></span>
+                <span class="graph-card-title">VPN Gateway Latency & Stability</span>
+              </div>
+              <div class="graph-card-desc">WireGuard tunnel egress ping latency & killswitch integrity</div>
+            </div>
+            <div class="graph-badge-group">
+              <span class="graph-pill-badge" id="badge-vpn-status" style="color: #14b8a6;">CONNECTED</span>
+              <span class="graph-pill-badge" id="badge-cur-vpn-ms" style="color: #a1a1aa;">EGRESS: --</span>
+            </div>
+          </div>
+          <div class="graph-canvas-wrap">
+            <canvas id="canvas-vpn" class="metric-canvas"></canvas>
+          </div>
+          <div class="graph-card-footer">
+            <div class="graph-legend">
+              <span class="legend-chip"><span class="legend-color" style="background: #14b8a6;"></span>Egress Latency (ms)</span>
+              <span class="legend-chip"><span class="legend-color" style="background: #2dd4bf;"></span>Tunnel Stable</span>
+            </div>
+            <div class="graph-footnote">Gluetun WireGuard Gateway</div>
+          </div>
+        </div>
+
+        <!-- Graph 6: Alpha Storage Trajectory & Growth -->
+        <div class="graph-card">
+          <div class="graph-card-header">
+            <div>
+              <div class="graph-title-group">
+                <span class="graph-indicator-dot" style="background: #6366f1;"></span>
+                <span class="graph-card-title">Alpha Storage Trajectory & Capacity</span>
+              </div>
+              <div class="graph-card-desc">Drive space consumption rate and available free capacity</div>
+            </div>
+            <div class="graph-badge-group">
+              <span class="graph-pill-badge" id="badge-storage-free" style="color: #818cf8;">-- FREE</span>
+              <span class="graph-pill-badge" id="badge-cur-growth" style="color: #a1a1aa;">STABLE</span>
+            </div>
+          </div>
+          <div class="graph-canvas-wrap">
+            <canvas id="canvas-storage" class="metric-canvas"></canvas>
+          </div>
+          <div class="graph-card-footer">
+            <div class="graph-legend">
+              <span class="legend-chip"><span class="legend-color" style="background: #6366f1;"></span>Free Storage (GB)</span>
+              <span class="legend-chip"><span class="legend-color" style="background: #a5b4fc;"></span>Consumption Curve</span>
+            </div>
+            <div class="graph-footnote">External Drive /media/alpha</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Floating Canvas Tooltip -->
+      <div id="metrics-tooltip" class="metrics-tooltip" style="display: none;"></div>
+
+    </section>
+
+    <!-- VIEW 6: MEDIA REQUESTS & DOWNLOAD PIPELINE -->
+    <section id="tab-requests" class="tab-pane">
+      <!-- Section Header -->
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+        <div>
+          <h1 style="font-size: 1.5rem; font-weight: 700; color: #fff; margin: 0; display: flex; align-items: center; gap: 10px;">
+            <span>Media Requests & Downloads</span>
+            <span id="req-header-pill" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 600; border: 1px solid rgba(56, 189, 248, 0.3);">Loading...</span>
+          </h1>
+          <p style="font-size: 0.85rem; color: #71717a; margin: 4px 0 0;">Unified Seerr requests pipeline, qBittorrent torrent swarm metrics & automated diagnosis</p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button id="btn-refresh-requests" class="btn-orbit-action" onclick="fetchRequests(true)" style="padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+            <svg id="icon-refresh-req" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            Refresh
+          </button>
+          <button id="btn-new-request" class="btn-primary" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; color: #fff; padding: 9px 18px; border-radius: 9px; font-weight: 600; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            New Request
+          </button>
+        </div>
+      </div>
+
+      <!-- Top Metrics Ribbon -->
+      <div class="bandwidth-row" style="margin-bottom: 24px;">
+        <div class="bandwidth-card">
+          <div class="bandwidth-label">Total Requests</div>
+          <div class="bandwidth-speed" id="req-metric-total" style="color: #fff;">0</div>
+          <div style="font-size: 0.78rem; color: #71717a; margin-top: 4px;" id="req-metric-sub-total">Seerr pipeline ledger</div>
+        </div>
+        <div class="bandwidth-card">
+          <div class="bandwidth-label">Active Downloads</div>
+          <div class="bandwidth-speed" id="req-metric-active" style="color: #38bdf8;">0</div>
+          <div style="font-size: 0.78rem; color: #71717a; margin-top: 4px;" id="req-metric-speed">↓ 0 KB/s in swarm</div>
+        </div>
+        <div class="bandwidth-card">
+          <div class="bandwidth-label">Attention Needed</div>
+          <div class="bandwidth-speed" id="req-metric-attention" style="color: #f59e0b;">0</div>
+          <div style="font-size: 0.78rem; color: #71717a; margin-top: 4px;" id="req-metric-attention-sub">Stalled / Dead swarms</div>
+        </div>
+        <div class="bandwidth-card">
+          <div class="bandwidth-label">Completed & Available</div>
+          <div class="bandwidth-speed" id="req-metric-completed" style="color: #10b981;">0</div>
+          <div style="font-size: 0.78rem; color: #71717a; margin-top: 4px;">Ready to play in Jellyfin</div>
+        </div>
+      </div>
+
+      <!-- Filter & Search Toolbar -->
+      <div class="req-toolbar">
+        <div class="req-search-wrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="req-search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="req-filter-search" class="req-search-input" placeholder="Filter requests by title, year, or user...">
+        </div>
+        <div class="req-filter-tabs" id="req-status-filters">
+          <button class="req-filter-btn active" data-filter="all">All</button>
+          <button class="req-filter-btn" data-filter="downloading">Downloading</button>
+          <button class="req-filter-btn" data-filter="stalled">Stalled / Attention</button>
+          <button class="req-filter-btn" data-filter="completed">Completed</button>
+          <button class="req-filter-btn" data-filter="pending">Queued / Searching</button>
+        </div>
+        <div class="req-user-filter-wrap">
+          <select id="req-user-select" class="req-user-select">
+            <option value="all">All Requesters</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Requests Cards List / Grid -->
+      <div id="requests-grid" class="requests-grid">
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 48px 24px; text-align: center; color: var(--text-muted);">
+          <div class="spinner-small" style="margin: 0 auto 14px auto; width: 24px; height: 24px;"></div>
+          <div style="font-size: 0.95rem; font-weight: 600; color: #fff;">Connecting to Seerr & Torrent Subsystems...</div>
+        </div>
+      </div>
+
+      <!-- NEW REQUEST MODAL -->
+      <div id="modal-request" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 720px; width: 90%;">
+          <div class="modal-header">
+            <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0;">Request Media</h2>
+            <button class="modal-close" onclick="closeRequestModal()" title="Close">&times;</button>
+          </div>
+          <div class="modal-body" style="padding: 20px 24px;">
+            <!-- Step 1: Search -->
+            <div id="request-step-search">
+              <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #71717a; margin-bottom: 8px; letter-spacing: 0.06em;">Search Movie / Series</label>
+                <div style="position: relative;">
+                  <input type="text" id="request-search-input" class="input-terminal" placeholder="Type to search TMDB (e.g., The Matrix, Breaking Bad)..." style="width: 100%; padding-right: 40px;" autocomplete="off">
+                  <div id="request-search-loading" class="spinner-small" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: none;"></div>
+                </div>
+                <div id="request-search-results" style="margin-top: 12px; max-height: 300px; overflow-y: auto; display: none;"></div>
+              </div>
+            </div>
+
+            <!-- Step 2: Quality Selection -->
+            <div id="request-step-quality" style="display: none;">
+              <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #71717a; margin-bottom: 8px; letter-spacing: 0.06em;">Quality Preference</label>
+                <div class="quality-tier-buttons" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+                  <button class="quality-tier-btn active" data-tier="max" style="flex: 1; min-width: 100px; padding: 12px 16px; border: 1px solid rgba(59, 130, 246, 0.5); background: rgba(59, 130, 246, 0.15); color: #3b82f6; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <div style="font-size: 0.8rem;">MAX</div>
+                    <div style="font-size: 0.65rem; opacity: 0.8;">Best available NOW</div>
+                  </button>
+                  <button class="quality-tier-btn" data-tier="high" style="flex: 1; min-width: 100px; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); background: #121215; color: #a1a1aa; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <div style="font-size: 0.8rem;">HIGH</div>
+                    <div style="font-size: 0.65rem; opacity: 0.8;">1080p+ only</div>
+                  </button>
+                  <button class="quality-tier-btn" data-tier="med" style="flex: 1; min-width: 100px; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); background: #121215; color: #a1a1aa; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <div style="font-size: 0.8rem;">MED</div>
+                    <div style="font-size: 0.65rem; opacity: 0.8;">720p+ only</div>
+                  </button>
+                  <button class="quality-tier-btn" data-tier="advanced" style="flex: 1; min-width: 100px; padding: 12px 16px; border: 1px solid rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <div style="font-size: 0.8rem;">ADVANCED</div>
+                    <div style="font-size: 0.65rem; opacity: 0.8;">Pick exact quality</div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Advanced: Quality Discovery Grid -->
+              <div id="request-advanced-discovery" style="display: none;">
+                <div style="margin-bottom: 12px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="font-size: 0.8rem; font-weight: 600; color: #fff;">Discovered Qualities</span>
+                    <div style="display: flex; gap: 8px;">
+                      <button id="btn-discover-qualities" class="btn-primary" style="font-size: 0.75rem; padding: 8px 16px;" onclick="discoverQualities()">Discover Qualities</button>
+                      <button id="btn-rediscover" class="btn-orbit-action" style="font-size: 0.75rem; display: none;">Rediscover</button>
+                    </div>
+                  </div>
+                  <div id="discovery-status" style="font-size: 0.8rem; color: #71717a; margin-bottom: 12px;">Click "Discover Qualities" to search indexers for available releases...</div>
+                  <div id="quality-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; max-height: 400px; overflow-y: auto;">
+                    <!-- Quality cards rendered here -->
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">
+                <button class="btn-secondary" onclick="backToSearch()">Back</button>
+                <button id="btn-confirm-request" class="btn-primary" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6);" disabled>Request</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="toast-shelf" id="toast-shelf"></div>
+
+  <script src="app.js?v=2.3"></script>
+</body>
+</html>

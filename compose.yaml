@@ -1,0 +1,111 @@
+# ==============================================================================
+# Alpha Prod Orbit: Core Service Stack
+# Tailscale mesh VPN sidecar with trusted streaming services
+# Services: tailscale, dashboard, jellyfin, seerr
+# Start: ./start.sh | Stop: ./stop.sh
+# Sandbox (Downloads): compose.sandbox.yaml (managed separately by supervisor)
+# ==============================================================================
+
+name: alpha-prod-orbit
+
+networks:
+  default:
+    name: alpha_prod_default
+
+services:
+  tailscale:
+    image: docker.io/tailscale/tailscale:latest
+    container_name: alpha-prod-tailscale
+    hostname: ${TS_HOSTNAME:-alpha-prod-orbit}
+    environment:
+      - TS_AUTHKEY=${TS_AUTHKEY:-}
+      - TS_HOSTNAME=${TS_HOSTNAME:-alpha-prod-orbit}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=${TS_USERSPACE:-true}
+      - TS_EXTRA_ARGS=${TS_EXTRA_ARGS:-}
+    volumes:
+      - ${SERVER_DATA_DIR:-./data}/tailscale:/var/lib/tailscale:Z
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      # Localhost loopback mappings for direct access
+      - "127.0.0.1:3000:3000"   # Central Cockpit Dashboard
+      - "127.0.0.1:8096:8096"   # Jellyfin Cinema
+      - "127.0.0.1:5055:5055"   # Seerr Media Discovery
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+      - 8.8.8.8
+    restart: unless-stopped
+
+  dashboard:
+    build: ./dashboard
+    image: localhost/alpha-prod-dashboard:latest
+    container_name: alpha-prod-dashboard
+    network_mode: "service:tailscale"
+    depends_on:
+      tailscale:
+        condition: service_started
+    volumes:
+      - ./dashboard:/app:ro,Z
+      - /run/user/1000/podman/podman.sock:/var/run/docker.sock:Z
+      - /run/media/banana/Alpha:/media/alpha:ro
+      - ${SERVER_DATA_DIR:-./data}/sandbox/logs:/logs:ro,Z
+    environment:
+      - PORT=3000
+      - TS_HOSTNAME=${TS_HOSTNAME:-alpha-prod-orbit}
+      - SWITCHER_API_KEY=${SWITCHER_API_KEY:-}
+    restart: unless-stopped
+
+  jellyfin:
+    image: docker.io/jellyfin/jellyfin:latest
+    container_name: alpha-prod-jellyfin
+    network_mode: "service:tailscale"
+    user: "0:0"
+    deploy:
+      resources:
+        limits:
+          cpus: '6.0'
+          memory: 4096M
+    depends_on:
+      tailscale:
+        condition: service_started
+    environment:
+      - JELLYFIN_PublishedServerUrl=http://${TS_HOSTNAME:-alpha-prod-orbit}:8096
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "983"
+      - "987"
+    tmpfs:
+      - /cache/transcodes:size=2560M,mode=1777
+    volumes:
+      - ./jellyfin:/config:Z
+      - /var/tmp/jellyfin-cache:/cache:Z
+      - ${SERVER_DATA_DIR:-./data}/jellyfin/media/Entertainment:/media/entertainment:Z
+      - ${SERVER_DATA_DIR:-./data}/seerr/media/download/completed:/media/downloads:ro,Z
+      - ./jellyfin/index.html:/jellyfin/jellyfin-web/index.html:ro,Z
+      - ./jellyfin/custom-details-hero.js:/jellyfin/jellyfin-web/custom-details-hero.js:ro,Z
+      - ./jellyfin/custom-hover-preview.js:/jellyfin/jellyfin-web/custom-hover-preview.js:ro,Z
+      - ./jellyfin/custom-discover-request.js:/jellyfin/jellyfin-web/custom-discover-request.js:ro,Z
+      - ${SERVER_DATA_DIR:-./data}/jellyfin/data/JellyBridge:/data/JellyBridge:Z
+    restart: unless-stopped
+
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    container_name: alpha-prod-seerr
+    network_mode: "service:tailscale"
+    environment:
+      - LOG_LEVEL=info
+      - PORT=5055
+      - TZ=Asia/Kolkata
+    volumes:
+      - ./seerr:/app/config:Z
+    depends_on:
+      tailscale:
+        condition: service_started
+      jellyfin:
+        condition: service_started
+    restart: unless-stopped
