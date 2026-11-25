@@ -319,8 +319,15 @@ services:
         condition: service_healthy
     entrypoint: ["/bin/bash", "-c", "while true; do /scripts/gatekeeper.sh; sleep 30; done"]
     environment:
-      - JELLYFIN_URL=${JELLYFIN_URL:-http://alpha-prod-tailscale:8096}
+      - JELLYFIN_URL=http://alpha-prod-tailscale:8096
+      - JELLYFIN_INTERNAL_URL=http://alpha-prod-tailscale:8096
       - JELLYFIN_API_KEY=${JELLYFIN_API_KEY:-}
+      - RADARR_URL=http://alpha-prod-gluetun:7878
+      - SONARR_URL=http://alpha-prod-gluetun:8989
+      - SEERR_URL=http://alpha-prod-tailscale:5055
+      - RADARR_API_KEY=${RADARR_API_KEY:-}
+      - SONARR_API_KEY=${SONARR_API_KEY:-}
+      - INACTIVE_MAX_AGE_DAYS=${INACTIVE_MAX_AGE_DAYS:-7}
       - CLAMAV_HOST=alpha-prod-clamav
     volumes:
       - ./sandbox:/scripts:ro,Z
@@ -342,7 +349,7 @@ services:
 
   # ============================================================================
   # RETENTION ENGINE: Jellyfin-Aware Automated Media Purge
-  # Queries Jellyfin REST API; removes watched items >7d, unplayed >30d
+  # Queries Jellyfin REST API; removes watched/inactive/unplayed items after configurable max age
   # ============================================================================
   retention:
     image: docker.io/linuxserver/ffmpeg:latest
@@ -352,11 +359,20 @@ services:
       - alpha_prod_sandbox_net
     entrypoint: ["/bin/bash", "-c", "while true; do /scripts/retention.sh; sleep 3600; done"]
     environment:
-      - JELLYFIN_URL=${JELLYFIN_URL:-http://alpha-prod-tailscale:8096}
+      - JELLYFIN_URL=http://alpha-prod-tailscale:8096
+      - JELLYFIN_INTERNAL_URL=http://alpha-prod-tailscale:8096
       - JELLYFIN_API_KEY=${JELLYFIN_API_KEY:-}
+      - RADARR_URL=http://alpha-prod-gluetun:7878
+      - SONARR_URL=http://alpha-prod-gluetun:8989
+      - SEERR_URL=http://alpha-prod-tailscale:5055
+      - RADARR_API_KEY=${RADARR_API_KEY:-}
+      - SONARR_API_KEY=${SONARR_API_KEY:-}
+      - SEERR_API_KEY=${SEERR_API_KEY:-}
       - COMPLETED_DIR=/data/media/completed
-      - WATCHED_MAX_AGE_DAYS=7
-      - UNWATCHED_MAX_AGE_DAYS=30
+      - WATCHED_MAX_AGE_DAYS=${WATCHED_MAX_AGE_DAYS:-7}
+      - INACTIVE_MAX_AGE_DAYS=${INACTIVE_MAX_AGE_DAYS:-7}
+      - UNWATCHED_MAX_AGE_DAYS=${UNWATCHED_MAX_AGE_DAYS:-7}
+      - UNMONITOR_ON_DELETE=${UNMONITOR_ON_DELETE:-true}
     volumes:
       - ./sandbox:/scripts:ro,Z
       - ${SERVER_DATA_DIR:-./data}/seerr/media/download/completed:/data/media/completed:z

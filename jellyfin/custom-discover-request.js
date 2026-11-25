@@ -8,9 +8,9 @@
  *     - "✨ Discover & Request" entry injected into the sidebar navigation drawer (.mainDrawer-scrollContainer).
  *     - Search page recommendation card ("Can't find what you're looking for? Surprise Me").
  *  2. Discovery Modal Component (#jellyfinDiscoverModal):
- *     - Matte #141414 backdrop with 16px frosted glass blur and fluid spring animation.
+ *     - Obsidian #0b0b0d / #18181d backdrop with 22px frosted glass blur and fluid spring animation.
  *     - 16:9 high-resolution backdrop poster with multi-stop dark vignette.
- *     - Movie Title (SF Pro Rounded bold), Release Year, Runtime, Genres, Rating pill badge (⭐ 7.8/10).
+ *     - Movie Title (dx.bi Inter bold), Release Year, Runtime, Genres, Rating pill badge (⭐ 7.8/10).
  *     - Full synopsis, Director, and Cast overview.
  *  3. Interactive Controls:
  *     - [ 🎲 Roll Another ]: Smooth crossfade to another high-rated random candidate.
@@ -102,14 +102,22 @@
     if (document.getElementById(STYLES_ID)) return;
 
     const css = `
-      /* Font Definition & Variables */
+      /* Font Definition & dx.bi Design Tokens */
       :root {
-        --jdr-font: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --jdr-bg: #141416;
-        --jdr-card-bg: rgba(22, 22, 26, 0.94);
-        --jdr-netflix-red: #E50914;
-        --jdr-netflix-hover: #F40612;
-        --jdr-gold: #F5C518;
+        --jdr-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+        --jdr-display-font: "Bebas Neue", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        --jdr-bg: #0b0b0d;
+        --jdr-bg-raised: #131317;
+        --jdr-surface: #18181d;
+        --jdr-surface-2: #212128;
+        --jdr-card-bg: rgba(24, 24, 29, 0.96);
+        --jdr-line: rgba(255, 255, 255, 0.08);
+        --jdr-line-strong: rgba(255, 255, 255, 0.16);
+        --jdr-text: #f4f4f5;
+        --jdr-text-2: #c4c4cc;
+        --jdr-netflix-red: #e50914;
+        --jdr-netflix-hover: #f40612;
+        --jdr-gold: #f5c518;
       }
 
       /* Header "Surprise Me" Button */
@@ -120,10 +128,10 @@
         height: 38px;
         padding: 0 14px;
         margin: 0 6px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(19, 19, 23, 0.78);
+        border: 1px solid var(--jdr-line-strong);
         border-radius: 9999px;
-        color: #FFFFFF;
+        color: var(--jdr-text);
         font-family: var(--jdr-font);
         font-size: 13.5px;
         font-weight: 600;
@@ -138,10 +146,11 @@
         z-index: 10;
       }
       #${HEADER_BTN_ID}:hover {
-        background: rgba(255, 255, 255, 0.18);
-        border-color: rgba(255, 255, 255, 0.35);
-        transform: scale(1.04);
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), 0 0 12px rgba(255, 255, 255, 0.15);
+        background: var(--jdr-surface-2);
+        border-color: rgba(255, 255, 255, 0.85);
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.25);
       }
       #${HEADER_BTN_ID}:active {
         transform: scale(0.97);
@@ -161,10 +170,10 @@
         width: calc(100% - 24px);
         margin: 6px 12px;
         padding: 12px 18px;
-        border-radius: 12px;
-        background: linear-gradient(90deg, rgba(229, 9, 20, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%);
-        border: 1px solid rgba(229, 9, 20, 0.3);
-        color: #FFFFFF;
+        border-radius: 10px;
+        background: linear-gradient(90deg, rgba(229, 9, 20, 0.14) 0%, rgba(24, 24, 29, 0.92) 100%);
+        border: 1px solid rgba(229, 9, 20, 0.32);
+        color: var(--jdr-text);
         font-family: var(--jdr-font);
         font-size: 15px;
         font-weight: 600;
@@ -176,8 +185,9 @@
         box-sizing: border-box;
       }
       #${DRAWER_BTN_ID}:hover {
-        background: linear-gradient(90deg, rgba(229, 9, 20, 0.22) 0%, rgba(255, 255, 255, 0.08) 100%);
-        border-color: rgba(229, 9, 20, 0.6);
+        background: linear-gradient(90deg, rgba(229, 9, 20, 0.24) 0%, var(--jdr-surface-2) 100%);
+        border-color: var(--jdr-netflix-red);
+        color: #ffffff;
         transform: translateX(4px);
       }
       #${DRAWER_BTN_ID} .jdr-drawer-icon {
@@ -187,7 +197,7 @@
         width: 32px;
         height: 32px;
         border-radius: 8px;
-        background: rgba(229, 9, 20, 0.2);
+        background: rgba(229, 9, 20, 0.22);
         color: var(--jdr-netflix-red);
       }
 
@@ -198,18 +208,24 @@
         max-width: 900px;
         width: calc(100% - 32px);
         padding: 20px 24px;
-        border-radius: 16px;
-        background: linear-gradient(135deg, rgba(30, 30, 38, 0.85) 0%, rgba(18, 18, 22, 0.95) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--jdr-surface) 0%, var(--jdr-bg-raised) 100%);
+        border: 1px solid var(--jdr-line-strong);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 20px;
         box-sizing: border-box;
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease, box-shadow 0.28s ease;
         z-index: 5;
+      }
+      #${SEARCH_CARD_ID}:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.45);
+        box-shadow: 0 22px 56px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(255, 255, 255, 0.2);
       }
       .jdr-search-content {
         display: flex;
@@ -220,24 +236,24 @@
         display: inline-flex;
         align-items: center;
         gap: 5px;
-        font-family: var(--jdr-font);
-        font-size: 11px;
-        font-weight: 700;
+        font-family: var(--jdr-display-font);
+        font-size: 13px;
+        font-weight: 400;
         text-transform: uppercase;
-        letter-spacing: 0.8px;
+        letter-spacing: 0.08em;
         color: var(--jdr-netflix-red);
       }
       .jdr-search-title {
         font-family: var(--jdr-font);
         font-size: 18px;
         font-weight: 700;
-        color: #FFFFFF;
+        color: var(--jdr-text);
         margin: 0;
       }
       .jdr-search-subtitle {
         font-family: var(--jdr-font);
         font-size: 13.5px;
-        color: rgba(255, 255, 255, 0.65);
+        color: var(--jdr-text-2);
         margin: 0;
       }
       .jdr-search-btn {
@@ -246,22 +262,22 @@
         gap: 8px;
         height: 40px;
         padding: 0 20px;
-        background: var(--jdr-netflix-red);
-        border: none;
-        border-radius: 10px;
-        color: #FFFFFF;
+        background: #ffffff;
+        border: 1px solid #ffffff;
+        border-radius: 9999px;
+        color: #000000;
         font-family: var(--jdr-font);
         font-size: 14px;
         font-weight: 700;
         cursor: pointer;
         flex-shrink: 0;
         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        box-shadow: 0 4px 16px rgba(229, 9, 20, 0.4);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
       }
       .jdr-search-btn:hover {
-        background: var(--jdr-netflix-hover);
+        background: rgba(255, 255, 255, 0.85);
         transform: translateY(-2px);
-        box-shadow: 0 6px 22px rgba(229, 9, 20, 0.6);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
       }
 
       /* Discovery Modal Overlay */
@@ -272,9 +288,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(10, 10, 12, 0.82);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+        background: rgba(11, 11, 13, 0.86);
+        backdrop-filter: blur(22px);
+        -webkit-backdrop-filter: blur(22px);
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
@@ -291,10 +307,10 @@
         position: relative;
         width: min(880px, 95vw);
         max-height: min(92vh, 860px);
-        background: var(--jdr-card-bg);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 20px;
-        box-shadow: 0 32px 80px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.06);
+        background: var(--jdr-surface);
+        border: 1px solid var(--jdr-line-strong);
+        border-radius: 14px;
+        box-shadow: 0 32px 80px rgba(0, 0, 0, 0.88), 0 0 0 1px rgba(255, 255, 255, 0.06);
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -315,9 +331,9 @@
         width: 38px;
         height: 38px;
         border-radius: 50%;
-        background: rgba(0, 0, 0, 0.55);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: #FFFFFF;
+        background: rgba(19, 19, 23, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        color: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -327,8 +343,8 @@
         transition: all 0.2s ease;
       }
       .jdr-close-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.4);
+        background: var(--jdr-netflix-red);
+        border-color: var(--jdr-netflix-red);
         transform: rotate(90deg);
       }
 
@@ -338,7 +354,7 @@
         width: 100%;
         aspect-ratio: 16 / 9;
         max-height: 400px;
-        background: #0D0D10;
+        background: var(--jdr-bg);
         overflow: hidden;
         flex-shrink: 0;
       }
@@ -353,7 +369,7 @@
       .jdr-media-vignette {
         position: absolute;
         inset: 0;
-        background: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(20,20,24,0.1) 40%, rgba(22,22,26,0.85) 85%, var(--jdr-card-bg) 100%);
+        background: linear-gradient(180deg, rgba(11, 11, 13, 0.45) 0%, rgba(11, 11, 13, 0.12) 40%, rgba(24, 24, 29, 0.88) 85%, var(--jdr-surface) 100%);
         pointer-events: none;
       }
 
@@ -385,7 +401,7 @@
         gap: 6px;
         padding: 5px 12px;
         border-radius: 9999px;
-        background: rgba(0, 0, 0, 0.65);
+        background: rgba(11, 11, 13, 0.72);
         border: 1px solid rgba(245, 197, 24, 0.45);
         color: var(--jdr-gold);
         font-family: var(--jdr-font);
@@ -403,7 +419,7 @@
         flex-direction: column;
         gap: 16px;
         scrollbar-width: thin;
-        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+        scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
       }
       .jdr-details-header {
         display: flex;
@@ -414,7 +430,7 @@
         font-family: var(--jdr-font);
         font-size: 28px;
         font-weight: 800;
-        color: #FFFFFF;
+        color: #ffffff;
         line-height: 1.2;
         margin: 0;
         letter-spacing: -0.4px;
@@ -426,7 +442,7 @@
         gap: 10px;
         font-family: var(--jdr-font);
         font-size: 13.5px;
-        color: rgba(255, 255, 255, 0.7);
+        color: var(--jdr-text-2);
       }
       .jdr-meta-item {
         display: inline-flex;
@@ -447,9 +463,9 @@
         align-items: center;
         padding: 3px 10px;
         border-radius: 9999px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: rgba(255, 255, 255, 0.85);
+        background: var(--jdr-surface-2);
+        border: 1px solid var(--jdr-line-strong);
+        color: var(--jdr-text);
         font-family: var(--jdr-font);
         font-size: 12px;
         font-weight: 500;
@@ -460,7 +476,7 @@
         font-family: var(--jdr-font);
         font-size: 14.5px;
         line-height: 1.6;
-        color: rgba(255, 255, 255, 0.85);
+        color: var(--jdr-text-2);
         margin: 0;
         max-height: 96px;
         overflow-y: auto;
@@ -475,15 +491,15 @@
         font-family: var(--jdr-font);
         font-size: 13px;
         line-height: 1.45;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 1px solid var(--jdr-line);
         padding-top: 12px;
       }
       .jdr-credits-label {
         font-weight: 600;
-        color: rgba(255, 255, 255, 0.45);
+        color: rgba(255, 255, 255, 0.5);
       }
       .jdr-credits-val {
-        color: rgba(255, 255, 255, 0.9);
+        color: var(--jdr-text);
       }
 
       /* Action Controls Bar */
@@ -492,8 +508,8 @@
         flex-wrap: wrap;
         align-items: center;
         gap: 12px;
-        padding-top: 8px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding-top: 12px;
+        border-top: 1px solid var(--jdr-line);
       }
       .jdr-btn {
         display: inline-flex;
@@ -501,11 +517,11 @@
         justify-content: center;
         gap: 8px;
         height: 44px;
-        padding: 0 20px;
-        border-radius: 10px;
+        padding: 0 22px;
+        border-radius: 9999px;
         font-family: var(--jdr-font);
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 700;
         cursor: pointer;
         outline: none;
         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -513,37 +529,42 @@
         box-sizing: border-box;
       }
       .jdr-btn-primary {
-        background: var(--jdr-netflix-red);
-        border: none;
-        color: #FFFFFF;
-        box-shadow: 0 4px 18px rgba(229, 9, 20, 0.45);
+        background: #ffffff;
+        border: 1px solid #ffffff;
+        color: #000000;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
       }
       .jdr-btn-primary:hover:not(:disabled) {
-        background: var(--jdr-netflix-hover);
+        background: rgba(255, 255, 255, 0.85);
         transform: translateY(-2px);
-        box-shadow: 0 6px 24px rgba(229, 9, 20, 0.65);
+        box-shadow: 0 8px 26px rgba(0, 0, 0, 0.6);
+      }
+      .jdr-btn-primary:focus-visible {
+        box-shadow: 0 0 0 2px #0b0b0d, 0 0 0 4px var(--jdr-netflix-red);
       }
       .jdr-btn-primary:disabled {
-        background: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.14);
+        border-color: transparent;
         color: rgba(255, 255, 255, 0.45);
         box-shadow: none;
         cursor: not-allowed;
       }
       .jdr-btn-primary.jdr-requested {
-        background: rgba(46, 125, 50, 0.25);
-        border: 1px solid rgba(76, 175, 80, 0.5);
-        color: #81C784;
+        background: rgba(16, 185, 129, 0.18);
+        border: 1px solid rgba(16, 185, 129, 0.52);
+        color: #6ee7b7;
       }
       .jdr-btn-secondary {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        color: #FFFFFF;
+        background: var(--jdr-surface-2);
+        border: 1px solid var(--jdr-line-strong);
+        color: var(--jdr-text);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
       }
       .jdr-btn-secondary:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.16);
-        border-color: rgba(255, 255, 255, 0.35);
+        background: #2b2b33;
+        border-color: rgba(255, 255, 255, 0.45);
+        color: #ffffff;
         transform: translateY(-2px);
       }
       .jdr-btn-secondary:disabled {
@@ -563,13 +584,13 @@
         max-width: 440px;
         padding: 14px 20px;
         border-radius: 14px;
-        background: rgba(24, 24, 28, 0.95);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        color: #FFFFFF;
+        background: rgba(24, 24, 29, 0.96);
+        border: 1px solid var(--jdr-line-strong);
+        color: var(--jdr-text);
         font-family: var(--jdr-font);
         font-size: 13.5px;
         line-height: 1.45;
-        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.72);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         transform: translateY(30px) scale(0.95);
@@ -590,8 +611,8 @@
         width: 28px;
         height: 28px;
         border-radius: 50%;
-        background: rgba(76, 175, 80, 0.2);
-        color: #81C784;
+        background: rgba(16, 185, 129, 0.18);
+        color: #10b981;
       }
 
       /* Mobile Responsive Tweaks */

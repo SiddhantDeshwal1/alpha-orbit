@@ -118,30 +118,138 @@ def fetch_best_trackers() -> list:
     logging.info(f"Successfully harvested {len(tracker_list)} high-speed active trackers ({udp_count} UDP prioritized) from {len(trackers)} candidates.")
     return tracker_list
 
-def update_env_file(best_ip: str, port: int = 2408) -> bool:
-    """Update WARP_ENDPOINT_IP in .env with the new fastest server."""
-    if not os.path.exists(ENV_FILE):
-        logging.warning(f".env file not found at {ENV_FILE}")
-        return False
+def _get_quadlet_env_candidates() -> list:
+    """Return deduplicated candidate paths for alpha-orbit-mapped.env."""
+    raw_paths = [
+        os.environ.get("QUADLET_ENV_FILE", "").strip(),
+        os.path.join(
+            os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")),
+            "containers",
+            "systemd",
+            "alpha-orbit-mapped.env",
+        ),
+        os.path.expanduser("~/.config/containers/systemd/alpha-orbit-mapped.env"),
+        "/etc/containers/systemd/alpha-orbit-mapped.env",
+        "/etc/containers/alpha-orbit-mapped.env",
+    ]
+    seen = set()
+    candidates = []
+    for path in raw_paths:
+        if not path:
+            continue
+        norm = os.path.abspath(path)
+        if norm not in seen:
+            seen.add(norm)
+            candidates.append(norm)
+    return candidates
 
-    with open(ENV_FILE, "r") as f:
+
+def _upsert_env_keys(file_path: str, updates: dict, append_if_missing: tuple = ()) -> tuple:
+    """
+    Update matching KEY=VALUE entries in an env file.
+    Returns (success, changed).
+    """
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    old_ip_match = re.search(r"^WARP_ENDPOINT_IP=(.*)$", content, re.MULTILINE)
-    old_ip = old_ip_match.group(1).strip() if old_ip_match else "unknown"
+    new_content = content
+    changed = False
+    found_any_key = False
 
-    if old_ip == best_ip:
-        logging.info(f".env already has fastest server endpoint: {best_ip}")
-        return True
+    for key, new_val in updates.items():
+        pattern = re.compile(rf"^{re.escape(key)}=(.*)$", re.MULTILINE)
+        match = pattern.search(new_content)
+        if match:
+            found_any_key = True
+            old_val = match.group(1).strip()
+            if old_val != str(new_val):
+                new_content = pattern.sub(f"{key}={new_val}", new_content)
+                changed = True
 
-    new_content = re.sub(r"^WARP_ENDPOINT_IP=.*$", f"WARP_ENDPOINT_IP={best_ip}", content, flags=re.MULTILINE)
-    new_content = re.sub(r"^WARP_ENDPOINT_PORT=.*$", f"WARP_ENDPOINT_PORT={port}", new_content, flags=re.MULTILINE)
+    if not found_any_key and append_if_missing:
+        suffix = "" if (not new_content or new_content.endswith("\n")) else "\n"
+        lines_to_add = [f"{k}={updates[k]}" for k in append_if_missing if k in updates]
+        if lines_to_add:
+            new_content = new_content + suffix + "\n".join(lines_to_add) + "\n"
+            changed = True
 
-    with open(ENV_FILE, "w") as f:
-        f.write(new_content)
+    if changed:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(new_content)
 
-    logging.info(f"[+] Updated .env WARP_ENDPOINT_IP from '{old_ip}' -> '{best_ip}' (Port {port})")
-    return True
+    return True, changed
+
+
+def update_quadlet_mapped_env(best_ip: str, port: int = 2408) -> tuple:
+    """
+    Optionally update WARP/WireGuard endpoint keys in existing alpha-orbit-mapped.env file(s).
+    Returns (updated_paths, any_changed).
+    """
+    updates = {
+        "WARP_ENDPOINT_IP": best_ip,
+        "WARP_ENDPOINT_PORT": str(port),
+        "WIREGUARD_ENDPOINT_IP": best_ip,
+        "WIREGUARD_ENDPOINT_PORT": str(port),
+        "VPN_ENDPOINT_IP": best_ip,
+        "VPN_ENDPOINT_PORT": str(port),
+    }
+    updated_paths = []
+    any_changed = False
+
+    for mapped_path in _get_quadlet_env_candidates():
+        if not os.path.isfile(mapped_path):
+            continue
+        try:
+            _, changed = _upsert_env_keys(
+                mapped_path,
+                updates,
+                append_if_missing=("WARP_ENDPOINT_IP", "WARP_ENDPOINT_PORT"),
+            )
+            updated_paths.append(mapped_path)
+            if changed:
+                any_changed = True
+                logging.info(f"[+] Updated Quadlet env {mapped_path} -> endpoint {best_ip}:{port}")
+            else:
+                logging.info(f"Quadlet env {mapped_path} already has fastest endpoint: {best_ip}:{port}")
+        except OSError as e:
+            logging.warning(f"Could not update optional Quadlet env {mapped_path}: {e}")
+
+    return updated_paths, any_changed
+
+
+def update_env_file(best_ip: str, port: int = 2408) -> bool:
+    """Update WARP_ENDPOINT_IP in .env and optional Quadlet alpha-orbit-mapped.env."""
+    env_ok = False
+    env_changed = False
+
+    if not os.path.exists(ENV_FILE):
+        logging.warning(f".env file not found at {ENV_FILE}")
+    else:
+        with open(ENV_FILE, "r", encoding="utf-8") as f:
+            old_match = re.search(r"^WARP_ENDPOINT_IP=(.*)$", f.read(), re.MULTILINE)
+            old_ip = old_match.group(1).strip() if old_match else "unknown"
+
+        env_ok, env_changed = _upsert_env_keys(
+            ENV_FILE,
+            {"WARP_ENDPOINT_IP": best_ip, "WARP_ENDPOINT_PORT": str(port)},
+            append_if_missing=("WARP_ENDPOINT_IP", "WARP_ENDPOINT_PORT"),
+        )
+        if env_changed:
+            logging.info(f"[+] Updated .env WARP_ENDPOINT_IP from '{old_ip}' -> '{best_ip}' (Port {port})")
+        else:
+            logging.info(f".env already has fastest server endpoint: {best_ip}")
+
+    mapped_paths, quadlet_changed = update_quadlet_mapped_env(best_ip, port)
+
+    if env_changed or quadlet_changed:
+        logging.info(
+            "[!] Gluetun VPN restart is required to apply the updated endpoint "
+            "(e.g. 'systemctl --user restart alpha-prod-gluetun.service' or 'podman restart alpha-prod-gluetun')."
+        )
+    elif env_ok or mapped_paths:
+        logging.info("[=] Endpoint unchanged; Gluetun restart not needed.")
+
+    return env_ok or bool(mapped_paths)
 
 def update_template_conf(template_conf: str, trackers: list) -> bool:
     """Safely update qBittorrent template conf without multiline appends or corruption."""

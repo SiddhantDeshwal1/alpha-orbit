@@ -9,11 +9,17 @@ Network=alpha_prod_sandbox_net.network
 Entrypoint=/bin/bash
 Exec=-c "while true; do /scripts/retention.sh; sleep 3600; done"
 
-Environment=JELLYFIN_URL=http://alpha-prod-tailscale:8096
-Environment=COMPLETED_DIR=/data/media/completed
 Environment=WATCHED_MAX_AGE_DAYS=7
-Environment=UNWATCHED_MAX_AGE_DAYS=30
+Environment=INACTIVE_MAX_AGE_DAYS=7
+Environment=UNWATCHED_MAX_AGE_DAYS=7
+Environment=UNMONITOR_ON_DELETE=true
 EnvironmentFile=__APP_DIR__/.env
+Environment=JELLYFIN_URL=http://alpha-prod-tailscale:8096
+Environment=JELLYFIN_INTERNAL_URL=http://alpha-prod-tailscale:8096
+Environment=RADARR_URL=http://alpha-prod-gluetun:7878
+Environment=SONARR_URL=http://alpha-prod-gluetun:8989
+Environment=SEERR_URL=http://alpha-prod-tailscale:5055
+Environment=COMPLETED_DIR=/data/media/completed
 
 Volume=__APP_DIR__/sandbox:/scripts:ro,Z
 Volume=__DATA_DIR__/seerr/media/download/completed:/data/media/completed:z

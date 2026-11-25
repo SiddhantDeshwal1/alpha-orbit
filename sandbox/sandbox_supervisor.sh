@@ -35,6 +35,7 @@ SERVER_DATA_DIR="${SERVER_DATA_DIR:-$CONFIG_DIR/data}"
 if [[ "$SERVER_DATA_DIR" != /* ]]; then
     SERVER_DATA_DIR="$(cd "$CONFIG_DIR" && cd "$SERVER_DATA_DIR" 2>/dev/null && pwd || echo "$CONFIG_DIR/data")"
 fi
+QUADLET_SYSTEMD_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/containers/systemd"
 
 SEERR_URL="${SEERR_URL:-http://127.0.0.1:5055}"
 SEERR_API_KEY="${SEERR_API_KEY:-}"
@@ -251,9 +252,24 @@ retry_failed_seerr_requests() {
 }
 
 sandbox_is_running() {
-    local running
-    running=$(podman ps --filter "name=alpha-prod-qbittorrent" --filter "status=running" --format "{{.Names}}" 2>/dev/null | grep -E "^alpha-prod-qbittorrent$" || true)
-    [ -n "$running" ]
+    local quadlet_mode=false
+    if [ -f "$QUADLET_SYSTEMD_DIR/alpha-prod-qbittorrent.container" ]; then
+        quadlet_mode=true
+    fi
+
+    local unit running
+    for unit in alpha-prod-qbittorrent alpha-prod-gatekeeper alpha-prod-clamav; do
+        if [ "$quadlet_mode" = true ]; then
+            if ! systemctl --user is-active --quiet "${unit}.service" 2>/dev/null; then
+                return 1
+            fi
+        fi
+        running=$(podman ps --filter "name=${unit}" --filter "status=running" --format "{{.Names}}" 2>/dev/null | grep -E "^${unit}$" || true)
+        if [ -z "$running" ]; then
+            return 1
+        fi
+    done
+    return 0
 }
 
 start_sandbox() {
@@ -269,9 +285,9 @@ start_sandbox() {
 }
 
 stop_sandbox() {
-    log "INFO" "${COOLDOWN_MINUTES}-Minute cooldown expired with zero active requests. Stopping sandbox..."
+    log "INFO" "${COOLDOWN_MINUTES}-Minute cooldown expired with zero active requests. Parking ingestion workers..."
     "$SCRIPT_DIR/stop_sandbox.sh" >> "$SUPERVISOR_LOG" 2>&1 || true
-    log "INFO" "Sandbox stopped. Drive heads safely parked. 100% CPU/RAM released."
+    log "INFO" "Ingestion workers (qBit, Gatekeeper, ClamAV) stopped; Gluetun/Radarr/Sonarr/Prowlarr remain warm with disk I/O parked."
 }
 
 log "INFO" "=========================================================="

@@ -124,19 +124,19 @@
     const styleEl = document.createElement('style');
     styleEl.id = STYLES_ID;
     styleEl.textContent = `
-      /* ── Singleton Floating Preview Portal ── */
+      /* ── Singleton Floating Preview Portal (dx.bi Obsidian) ── */
       #${PORTAL_ID} {
         position: fixed;
         z-index: 99999;
-        background-color: #141414;
+        background-color: #18181d;
         border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.14);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.16);
         cursor: pointer;
         pointer-events: none;
         opacity: 0;
         transform: scale(0.96) translateZ(0);
-        transition: transform 0.26s cubic-bezier(0.165, 0.84, 0.44, 1.0),
+        transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1),
                     opacity 0.22s ease,
                     box-shadow 0.26s ease;
         will-change: transform, opacity;
@@ -147,6 +147,7 @@
         opacity: 1;
         pointer-events: auto;
         transform: scale(1.18) translateZ(0);
+        box-shadow: 0 22px 58px rgba(0, 0, 0, 0.92), 0 0 0 2px rgba(255, 255, 255, 0.85);
       }
 
       /* Inner media layout */
@@ -154,7 +155,7 @@
         position: relative;
         width: 100%;
         height: 100%;
-        background-color: #141414;
+        background-color: #18181d;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
@@ -164,7 +165,7 @@
         position: absolute;
         inset: 0;
         overflow: hidden;
-        background-color: #141414;
+        background-color: #0b0b0d;
         z-index: 1;
       }
 
@@ -211,7 +212,7 @@
       .hover-preview-vignette {
         position: absolute;
         inset: 0;
-        background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 40%, rgba(20,20,20,0.92) 100%);
+        background: linear-gradient(180deg, rgba(11, 11, 13, 0.22) 0%, transparent 40%, rgba(11, 11, 13, 0.94) 100%);
         z-index: 2;
         pointer-events: none;
       }
@@ -224,11 +225,11 @@
         width: 34px;
         height: 34px;
         border-radius: 50%;
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        background: rgba(20, 20, 20, 0.65);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        color: #FFFFFF;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(19, 19, 23, 0.78);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        color: #ffffff;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -239,8 +240,8 @@
       }
 
       .hover-preview-mute-btn:hover {
-        background: rgba(229, 9, 20, 0.85);
-        border-color: #E50914;
+        background: #e50914;
+        border-color: #e50914;
         transform: scale(1.08);
       }
 
@@ -248,7 +249,7 @@
         display: none !important;
       }
 
-      /* Bottom Info & Netflix Typography */
+      /* Bottom Info & dx.bi Inter Typography */
       .hover-preview-info {
         position: relative;
         padding: 10px 12px;
@@ -260,8 +261,8 @@
       }
 
       .hover-preview-title {
-        color: #FFFFFF;
-        font-family: "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #f4f4f5;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
         font-size: 0.95rem;
         font-weight: 700;
         line-height: 1.25;
@@ -275,31 +276,34 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        font-family: "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
         font-size: 0.72rem;
         font-weight: 600;
       }
 
       .hover-preview-badge {
-        padding: 1px 5px;
+        padding: 2px 6px;
         border-radius: 4px;
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(33, 33, 40, 0.84);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
-        color: rgba(255, 255, 255, 0.9);
+        color: #f4f4f5;
       }
 
       .hover-preview-badge.tier {
-        background: rgba(229, 9, 20, 0.85);
-        color: #FFFFFF;
+        background: #e50914;
+        border-color: #e50914;
+        color: #ffffff;
         font-size: 0.65rem;
         letter-spacing: 0.5px;
         text-transform: uppercase;
       }
 
       .hover-preview-badge.rating {
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        background: rgba(11, 11, 13, 0.55);
+        color: #f4f4f5;
       }
     `;
 

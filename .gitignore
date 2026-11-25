@@ -73,3 +73,11 @@ Thumbs.db
 *~
 .idea/
 .vscode/
+
+# 9. Dashboard Runtime User & Access Request State
+dashboard/data/
+dashboard/data/**
+
+# 10. Local Extra / Reference Subprojects
+extra/
+extra/**

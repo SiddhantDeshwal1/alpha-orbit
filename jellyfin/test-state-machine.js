@@ -1619,12 +1619,12 @@ async function runTestSuite() {
   // 4. Cinema screen ambient vignette (z-index: 3)
   assertCondition(heroCode.includes('.jellyfin-hero-vignette-overlay {'), `custom-details-hero.js defines .jellyfin-hero-vignette-overlay`);
   assertCondition(heroCode.includes('z-index: 3 !important;'), `Ambient vignette overlay positioned at z-index: 3`);
-  assertCondition(heroCode.includes('linear-gradient(180deg') && heroCode.includes('#141414 100%'), `Ambient vignette provides bottom fade to #141414`);
+  assertCondition(heroCode.includes('linear-gradient(180deg') && heroCode.includes('#0b0b0d 100%'), `Ambient vignette provides bottom fade to #0b0b0d`);
   assertCondition(heroContainer.querySelector('.jellyfin-hero-vignette-overlay') !== null, `Vignette overlay DOM element mounted into heroContainer`);
 
   // 5. Title typography and responsive font sizing clamp
   assertCondition(heroCode.includes('#itemDetailPage.has-video-hero .nameContainer h1.itemName'), `custom-details-hero.js defines big title typography rule`);
-  assertCondition(heroCode.includes('"SF Pro Rounded"'), `Title typography enforces SF Pro Rounded font family`);
+  assertCondition(heroCode.includes('"Inter"'), `Title typography enforces Inter font family`);
   assertCondition(heroCode.includes('font-size: clamp(2.2rem, 3.8vw, 3.4rem) !important;'), `Title typography enforces responsive clamp(2.2rem, 3.8vw, 3.4rem) sizing`);
   assertCondition(heroCode.includes('font-weight: 800 !important;'), `Title typography enforces font-weight: 800`);
   assertCondition(heroCode.includes('text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85)'), `Title typography enforces theatrical drop text-shadow`);

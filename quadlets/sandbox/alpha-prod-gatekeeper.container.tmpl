@@ -11,9 +11,14 @@ Network=alpha_prod_sandbox_net.network
 Entrypoint=/bin/bash
 Exec=-c "while true; do /scripts/gatekeeper.sh; sleep 30; done"
 
-Environment=JELLYFIN_URL=http://alpha-prod-tailscale:8096
-Environment=CLAMAV_HOST=alpha-prod-clamav
+Environment=INACTIVE_MAX_AGE_DAYS=7
 EnvironmentFile=__APP_DIR__/.env
+Environment=JELLYFIN_URL=http://alpha-prod-tailscale:8096
+Environment=JELLYFIN_INTERNAL_URL=http://alpha-prod-tailscale:8096
+Environment=RADARR_URL=http://alpha-prod-gluetun:7878
+Environment=SONARR_URL=http://alpha-prod-gluetun:8989
+Environment=SEERR_URL=http://alpha-prod-tailscale:5055
+Environment=CLAMAV_HOST=alpha-prod-clamav
 
 Volume=__APP_DIR__/sandbox:/scripts:ro,Z
 Volume=__DATA_DIR__/seerr/media/download/staging:/data/media/staging:z

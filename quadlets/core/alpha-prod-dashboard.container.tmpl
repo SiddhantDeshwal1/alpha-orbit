@@ -15,7 +15,11 @@ Environment=PORT=3000
 Environment=TS_HOSTNAME=__TS_HOSTNAME__
 Environment=ALPHA_MOUNT_POINT=/media/alpha
 Environment=SERVER_DATA_DIR=/data
-Volume=%t/podman/podman.sock:/var/run/docker.sock:Z
+Environment=PODMAN_SOCKET=/run/podman/podman.sock
+Environment=DASHBOARD_DATA_DIR=/data/dashboard
+SecurityLabelDisable=true
+Volume=%t/podman:/run/podman:ro
+Volume=__DATA_DIR__/dashboard:/data/dashboard:Z
 Volume=__MOUNT_POINT__:/media/alpha:ro
 Volume=__DATA_DIR__/sandbox/logs:/logs:ro,Z
 

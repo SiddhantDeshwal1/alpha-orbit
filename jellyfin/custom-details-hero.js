@@ -12,7 +12,7 @@
  *  7. Multi-Container Selector: Searches .detailPageWrapperContainer, .detailPagePrimaryContainer, .detailRibbon, #itemDetailPage.
  *  8. Audio Management: Default unmuted (vol: 0.40) with gentle ramp & browser autoplay policy fallback.
  *  9. Floating Glass Speaker Button: 42x42px blur(8px) glassmorphism toggle at bottom-right.
- * 10. Multi-Stop Vignette: Deep theatrical dark vignette blending seamlessly into Jellyfin #141414 matte canvas.
+ * 10. Multi-Stop Vignette: Deep theatrical dark vignette blending seamlessly into dx.bi #0b0b0d obsidian canvas.
  * 11. DOM Scavenger: Proactively clears rogue .pause-button elements from #slides-container.
  * 12. Lifecycle & Memory Safety: IntersectionObserver scroll auto-pause/resume and comprehensive teardown on exit.
  */
@@ -350,7 +350,7 @@
         height: 52vh !important;
         min-height: 380px !important;
         max-height: 620px !important;
-        background-color: #141414 !important;
+        background-color: #0b0b0d !important;
         overflow: hidden !important;
         margin: 0 !important;
         z-index: 2 !important;
@@ -428,12 +428,12 @@
         z-index: 5 !important;
       }
 
-      /* Stylish Big Title Typography (SF Pro Rounded Hierarchy - Never Overlapping Trailer) */
+      /* Stylish Big Title Typography (dx.bi Inter Hierarchy - Never Overlapping Trailer) */
       #itemDetailPage.has-video-hero .nameContainer h1.itemName,
       #itemDetailPage.has-video-hero .nameContainer h1.parentName,
       #itemDetailPage.has-video-hero .nameContainer h1.parentNameLast,
       #itemDetailPage.has-video-hero h1.itemName {
-        font-family: "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif !important;
         font-size: clamp(2.2rem, 3.8vw, 3.4rem) !important;
         font-weight: 800 !important;
         letter-spacing: -0.025em !important;
@@ -553,8 +553,47 @@
         pointer-events: none !important;
         z-index: 3 !important;
         background:
-          linear-gradient(180deg, rgba(20, 20, 20, 0.45) 0%, transparent 18%, transparent 65%, rgba(20, 20, 20, 0.85) 90%, #141414 100%),
-          linear-gradient(90deg, rgba(20, 20, 20, 0.40) 0%, transparent 12%, transparent 88%, rgba(20, 20, 20, 0.40) 100%) !important;
+          linear-gradient(180deg, rgba(11, 11, 13, 0.45) 0%, transparent 18%, transparent 65%, rgba(11, 11, 13, 0.86) 90%, #0b0b0d 100%),
+          linear-gradient(90deg, rgba(11, 11, 13, 0.42) 0%, transparent 12%, transparent 88%, rgba(11, 11, 13, 0.42) 100%) !important;
+      }
+
+      /* ── dx.bi Detail Ribbon Action Buttons &amp; Pill Badges ── */
+      #itemDetailPage.has-video-hero .btnPlay,
+      #itemDetailPage.has-video-hero .btnPlay.detailButton {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #ffffff !important;
+        border-radius: 9999px !important;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif !important;
+        font-weight: 700 !important;
+      }
+
+      #itemDetailPage.has-video-hero .btnPlay .material-icons,
+      #itemDetailPage.has-video-hero .btnPlay svg {
+        color: #000000 !important;
+        fill: #000000 !important;
+      }
+
+      #itemDetailPage.has-video-hero .btnPlay:hover {
+        background-color: rgba(255, 255, 255, 0.85) !important;
+      }
+
+      #itemDetailPage.has-video-hero .detailButton:not(.btnPlay) {
+        background-color: #212128 !important;
+        color: #f4f4f5 !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+        border-radius: 9999px !important;
+      }
+
+      #itemDetailPage.has-video-hero .detailButton:not(.btnPlay):hover {
+        background-color: #2b2b33 !important;
+        border-color: rgba(255, 255, 255, 0.42) !important;
+      }
+
+      #itemDetailPage.has-video-hero .mediaInfoItem {
+        background: rgba(24, 24, 29, 0.82) !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+        color: #f4f4f5 !important;
       }
 
       /* ── Layer 3: Floating Glass Speaker Button (Bottom Right) ── */
@@ -567,11 +606,11 @@
         width: 44px !important;
         height: 44px !important;
         border-radius: 50% !important;
-        background: rgba(20, 20, 20, 0.75) !important;
+        background: rgba(19, 19, 23, 0.78) !important;
         backdrop-filter: blur(12px) !important;
         -webkit-backdrop-filter: blur(12px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.35) !important;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.75), 0 0 1px rgba(255, 255, 255, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.75), 0 0 1px rgba(255, 255, 255, 0.16) !important;
         color: #ffffff !important;
         opacity: 1 !important;
         pointer-events: auto !important;
@@ -583,7 +622,7 @@
         padding: 0;
         margin: 0;
         outline: none;
-        transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
                     background-color 0.22s ease,
                     border-color 0.22s ease,
                     box-shadow 0.22s ease !important;
@@ -593,14 +632,14 @@
 
       .jellyfin-hero-speaker-btn:hover {
         transform: scale(1.10) !important;
-        background: rgba(229, 9, 20, 0.90) !important;
-        border-color: #E50914 !important;
-        box-shadow: 0 4px 22px rgba(229, 9, 20, 0.60), 0 0 2px rgba(255, 255, 255, 0.50) !important;
+        background: #e50914 !important;
+        border-color: #e50914 !important;
+        box-shadow: 0 4px 22px rgba(229, 9, 20, 0.60), 0 0 2px rgba(255, 255, 255, 0.45) !important;
       }
 
       .jellyfin-hero-speaker-btn:not(.is-muted) {
-        border-color: rgba(229, 9, 20, 0.75) !important;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.70), 0 0 10px rgba(229, 9, 20, 0.35) !important;
+        border-color: rgba(229, 9, 20, 0.8) !important;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.75), 0 0 12px rgba(229, 9, 20, 0.38) !important;
       }
 
       .jellyfin-hero-speaker-btn:active {

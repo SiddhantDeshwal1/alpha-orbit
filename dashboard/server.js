@@ -1,3 +1,40 @@
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const { URL } = require('url');
+
+// Load .env from project root or dashboard directory without overriding runtime env
+function loadEnvFile() {
+  const candidates = [path.join(__dirname, '..', '.env'), path.join(__dirname, '.env')];
+  for (const envPath of candidates) {
+    try {
+      if (!fs.existsSync(envPath)) continue;
+      const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith('#')) continue;
+        const cleaned = line.startsWith('export ') ? line.slice(7).trim() : line;
+        const eqIdx = cleaned.indexOf('=');
+        if (eqIdx <= 0) continue;
+        const key = cleaned.slice(0, eqIdx).trim();
+        if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
+        if (process.env[key] !== undefined && process.env[key] !== '') continue;
+        let val = cleaned.slice(eqIdx + 1).trim();
+        if (
+          (val.startsWith('"') && val.endsWith('"')) ||
+          (val.startsWith("'") && val.endsWith("'"))
+        ) {
+          val = val.slice(1, -1);
+        }
+        process.env[key] = val;
+      }
+    } catch (_) {}
+  }
+}
+
+loadEnvFile();
+
 // Environment-configurable API keys (injected via .env / container runtime)
 const SEERR_API_KEY = process.env.SEERR_API_KEY || '';
 const RADARR_API_KEY = process.env.RADARR_API_KEY || '';
@@ -6,23 +43,37 @@ const PROWLARR_API_KEY = process.env.PROWLARR_API_KEY || '';
 const JELLYFIN_API_KEY = process.env.JELLYFIN_API_KEY || '';
 const SWITCHER_API_KEY = process.env.SWITCHER_API_KEY || '';
 
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const { URL } = require('url');
+const { createAccessManager } = require('./lib/accessManager');
+
+const accessManager = createAccessManager(() => ({
+  JELLYFIN_API_KEY: process.env.JELLYFIN_API_KEY || JELLYFIN_API_KEY,
+  SEERR_API_KEY: process.env.SEERR_API_KEY || SEERR_API_KEY,
+  SWITCHER_API_KEY: process.env.SWITCHER_API_KEY || SWITCHER_API_KEY,
+  NTFY_URL: process.env.NTFY_URL || '',
+  NTFY_TOPIC: process.env.NTFY_TOPIC || '',
+  NTFY_TOKEN: process.env.NTFY_TOKEN || '',
+  JELLYFIN_URL: process.env.JELLYFIN_URL || '',
+  JELLYFIN_INTERNAL_URL: process.env.JELLYFIN_INTERNAL_URL || '',
+  SEERR_URL: process.env.SEERR_URL || '',
+  DASHBOARD_DATA_DIR: process.env.DASHBOARD_DATA_DIR || '',
+  DASHBOARD_ENC_SECRET: process.env.DASHBOARD_ENC_SECRET || '',
+  DASHBOARD_AUTH_DISABLED: process.env.DASHBOARD_AUTH_DISABLED || ''
+}));
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = '0.0.0.0';
 
 // Detect Podman socket location (container or host)
 function getPodmanSocketPath() {
+  if (process.env.PODMAN_SOCKET) {
+    return process.env.PODMAN_SOCKET;
+  }
   const uid = process.getuid ? process.getuid() : 1000;
   const candidates = [
     process.env.PODMAN_SOCKET,
+    '/run/podman/podman.sock',
     `/run/user/${uid}/podman/podman.sock`,
-    '/var/run/docker.sock',
-    '/run/podman/podman.sock'
+    '/var/run/docker.sock'
   ].filter(Boolean);
 
   for (const p of candidates) {
@@ -55,8 +106,8 @@ function getAlphaPath() {
 // Find logs folder
 function getLogsDir() {
   const candidates = [
-    process.env.SERVER_DATA_DIR ? path.join(process.env.SERVER_DATA_DIR, 'sandbox/logs') : null,
     '/logs',
+    process.env.SERVER_DATA_DIR ? path.join(process.env.SERVER_DATA_DIR, 'sandbox/logs') : null,
     path.join(__dirname, '../data/sandbox/logs'),
     '/run/media/banana/Alpha/project/alpha/alpha-prod-orbit/data/sandbox/logs',
     path.join(__dirname, '../../serverData/sandbox/logs'),
@@ -152,7 +203,15 @@ function demuxDockerLogs(buffer) {
   const lines = [];
   let offset = 0;
   while (offset + 8 <= buffer.length) {
-    const streamType = buffer[offset]; // 1 = stdout, 2 = stderr
+    const streamType = buffer[offset]; // 0 = stdin, 1 = stdout, 2 = stderr
+    const isValidFrameHeader =
+      streamType <= 2 &&
+      buffer[offset + 1] === 0 &&
+      buffer[offset + 2] === 0 &&
+      buffer[offset + 3] === 0;
+    if (!isValidFrameHeader) {
+      break;
+    }
     const size = buffer.readUInt32BE(offset + 4);
     offset += 8;
     if (offset + size > buffer.length) {
@@ -180,11 +239,22 @@ function demuxDockerLogs(buffer) {
   return lines;
 }
 
+function isPodmanSocketError(err) {
+  if (!err) return false;
+  if (['ECONNREFUSED', 'ENOENT', 'EACCES', 'EPERM', 'ETIMEDOUT', 'ECONNRESET'].includes(err.code)) {
+    return true;
+  }
+  return /ENOENT|EACCES|ECONNREFUSED|connect/i.test(err.message || '');
+}
+
 // Request helper for Podman unix socket
 function requestPodman(apiPath, method = 'GET', body = null) {
   return new Promise((resolve, reject) => {
+    const socketPath =
+      process.env.PODMAN_SOCKET ||
+      (fs.existsSync(PODMAN_SOCKET) ? PODMAN_SOCKET : getPodmanSocketPath());
     const options = {
-      socketPath: PODMAN_SOCKET,
+      socketPath,
       path: apiPath,
       method: method,
       headers: {}
@@ -198,13 +268,19 @@ function requestPodman(apiPath, method = 'GET', body = null) {
       const chunks = [];
       res.on('data', (c) => chunks.push(c));
       res.on('end', () => {
+        const rawBuffer = Buffer.concat(chunks);
         resolve({
           statusCode: res.statusCode,
           headers: res.headers,
-          rawBuffer: Buffer.concat(chunks),
-          body: Buffer.concat(chunks).toString('utf8')
+          rawBuffer,
+          body: rawBuffer.toString('utf8')
         });
       });
+    });
+    req.setTimeout(5000, () => {
+      const err = new Error(`Podman socket request timed out (${socketPath})`);
+      err.code = 'ETIMEDOUT';
+      req.destroy(err);
     });
     req.on('error', reject);
     if (body) {
@@ -220,10 +296,7 @@ const MONITORED_SERVICES = [
     id: 'jellyfin',
     name: 'Jellyfin Cinema',
     port: 8096,
-    urls: [
-      'http://alpha-prod-jellyfin:8096/System/Info/Public',
-      'http://127.0.0.1:8096/System/Info/Public'
-    ],
+    urls: accessManager.getJellyfinUrls('/System/Info/Public'),
     category: 'media',
     icon: 'film',
     desc: 'Direct-Play Cinema & Shows'
@@ -232,7 +305,7 @@ const MONITORED_SERVICES = [
     id: 'seerr',
     name: 'Seerr Netflix UI',
     port: 5055,
-    urls: ['http://alpha-prod-seerr:5055/api/v1/status', 'http://127.0.0.1:5055/api/v1/status'],
+    urls: accessManager.getSeerrUrls('/api/v1/status'),
     category: 'media',
     icon: 'compass',
     desc: 'Media Discovery & Automated Requests'
@@ -686,13 +759,7 @@ class MetricsStore {
     let jfStreams = 0,
       jfUsers = 0;
     try {
-      const ctrl = new AbortController();
-      const tId = setTimeout(() => ctrl.abort(), 1200);
-      const jfRes = await fetch('http://127.0.0.1:8096/Sessions', {
-        headers: { Authorization: `MediaBrowser Token="${JELLYFIN_API_KEY}"` },
-        signal: ctrl.signal
-      });
-      clearTimeout(tId);
+      const jfRes = await accessManager.jellyfinFetch('/Sessions', { method: 'GET' }, 1500);
       if (jfRes.ok) {
         const sessions = await jfRes.json();
         if (Array.isArray(sessions)) {
@@ -879,30 +946,326 @@ const TMDB_PROXY_ALLOWED_PARAMS = [
   'include_adult'
 ];
 
-function sendJSON(res, statusCode, data) {
+function isAllowedOrigin(origin) {
+  if (!origin || typeof origin !== 'string') return false;
+  let parsed;
+  try {
+    parsed = new URL(origin);
+  } catch (_) {
+    return false;
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+  if (parsed.port && !/^\d{1,5}$/.test(parsed.port)) return false;
+
+  const host = parsed.hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  if (!host) return false;
+
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+  if (host.endsWith('.ts.net') || host.startsWith('alpha-prod-') || host.endsWith('.local')) {
+    return true;
+  }
+  if (process.env.TS_HOSTNAME && host === process.env.TS_HOSTNAME.toLowerCase()) {
+    return true;
+  }
+
+  // Tailscale CGNAT (100.*) & private LAN IPv4 ranges
+  const ipv4Match = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4Match) {
+    const octets = ipv4Match.slice(1).map(Number);
+    if (octets.some((o) => o < 0 || o > 255)) return false;
+    const [a, b] = octets;
+    if (a === 100 || a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function getCorsHeaders(req) {
+  const origin = req && req.headers ? req.headers.origin : '';
+  const headers = { Vary: 'Origin' };
+  if (isAllowedOrigin(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin;
+    headers['Access-Control-Allow-Credentials'] = 'true';
+  }
+  return headers;
+}
+
+function sendJSON(res, statusCode, data, extraHeaders = {}) {
+  const cors = res._corsHeaders || { Vary: 'Origin' };
   res.writeHead(statusCode, {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Cache-Control': 'no-cache'
+    'Cache-Control': 'no-cache',
+    ...cors,
+    ...extraHeaders
   });
   res.end(JSON.stringify(data));
 }
 
+function sendError(res, err, fallbackCode = 500) {
+  const statusCode =
+    err && Number.isInteger(err.statusCode) && err.statusCode >= 400 ? err.statusCode : fallbackCode;
+  return sendJSON(res, statusCode, { error: (err && err.message) || 'Internal server error' });
+}
+
+function readJsonBody(req, maxBytes = 64 * 1024) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let total = 0;
+    let settled = false;
+
+    req.on('data', (chunk) => {
+      if (settled) return;
+      total += chunk.length;
+      if (total > maxBytes) {
+        settled = true;
+        const err = new Error('Request body too large');
+        err.statusCode = 413;
+        reject(err);
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+
+    req.on('end', () => {
+      if (settled) return;
+      settled = true;
+      const raw = Buffer.concat(chunks).toString('utf8').trim();
+      if (!raw) return resolve({});
+      try {
+        resolve(JSON.parse(raw));
+      } catch (_) {
+        const err = new Error('Invalid JSON payload');
+        err.statusCode = 400;
+        reject(err);
+      }
+    });
+
+    req.on('error', (err) => {
+      if (settled) return;
+      settled = true;
+      reject(err);
+    });
+  });
+}
+
+function getClientIp(req) {
+  const fwd = req && req.headers && req.headers['x-forwarded-for'];
+  let ip = '';
+  if (typeof fwd === 'string' && fwd.trim()) {
+    ip = fwd.split(',')[0].trim();
+  } else if (req && req.headers && typeof req.headers['x-real-ip'] === 'string') {
+    ip = req.headers['x-real-ip'].trim();
+  } else {
+    ip = (req && req.socket && req.socket.remoteAddress) || 'unknown';
+  }
+  return ip.replace(/^::ffff:/, '');
+}
+
+const PUBLIC_API_PATHS = new Set([
+  '/api/health',
+  '/api/auth/me',
+  '/api/auth/login',
+  '/api/auth/logout',
+  '/api/auth/signup-options',
+  '/api/auth/signup-request',
+  '/api/auth/signup-status',
+  '/api/tmdb/proxy'
+]);
+
+const INTERNAL_WEBHOOK_PATHS = new Set([
+  '/api/downloads/torrent-complete',
+  '/api/downloads/gatekeeper-complete'
+]);
+
+function isInternalWebhookRequest(req) {
+  if (accessManager.verifySession(req)) return true;
+  if (SWITCHER_API_KEY && req.headers['x-api-key'] === SWITCHER_API_KEY) return true;
+  const peerIp = ((req && req.socket && req.socket.remoteAddress) || '').replace(/^::ffff:/, '');
+  if (!peerIp) return false;
+  if (peerIp === '127.0.0.1' || peerIp === '::1') return true;
+  const m = peerIp.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (!m) return false;
+  const [a, b] = m.slice(1).map(Number);
+  return a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31);
+}
+
+function requireAdmin(req, res) {
+  if (process.env.DASHBOARD_AUTH_DISABLED === 'true') {
+    return { username: 'admin', userId: '', isAdmin: true, authDisabled: true };
+  }
+  const session = accessManager.verifySession(req);
+  if (!session) {
+    sendJSON(res, 401, { error: 'Authentication required' });
+    return null;
+  }
+  return session;
+}
+
 // The HTTP Server
 const server = http.createServer(async (req, res) => {
-  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  const pathname = parsedUrl.pathname;
-  const searchParams = parsedUrl.searchParams;
+  res._corsHeaders = getCorsHeaders(req);
 
   // CORS preflight
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key'
+      ...res._corsHeaders,
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key',
+      'Access-Control-Max-Age': '86400'
     });
     return res.end();
   }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  } catch (_) {
+    return sendJSON(res, 400, { error: 'Malformed request URL' });
+  }
+  const pathname = parsedUrl.pathname;
+  const searchParams = parsedUrl.searchParams;
+
+  try {
+    // --- Public API: Health & Auth / Access Signup ---
+    if (pathname === '/api/health' && req.method === 'GET') {
+      return sendJSON(res, 200, {
+        ok: true,
+        status: 'healthy',
+        service: 'alpha-prod-dashboard',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (pathname === '/api/auth/me' && req.method === 'GET') {
+      const status = await accessManager.getAuthStatus(req);
+      return sendJSON(res, 200, status);
+    }
+
+    if (pathname === '/api/auth/login' && req.method === 'POST') {
+      const body = await readJsonBody(req);
+      const { token, session } = await accessManager.handleAuthLogin({
+        username: body.username,
+        password: body.password
+      });
+      return sendJSON(res, 200, session, {
+        'Set-Cookie': accessManager.buildSessionCookie(token, req)
+      });
+    }
+
+    if (pathname === '/api/auth/logout' && req.method === 'POST') {
+      return sendJSON(
+        res,
+        200,
+        { success: true, authenticated: false },
+        { 'Set-Cookie': accessManager.clearSessionCookie(req) }
+      );
+    }
+
+    if (pathname === '/api/auth/signup-options' && req.method === 'GET') {
+      const options = await accessManager.getSignupOptions();
+      return sendJSON(res, 200, options);
+    }
+
+    if (pathname === '/api/auth/signup-request' && req.method === 'POST') {
+      const body = await readJsonBody(req);
+      const created = await accessManager.createSignupRequest(body, getClientIp(req));
+      return sendJSON(res, 201, {
+        success: true,
+        id: created.request.id,
+        statusToken: created.statusToken,
+        request: created.request
+      });
+    }
+
+    if (pathname === '/api/auth/signup-status' && req.method === 'GET') {
+      const token = searchParams.get('token') || req.headers['x-status-token'] || '';
+      const status = accessManager.getSignupStatus(token);
+      return sendJSON(res, 200, status);
+    }
+
+    const signupStatusPathMatch = pathname.match(/^\/api\/auth\/signup-status\/([^/]+)$/);
+    if (signupStatusPathMatch && req.method === 'GET') {
+      const status = accessManager.getSignupStatus(decodeURIComponent(signupStatusPathMatch[1]));
+      return sendJSON(res, 200, status);
+    }
+
+    // --- Enforce Admin Session on All Non-Public /api/* Routes (except internal webhook peers) ---
+    let adminSession = null;
+    if (pathname.startsWith('/api/') && !PUBLIC_API_PATHS.has(pathname)) {
+      if (INTERNAL_WEBHOOK_PATHS.has(pathname)) {
+        if (process.env.DASHBOARD_AUTH_DISABLED !== 'true' && !isInternalWebhookRequest(req)) {
+          return sendJSON(res, 401, { error: 'Authentication required' });
+        }
+      } else {
+        adminSession = requireAdmin(req, res);
+        if (!adminSession) return;
+      }
+    }
+
+    // --- Admin API: Access Requests & User Provisioning ---
+    if (pathname === '/api/admin/access-requests' && req.method === 'GET') {
+      return sendJSON(res, 200, accessManager.listAccessRequests());
+    }
+
+    if (pathname === '/api/admin/libraries' && req.method === 'GET') {
+      const libs = await accessManager.getLibraries();
+      return sendJSON(res, 200, libs);
+    }
+
+    const approveMatch = pathname.match(/^\/api\/admin\/access-requests\/([^/]+)\/approve$/);
+    if (approveMatch && req.method === 'POST') {
+      const body = await readJsonBody(req);
+      const result = await accessManager.approveRequest(
+        decodeURIComponent(approveMatch[1]),
+        body,
+        adminSession ? adminSession.username : 'admin'
+      );
+      return sendJSON(res, 200, { success: true, ...result });
+    }
+
+    const rejectMatch = pathname.match(/^\/api\/admin\/access-requests\/([^/]+)\/reject$/);
+    if (rejectMatch && req.method === 'POST') {
+      const body = await readJsonBody(req);
+      const result = await accessManager.rejectRequest(
+        decodeURIComponent(rejectMatch[1]),
+        body.decisionNote !== undefined ? body.decisionNote : body.note || '',
+        adminSession ? adminSession.username : 'admin'
+      );
+      return sendJSON(res, 200, { success: true, ...result });
+    }
+
+    if (pathname === '/api/admin/users' && req.method === 'GET') {
+      const data = await accessManager.listDirectoryUsers();
+      return sendJSON(res, 200, data);
+    }
+
+    const toggleUserMatch = pathname.match(/^\/api\/admin\/users\/([^/]+)\/toggle$/);
+    if (toggleUserMatch && req.method === 'POST') {
+      const body = await readJsonBody(req);
+      const disabled =
+        body.disabled !== undefined
+          ? body.disabled
+          : body.isDisabled !== undefined
+            ? body.isDisabled
+            : undefined;
+      const result = await accessManager.toggleUser(
+        decodeURIComponent(toggleUserMatch[1]),
+        disabled,
+        adminSession || {}
+      );
+      return sendJSON(res, 200, result);
+    }
+
+    const deleteUserMatch = pathname.match(/^\/api\/admin\/users\/([^/]+)$/);
+    if (deleteUserMatch && req.method === 'DELETE') {
+      const result = await accessManager.deleteUser(
+        decodeURIComponent(deleteUserMatch[1]),
+        adminSession || {}
+      );
+      return sendJSON(res, 200, result);
+    }
 
   // --- API: System Telemetry & Disk Breakdown ---
   if (pathname === '/api/system' && req.method === 'GET') {
@@ -1085,14 +1448,7 @@ const server = http.createServer(async (req, res) => {
       // 3. Fetch Seerr requests queue
       let seerrRequests = [];
       try {
-        const seerrKey = SEERR_API_KEY;
-        const ctrl = new AbortController();
-        const tId = setTimeout(() => ctrl.abort(), 2000);
-        const sRes = await fetch('http://127.0.0.1:5055/api/v1/request?take=8&skip=0', {
-          headers: { 'X-Api-Key': seerrKey },
-          signal: ctrl.signal
-        });
-        clearTimeout(tId);
+        const sRes = await accessManager.seerrFetch('/api/v1/request?take=8&skip=0', {}, 2000);
         if (sRes.ok) {
           const sData = await sRes.json();
           seerrRequests = (sData.results || []).map((r) => ({
@@ -1919,30 +2275,48 @@ const server = http.createServer(async (req, res) => {
 
   // --- API: Available Log Sources ---
   if (pathname === '/api/logs/sources' && req.method === 'GET') {
+    const logsDir = getLogsDir();
+    let fileLogs = [];
+    if (logsDir && fs.existsSync(logsDir)) {
+      fileLogs = fs.readdirSync(logsDir).filter((f) => f.endsWith('.log'));
+    }
+
     try {
       const resp = await requestPodman('/v1.41/containers/json?all=1');
-      let containerNames = [];
-      if (resp.statusCode < 400) {
-        const list = JSON.parse(resp.body);
-        containerNames = list
-          .map((c) => (c.Names && c.Names[0] ? c.Names[0].replace(/^\//, '') : null))
-          .filter(Boolean);
+      if (resp.statusCode >= 400) {
+        let parsed = null;
+        try {
+          parsed = JSON.parse(resp.rawBuffer.toString('utf8'));
+        } catch (_) {}
+        return sendJSON(res, 502, {
+          error: parsed?.message || parsed?.cause || `Podman API returned HTTP ${resp.statusCode}`,
+          statusCode: resp.statusCode,
+          containers: [],
+          fileLogs
+        });
       }
-      const logsDir = getLogsDir();
-      let fileLogs = [];
-      if (logsDir && fs.existsSync(logsDir)) {
-        fileLogs = fs.readdirSync(logsDir).filter((f) => f.endsWith('.log'));
-      }
+      const list = JSON.parse(resp.body);
+      const containerNames = list
+        .map((c) => (c.Names && c.Names[0] ? c.Names[0].replace(/^\//, '') : null))
+        .filter(Boolean);
       return sendJSON(res, 200, { containers: containerNames, fileLogs });
     } catch (err) {
-      return sendJSON(res, 500, { error: err.message });
+      if (isPodmanSocketError(err)) {
+        return sendJSON(res, 503, {
+          error: `Podman socket unavailable (${err.code || 'ERROR'}: ${PODMAN_SOCKET}). Ensure podman.socket is running and accessible.`,
+          code: err.code || 'SOCKET_UNAVAILABLE',
+          containers: [],
+          fileLogs
+        });
+      }
+      return sendJSON(res, 500, { error: err.message, containers: [], fileLogs });
     }
   }
 
   // --- API: Live Container Logs with Error Tagging ---
   if (pathname === '/api/logs/stream' && req.method === 'GET') {
     let container = searchParams.get('container') || 'alpha-prod-seerr';
-    const tail = parseInt(searchParams.get('tail') || '150', 10);
+    const tail = Math.min(2000, Math.max(1, parseInt(searchParams.get('tail') || '150', 10) || 150));
     const filter = (searchParams.get('filter') || 'all').toLowerCase(); // 'all', 'error', 'warn'
     const isFile = searchParams.get('type') === 'file' || container.startsWith('file:');
     if (container.startsWith('file:')) {
@@ -1954,17 +2328,32 @@ const server = http.createServer(async (req, res) => {
       if (isFile) {
         const logsDir = getLogsDir();
         const safeName = path.basename(container);
-        const filePath = path.join(logsDir || '', safeName);
-        if (fs.existsSync(filePath)) {
-          const content = fs.readFileSync(filePath, 'utf8');
-          const allLines = content.split('\n');
-          const sliced = allLines.slice(-tail);
-          rawLines = sliced.map((t) => ({ stream: 'stdout', text: t }));
+        const filePath = logsDir ? path.join(logsDir, safeName) : '';
+        if (!filePath || !fs.existsSync(filePath)) {
+          return sendJSON(res, 404, {
+            error: `Log file not found: ${safeName}`,
+            container: safeName
+          });
         }
+        const content = fs.readFileSync(filePath, 'utf8');
+        const allLines = content.split('\n');
+        const sliced = allLines.slice(-tail);
+        rawLines = sliced.map((t) => ({ stream: 'stdout', text: t }));
       } else {
         const resp = await requestPodman(
           `/v1.41/containers/${encodeURIComponent(container)}/logs?stdout=1&stderr=1&tail=${tail}`
         );
+        if (resp.statusCode >= 400) {
+          let parsed = null;
+          try {
+            parsed = JSON.parse(resp.rawBuffer.toString('utf8'));
+          } catch (_) {}
+          return sendJSON(res, resp.statusCode === 404 ? 404 : 502, {
+            error: parsed?.message || parsed?.cause || 'Podman API error',
+            container,
+            statusCode: resp.statusCode
+          });
+        }
         rawLines = demuxDockerLogs(resp.rawBuffer);
       }
 
@@ -2002,6 +2391,13 @@ const server = http.createServer(async (req, res) => {
         lines: filtered
       });
     } catch (err) {
+      if (isPodmanSocketError(err)) {
+        return sendJSON(res, 503, {
+          error: `Podman socket unavailable (${err.code || 'ERROR'}: ${PODMAN_SOCKET}). Ensure podman.socket is running and accessible.`,
+          code: err.code || 'SOCKET_UNAVAILABLE',
+          container
+        });
+      }
       return sendJSON(res, 500, { error: err.message });
     }
   }
@@ -2053,12 +2449,10 @@ const server = http.createServer(async (req, res) => {
 
     // Seerr fallback
     try {
-      const seerrKey = SEERR_API_KEY;
-      const sRes = await fetch(
-        `http://127.0.0.1:5055/api/v1/search?query=${encodeURIComponent(query)}`,
-        {
-          headers: { 'X-Api-Key': seerrKey }
-        }
+      const sRes = await accessManager.seerrFetch(
+        `/api/v1/search?query=${encodeURIComponent(query)}`,
+        {},
+        4500
       );
       if (sRes.ok) {
         const sData = await sRes.json();
@@ -2135,11 +2529,17 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // --- Unmatched /api/* JSON 404 ---
+  if (pathname.startsWith('/api/')) {
+    return sendJSON(res, 404, { error: 'API endpoint not found' });
+  }
+
   // --- Proxy: Seerr Avatar Proxy ---
   if (pathname.startsWith('/avatarproxy/')) {
     try {
-      const seerrRes = await fetch(
-        `http://127.0.0.1:5055${pathname}${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`
+      const queryPart = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+      const seerrRes = await fetchCandidate(
+        accessManager.getSeerrUrls(`${pathname}${queryPart}`)
       );
       res.writeHead(seerrRes.status, {
         'Content-Type': seerrRes.headers.get('content-type') || 'image/png',
@@ -2172,6 +2572,11 @@ const server = http.createServer(async (req, res) => {
     });
     fs.createReadStream(filePath).pipe(res);
   });
+  } catch (err) {
+    if (!res.headersSent) {
+      return sendError(res, err);
+    }
+  }
 });
 
 process.on('SIGTERM', () => {

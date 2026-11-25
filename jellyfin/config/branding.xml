@@ -1,12 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <BrandingOptions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <LoginDisclaimer />
-  <CustomCss>@import url("https://cdn.jsdelivr.net/gh/ya0903/NetFin@main/netfin.css");
-@import url('https://fonts.cdnfonts.com/css/sf-pro-rounded');
+  <CustomCss>@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300..800&amp;family=Bebas+Neue&amp;display=swap");
 
-/* ── SF PRO ROUNDED GLOBAL TYPOGRAPHY ── */
+/* ── DX.BI DESIGN TOKENS &amp; JELLYFIN THEME VARIABLES ── */
 :root {
-  --default-font-family: "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --dx-bg: #0b0b0d;
+  --dx-bg-raised: #131317;
+  --dx-surface: #18181d;
+  --dx-surface-2: #212128;
+  --dx-surface-3: #2b2b33;
+  --dx-line: rgba(255, 255, 255, 0.08);
+  --dx-line-strong: rgba(255, 255, 255, 0.16);
+  --dx-text: #f4f4f5;
+  --dx-text-2: #c4c4cc;
+  --dx-text-3: #8a8a96;
+  --dx-accent: #e50914;
+  --dx-accent-hover: #f40612;
+  --dx-radius: 8px;
+  --dx-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  --dx-font-display: "Bebas Neue", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --default-font-family: var(--dx-font-sans);
+
+  /* Cinema Red Accents */
+  --theme-accent-color: #e50914;
+  --activeColor: #e50914;
+  --activeColorAlpha: rgba(229, 9, 20, 0.88);
+  --uiAccentColor: #e50914;
+  --osdSeekBarPlayedColor: #e50914;
+  --osdSeekBarThumbColor: #e50914;
+  --btnMiniPlayColor: #e50914;
+  --btnSubmitColor: #ffffff;
+  --checkboxCheckedBgColor: #e50914;
+  --highlightOutlineColor: #e50914;
+
+  /* dx.bi Obsidian Canvas (#0b0b0d) &amp; Elevated Surfaces */
+  --darkerGradientPoint: #0b0b0d;
+  --darkerGradientPointAlpha: rgba(11, 11, 13, 0.96);
+  --lighterGradientPoint: #131317;
+  --lighterGradientPointAlpha: rgba(19, 19, 23, 0.96);
+  --backgroundGradient: #0b0b0d;
+  --cardBackgroundGradient: linear-gradient(180deg, #18181d 0%, #131317 100%);
+  --drawerColor: rgba(19, 19, 23, 0.96);
+  --tableBodyColor: #131317;
+}
+
+/* ── INTER + BEBAS NEUE GLOBAL TYPOGRAPHY ── */
+html,
+body {
+  background-color: #0b0b0d !important;
+  color: #f4f4f5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body,
@@ -38,60 +83,121 @@ h2.sectionTitle,
 .button-flat,
 .button-submit,
 .btnPlay {
-  font-family: "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif !important;
 }
 
-/* ── NETFLIX AESTHETIC COMPLEMENTARY OVERRIDES ── */
-:root {
-  /* Authentic Netflix Red Accents */
-  --theme-accent-color: #E50914;
-  --activeColor: #E50914;
-  --activeColorAlpha: rgba(229, 9, 20, 0.88);
-  --uiAccentColor: #E50914;
-  --osdSeekBarPlayedColor: #E50914;
-  --osdSeekBarThumbColor: #E50914;
-  --btnMiniPlayColor: #E50914;
-  --btnSubmitColor: #E50914;
-  --checkboxCheckedBgColor: #E50914;
-  --highlightOutlineColor: #E50914;
-
-  /* Pure Dark Matte Canvas (#141414) */
-  --darkerGradientPoint: #141414;
-  --darkerGradientPointAlpha: rgba(20, 20, 20, 0.95);
-  --lighterGradientPoint: #141414;
-  --lighterGradientPointAlpha: rgba(20, 20, 20, 0.95);
-  --backgroundGradient: #141414;
-  --cardBackgroundGradient: linear-gradient(180deg, #181818 0%, #141414 100%);
-  --drawerColor: rgba(20, 20, 20, 0.96);
-  --tableBodyColor: #141414;
+.dx-display,
+.pageTitleWithDefaultLogo,
+.headerButtonUser .material-icons {
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Netflix Matte Canvas Surface */
+::selection {
+  background: #e50914;
+  color: #ffffff;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ── DX.BI OBSIDIAN CANVAS &amp; RAISED SURFACES ── */
 body,
 .backgroundContainer,
-.mainDrawer,
-.mainDrawer-scrollContainer {
-  background-color: #141414 !important;
+.backgroundContainer.withBackdrop,
+#loginPage {
+  background-color: #0b0b0d !important;
 }
 
-/* Transparent-to-Black Header Gradient */
+.backgroundContainer.withBackdrop::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(11, 11, 13, 0.45) 0%, rgba(11, 11, 13, 0.72) 55%, #0b0b0d 100%);
+  z-index: 0;
+}
+
+.mainDrawer,
+.mainDrawer-scrollContainer,
+.detailPageSecondaryContainer,
+.formDialogHeader,
+.formDialogFooter,
+.paperList,
+.collapseContent {
+  background-color: #131317 !important;
+}
+
+.mainDrawer {
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.cardBox,
+.visualCardBox,
+.dialog,
+.actionSheet,
+.emby-input,
+.emby-select,
+.emby-textarea {
+  background-color: #18181d !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f4f4f5 !important;
+}
+
+.emby-input:focus,
+.emby-select:focus,
+.emby-textarea:focus {
+  background-color: #212128 !important;
+  border-color: rgba(255, 255, 255, 0.48) !important;
+  box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.25) !important;
+}
+
+.listItem:hover,
+.navMenuOption:hover,
+.emby-tab-button:hover {
+  background-color: #212128 !important;
+}
+
+.navMenuOption-selected {
+  background-color: #212128 !important;
+  color: #ffffff !important;
+  border-left: 3px solid #e50914 !important;
+}
+
+/* ── SUBTLE #0b0b0d HEADER BACKDROP &amp; VIGNETTE GRADIENTS ── */
 .skinHeader {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(20, 20, 20, 0.4) 60%, transparent 100%) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: linear-gradient(180deg, rgba(11, 11, 13, 0.86) 0%, rgba(11, 11, 13, 0.38) 65%, transparent 100%) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: none !important;
-  transition: background-color 0.4s ease, backdrop-filter 0.4s ease;
+  transition: background-color 0.35s ease, backdrop-filter 0.35s ease, box-shadow 0.35s ease;
 }
 
 .skinHeader.skinHeader-blurred:not(.osdHeader),
 .skinHeader.semiTransparent:not(.osdHeader) {
-  background: linear-gradient(180deg, rgba(20, 20, 20, 0.98) 0%, rgba(20, 20, 20, 0.92) 100%) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(11, 11, 13, 0.94) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* ── REMOVE ALL RED HOVER ARTIFACTS ── */
+/* ── CLEAN OVERLAYS &amp; CARD TEXT CONTRAST ── */
 .cardOverlayContainer::before,
 .cardOverlayContainer::after {
   display: none !important;
@@ -102,66 +208,77 @@ body,
 
 .card-hoverable:hover .cardOverlayContainer,
 .card:hover .cardOverlayContainer {
-  background: transparent !important;
+  background: linear-gradient(180deg, transparent 50%, rgba(11, 11, 13, 0.72) 100%) !important;
 }
 
-/* Neutralize red text shift on hover */
 .card-hoverable:hover .cardText,
 .card-hoverable:hover .cardText-first,
 .card:hover .cardText,
 .card:hover .cardText-first {
-  color: #FFFFFF !important;
+  color: #f4f4f5 !important;
   text-shadow: none !important;
 }
 
 .card-hoverable:hover .cardText-secondary,
 .card:hover .cardText-secondary {
-  color: rgba(255, 255, 255, 0.70) !important;
+  color: #c4c4cc !important;
   text-shadow: none !important;
 }
 
-/* ── AUTHENTIC NETFLIX HOVER ZOOM AND MULTI-TIER ELEVATION ── */
+/* ── DX.BI POSTER CARDS: ELEVATION &amp; 2PX WHITE/ACCENT FOCUS/HOVER RINGS ── */
 .card {
   position: relative;
   transition: z-index 0.25s ease;
 }
 
-.card:hover {
+.card:hover,
+.card:focus-within {
   z-index: 50 !important;
 }
 
 .cardScalable {
-  transition: transform 0.28s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.28s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.28s ease !important;
+  border-radius: 8px !important;
+  background-color: #18181d !important;
+  overflow: hidden;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.28s ease !important;
   will-change: transform, box-shadow;
 }
 
 .card:hover .cardScalable,
 .card-hoverable:hover .cardScalable,
-.card-hoverable:hover .visualCardBox,
+.card-hoverable:hover .visualCardBox {
+  transform: translateY(-4px) scale(1.04) translateZ(0) !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.72), 0 0 0 2px rgba(255, 255, 255, 0.85) !important;
+}
+
 .card:focus .cardScalable,
-.card-hoverable:focus .cardScalable {
-  transform: scale(1.055) translateZ(0) !important;
-  box-shadow: 0 20px 38px rgba(0, 0, 0, 0.85), 0 8px 16px rgba(0, 0, 0, 0.65), 0 0 1px rgba(255, 255, 255, 0.18) !important;
-  border-color: rgba(255, 255, 255, 0.20) !important;
+.card:focus-visible .cardScalable,
+.card-hoverable:focus .cardScalable,
+.card-hoverable:focus-visible .cardScalable {
+  transform: translateY(-4px) scale(1.04) translateZ(0) !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.75), 0 0 0 2px #ffffff, 0 0 0 4px rgba(229, 9, 20, 0.55) !important;
+  outline: none !important;
 }
 
 .cardImageContainer {
-  transition: transform 0.28s cubic-bezier(0.25, 1, 0.5, 1) !important;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .card:hover .cardImageContainer {
-  transform: scale(1.02) !important;
+  transform: scale(1.03) !important;
 }
 
-/* ── ENLARGED HOME SCREEN TYPOGRAPHY AND SECTION ACCENT ── */
+/* ── SECTION HEADERS &amp; CINEMA RED ACCENT LINE ── */
 .sectionTitle,
 h2.sectionTitle,
 .sectionTitle-cards {
-  font-size: 1.75rem !important;
+  font-size: 1.55rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.02em !important;
   text-transform: none !important;
-  color: #FFFFFF !important;
+  color: #f4f4f5 !important;
   position: relative !important;
   padding-bottom: 8px !important;
   margin-bottom: 12px !important;
@@ -176,9 +293,9 @@ h2.sectionTitle::after,
   position: absolute !important;
   bottom: 0 !important;
   left: 0 !important;
-  width: 60px !important;
+  width: 56px !important;
   height: 2px !important;
-  background: linear-gradient(90deg, #E50914 0%, rgba(229, 9, 20, 0) 100%) !important;
+  background: linear-gradient(90deg, #e50914 0%, rgba(229, 9, 20, 0) 100%) !important;
   pointer-events: none !important;
 }
 
@@ -186,14 +303,14 @@ h2.sectionTitle::after,
 .sectionTitleButton:hover .sectionTitle::after,
 .sectionTitleTextButton:hover h2.sectionTitle::after,
 .sectionTitleButton:hover h2.sectionTitle::after {
-  width: 60px !important;
+  width: 72px !important;
 }
 
 .sectionTitleTextButton:hover .sectionTitle,
 .sectionTitleTextButton:hover h2.sectionTitle,
 .sectionTitleButton:hover .sectionTitle,
 .sectionTitleButton:hover h2.sectionTitle {
-  color: #FFFFFF !important;
+  color: #ffffff !important;
   animation: none !important;
   text-shadow: none !important;
 }
@@ -202,24 +319,23 @@ h2.sectionTitle::after,
 .sectionTitleButton:hover .material-icons,
 .sectionTitleTextButton:hover i.md-icon,
 .sectionTitleButton:hover i.md-icon {
-  color: #E50914 !important;
+  color: #e50914 !important;
   text-shadow: none !important;
   animation: none !important;
 }
 
-/* Card titles */
+/* Card titles &amp; metadata */
 .cardText-first,
 .cardText {
-  font-size: 1.10rem !important;
+  font-size: 0.98rem !important;
   font-weight: 600 !important;
-  color: #FFFFFF !important;
+  color: #f4f4f5 !important;
 }
 
-/* Card secondary metadata */
 .cardText-secondary {
-  font-size: 0.92rem !important;
+  font-size: 0.85rem !important;
   font-weight: 500 !important;
-  color: rgba(255, 255, 255, 0.70) !important;
+  color: #c4c4cc !important;
 }
 
 /* Hero and detail titles */
@@ -227,68 +343,123 @@ h2.sectionTitle::after,
 .nameContainer h1.itemName,
 .nameContainer h1.parentName,
 h1.itemName {
-  font-size: 2.85rem !important;
+  font-size: 2.75rem !important;
   font-weight: 800 !important;
-  letter-spacing: -0.02em !important;
+  letter-spacing: -0.025em !important;
   line-height: 1.15 !important;
+  color: #ffffff !important;
+}
+
+.itemName .dx-kicker,
+.pageTitleWithDefaultLogo {
+  font-family: "Bebas Neue", "Inter", sans-serif !important;
+  letter-spacing: 0.05em;
 }
 
 /* Synopsis / overview */
 .overview {
-  font-size: 1.15rem !important;
-  line-height: 1.62 !important;
+  font-size: 1.05rem !important;
+  line-height: 1.6 !important;
   max-width: 780px !important;
-  color: rgba(255, 255, 255, 0.90) !important;
+  color: #c4c4cc !important;
 }
 
 /* Frosted pill badges */
 .mediaInfoItem {
-  font-size: 0.88rem !important;
+  font-size: 0.84rem !important;
   font-weight: 600 !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
   border-radius: 9999px !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  padding: 0.25em 0.75em !important;
+  background: rgba(24, 24, 29, 0.78) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: #f4f4f5 !important;
+  padding: 0.25em 0.78em !important;
   margin-right: 0.5em !important;
   display: inline-flex !important;
   align-items: center !important;
 }
 
-/* Primary buttons */
+/* ── DX.BI PRIMARY WHITE PILL BUTTONS (#fff / #000 INK) ── */
 .btnPlay,
 .button-submit,
-.btnPlay.detailButton {
-  font-size: 1.10rem !important;
-  padding: 0.72em 1.75em !important;
-  border-radius: 8px !important;
-  font-weight: 600 !important;
+.btnPlay.detailButton,
+.detailButton-primary,
+button.raised.button-submit {
+  font-size: 1rem !important;
+  padding: 0.7em 1.7em !important;
+  border-radius: 9999px !important;
+  font-weight: 700 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #ffffff !important;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45) !important;
+  transition: background-color 0.2s ease, transform 0.18s ease, box-shadow 0.2s ease !important;
 }
 
-/* Netflix Red UI accents */
-.button-flat:hover,
-.emby-button:focus,
+.btnPlay .material-icons,
+.btnPlay.detailButton .material-icons,
+.button-submit .material-icons,
+.btnPlay svg {
+  color: #000000 !important;
+  fill: #000000 !important;
+}
+
+.btnPlay:hover,
+.button-submit:hover,
+.btnPlay.detailButton:hover,
+.detailButton-primary:hover,
+button.raised.button-submit:hover {
+  background-color: rgba(255, 255, 255, 0.86) !important;
+  color: #000000 !important;
+  transform: translateY(-1px) !important;
+}
+
+.btnPlay:focus-visible,
+.button-submit:focus-visible {
+  box-shadow: 0 0 0 2px #0b0b0d, 0 0 0 4px #e50914 !important;
+  outline: none !important;
+}
+
+/* Secondary &amp; Cinema Red Interactive Accents */
+.detailButton:not(.btnPlay):not(.detailButton-primary),
+.button-flat {
+  background-color: #212128 !important;
+  color: #f4f4f5 !important;
+  border-radius: 9999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease !important;
+}
+
+.detailButton:not(.btnPlay):not(.detailButton-primary):hover,
+.button-flat:hover {
+  background-color: #2b2b33 !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  color: #ffffff !important;
+}
+
+.emby-button:focus-visible,
 .emby-button.btnActive,
 .button-accent {
-  background-color: #E50914 !important;
-  color: #FFFFFF !important;
+  background-color: #e50914 !important;
+  color: #ffffff !important;
+  border-color: #e50914 !important;
 }
 
 .paper-icon-button-light:hover:not(:disabled) {
-  color: #E50914 !important;
+  color: #e50914 !important;
 }
 
 .itemProgressBarForeground,
 .playbackProgress div {
-  background-color: #E50914 !important;
+  background-color: #e50914 !important;
 }
 
 .mdl-slider::-webkit-slider-thumb {
-  background-color: #E50914 !important;
+  background-color: #e50914 !important;
 }
 
-/* ── MEDIA BAR ENHANCED OVERLAYS AND MUTE BUTTON ── */
+/* ── MEDIA BAR ENHANCED OVERLAYS &amp; MUTE BUTTON ── */
 .pause-button,
 #slides-container .pause-button,
 .slideshow-paused .pause-button,
@@ -319,20 +490,20 @@ body.media-bar-mobile-4-3 .pause-button {
   width: 44px !important;
   height: 44px !important;
   border-radius: 50% !important;
-  background: rgba(20, 20, 20, 0.75) !important;
+  background: rgba(19, 19, 23, 0.78) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.35) !important;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.75), 0 0 1px rgba(255, 255, 255, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.75), 0 0 1px rgba(255, 255, 255, 0.16) !important;
   color: #ffffff !important;
-  opacity: 1 !important; /* Overrides mediaBarEnhanced.css opacity: 0.3 */
+  opacity: 1 !important;
   pointer-events: auto !important;
   z-index: 100 !important;
   cursor: pointer !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
               background-color 0.22s ease,
               border-color 0.22s ease,
               box-shadow 0.22s ease !important;
@@ -342,16 +513,16 @@ body.media-bar-mobile-4-3 .pause-button {
 .mute-button:hover,
 .jellyfin-hero-speaker-btn:hover {
   transform: scale(1.10) !important;
-  background: rgba(229, 9, 20, 0.90) !important; /* Authentic Netflix Red */
-  border-color: #E50914 !important;
-  box-shadow: 0 4px 22px rgba(229, 9, 20, 0.60), 0 0 2px rgba(255, 255, 255, 0.50) !important;
+  background: #e50914 !important;
+  border-color: #e50914 !important;
+  box-shadow: 0 4px 22px rgba(229, 9, 20, 0.60), 0 0 2px rgba(255, 255, 255, 0.45) !important;
 }
 
 #slides-container .mute-button:not(.is-muted),
 .mute-button:not(.is-muted),
 .jellyfin-hero-speaker-btn:not(.is-muted) {
-  border-color: rgba(229, 9, 20, 0.75) !important;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.70), 0 0 10px rgba(229, 9, 20, 0.35) !important;
+  border-color: rgba(229, 9, 20, 0.8) !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.75), 0 0 12px rgba(229, 9, 20, 0.38) !important;
 }
 
 @media (max-width: 768px) {

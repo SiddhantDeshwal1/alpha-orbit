@@ -1,26 +1,77 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-dx-accent="red">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b0b0d" />
     <title>Orbit Server</title>
     <link
       rel="icon"
-      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2224%22 fill=%22%2318181b%22/><text x=%2250%25%22 y=%2255%25%22 font-size=%2260%22 font-family=%22system-ui,-apple-system,sans-serif%22 font-weight=%22800%22 fill=%22white%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>A</text></svg>"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2224%22 fill=%22%230b0b0d%22/><circle cx=%2276%22 cy=%2224%22 r=%229%22 fill=%22%23e50914%22/><text x=%2250%25%22 y=%2256%25%22 font-size=%2258%22 font-family=%22system-ui,-apple-system,sans-serif%22 font-weight=%22800%22 fill=%22white%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>O</text></svg>"
     />
-    <link rel="stylesheet" href="style.css?v=2.3" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&display=swap"
+    />
+    <script>
+      (function () {
+        try {
+          var savedAccent = localStorage.getItem('dxbi.accent') || 'red';
+          document.documentElement.dataset.dxAccent = savedAccent;
+        } catch (_) {}
+      })();
+    </script>
     <style>
-      /* Critical Fallback CSS ensuring zero unstyled content & true OLED Black */
+      /* Critical Fallback CSS ensuring zero unstyled content & dx.bi #0b0b0d canvas */
+      :root {
+        --dx-accent: #e50914;
+        --dx-bg: #0b0b0d;
+        --dx-surface: #131317;
+        --dx-surface-2: #18181d;
+        --dx-line: rgba(255, 255, 255, 0.08);
+      }
+      html[data-dx-accent='red'] {
+        --dx-accent: #e50914;
+      }
+      html[data-dx-accent='crimson'] {
+        --dx-accent: #d81f3c;
+      }
+      html[data-dx-accent='blue'] {
+        --dx-accent: #2f80ff;
+      }
+      html[data-dx-accent='purple'] {
+        --dx-accent: #8b5cf6;
+      }
+      html[data-dx-accent='green'] {
+        --dx-accent: #1db954;
+      }
+      html[data-dx-accent='amber'] {
+        --dx-accent: #f5a524;
+      }
+      html[data-dx-accent='pink'] {
+        --dx-accent: #ec4899;
+      }
+      html[data-dx-accent='white'] {
+        --dx-accent: #f4f4f5;
+      }
       body {
-        background-color: #000000;
+        background-color: #0b0b0d;
         color: #f4f4f5;
-        font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
         margin: 0;
         padding: 0;
         min-height: 100vh;
       }
-      header {
-        background: rgba(0, 0, 0, 0.9);
+      body.auth-pending header.top-bar,
+      body.auth-pending main,
+      body.auth-locked header.top-bar,
+      body.auth-locked main {
+        display: none;
+      }
+      header.top-bar {
+        background: rgba(11, 11, 13, 0.92);
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         padding: 12px 28px;
         position: sticky;
@@ -29,66 +80,57 @@
         backdrop-filter: blur(20px);
       }
       .header-inner {
-        max-width: 1400px;
+        max-width: 1440px;
         margin: 0 auto;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 20px;
+        gap: 16px;
+        flex-wrap: wrap;
       }
       .brand-wrap {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         cursor: pointer;
       }
-      .brand-mark {
-        width: 32px;
-        height: 32px;
-        border-radius: 9px;
-        background: #18181b;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        color: #fff;
-      }
-      .brand-title {
-        font-size: 1.05rem;
-        font-weight: 700;
+      .dx-wordmark {
+        font-family: 'Bebas Neue', 'Inter', sans-serif;
+        font-size: 2rem;
+        font-weight: 400;
         letter-spacing: 0.08em;
-        color: #fff;
+        line-height: 1;
+        color: var(--dx-accent);
       }
       .status-breathing-dot {
-        width: 6px;
-        height: 6px;
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
         background: #10b981;
       }
-      .nav-segmented {
-        position: relative;
+      .nav-tabs {
         display: flex;
-        background: #0a0a0c;
-        padding: 3px;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        align-items: center;
+        gap: 1.5rem;
+        overflow-x: auto;
       }
       .nav-tab-btn {
         position: relative;
-        z-index: 2;
         border: none;
         background: transparent;
-        color: #a1a1aa;
-        font-size: 0.85rem;
+        color: #8a8a96;
+        font-size: 0.9rem;
         font-weight: 500;
-        padding: 6px 16px;
-        border-radius: 7px;
+        padding: 0.5rem 0.15rem;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
       }
       .nav-tab-btn.active {
         color: #fff;
-        font-weight: 600;
+        font-weight: 700;
       }
       .telemetry-group {
         display: flex;
@@ -100,7 +142,7 @@
         align-items: center;
         gap: 8px;
         padding: 5px 12px;
-        background: #0a0a0c;
+        background: #131317;
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 8px;
         font-size: 0.8rem;
@@ -110,114 +152,24 @@
       .pill-item strong {
         color: #fff;
       }
+      .dx-round {
+        width: 34px;
+        height: 34px;
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: #18181d;
+        color: #f4f4f5;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
       main {
-        max-width: 1400px;
+        max-width: 1440px;
         margin: 0 auto;
         padding: 32px 28px;
         width: 100%;
         box-sizing: border-box;
-      }
-      .section-category {
-        margin-bottom: 36px;
-      }
-      .section-category-title {
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #71717a;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .section-category-title::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: rgba(255, 255, 255, 0.07);
-      }
-      .app-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-        gap: 16px;
-      }
-      .app-card {
-        background: #0a0a0c;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 18px 20px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        cursor: pointer;
-        text-decoration: none;
-        color: inherit;
-        transition:
-          transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-          box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-      }
-      .app-card:hover {
-        transform: translateY(-4px) scale(1.008);
-        background: #131317;
-        border-color: rgba(255, 255, 255, 0.16);
-        box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.8);
-      }
-      .app-card-top {
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-        margin-bottom: 14px;
-      }
-      .app-icon-wrap {
-        width: 52px;
-        height: 52px;
-        border-radius: 14px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-      }
-      .app-icon-img {
-        width: 36px;
-        height: 36px;
-        object-fit: contain;
-      }
-      .app-name {
-        font-size: 1.05rem;
-        font-weight: 600;
-        color: #fff;
-        margin-bottom: 3px;
-      }
-      .app-desc {
-        font-size: 0.8rem;
-        color: #71717a;
-        line-height: 1.35;
-      }
-      .app-card-bottom {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        border-top: 1px solid rgba(255, 255, 255, 0.04);
-        padding-top: 12px;
-        margin-top: auto;
-      }
-      .latency-indicator {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.75rem;
-        font-family: monospace;
-        color: #a1a1aa;
-      }
-      .dot-status-healthy {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #10b981;
       }
       .tab-pane {
         display: none;
@@ -225,37 +177,277 @@
       .tab-pane.active {
         display: block;
       }
+      .auth-gate-overlay {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: radial-gradient(
+          circle at top center,
+          rgba(229, 9, 20, 0.12) 0%,
+          #0b0b0d 55%
+        );
+      }
+      .dx-auth-card {
+        width: 100%;
+        max-width: 520px;
+        background: #131317;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
+      }
+      .dx-split-layout {
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr);
+        gap: 1.5rem;
+        align-items: start;
+      }
+      .dx-rail {
+        background: #131317;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 16px;
+      }
+      .dx-panel {
+        min-width: 0;
+      }
+      @media (max-width: 900px) {
+        .dx-split-layout {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
+    <link rel="stylesheet" href="style.css?v=3.0" />
   </head>
-  <body>
-    <!-- Minimalist Header & Navigation -->
-    <header>
+  <body class="auth-pending">
+    <!-- ======================================================================
+         AUTH GATE & SELF-SERVICE ACCESS PORTAL
+         ====================================================================== -->
+    <div id="auth-gate" class="auth-gate-overlay" style="display: none">
+      <div class="dx-auth-card">
+        <div class="dx-auth-brand">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span class="dx-wordmark">ORBIT</span>
+            <span class="dx-auth-pill">ACCESS PORTAL</span>
+          </div>
+          <p class="dx-auth-subtitle">
+            Sign in with your administrator credentials or request media access for Jellyfin &amp;
+            Seerr.
+          </p>
+        </div>
+
+        <div class="auth-mode-tabs" role="tablist">
+          <button
+            type="button"
+            class="auth-mode-btn active"
+            data-auth-mode="login"
+            id="btn-auth-tab-login"
+          >
+            Admin Sign In
+          </button>
+          <button
+            type="button"
+            class="auth-mode-btn"
+            data-auth-mode="signup"
+            id="btn-auth-tab-signup"
+          >
+            Request Access
+          </button>
+          <button
+            type="button"
+            class="auth-mode-btn"
+            data-auth-mode="status"
+            id="btn-auth-tab-status"
+          >
+            Check Status
+          </button>
+        </div>
+
+        <!-- PANEL 1: ADMIN SIGN IN -->
+        <div id="auth-panel-login" class="auth-mode-panel">
+          <form id="form-admin-login" class="dx-auth-form">
+            <div class="dx-field">
+              <label for="login-username">Admin Username</label>
+              <input
+                type="text"
+                id="login-username"
+                class="dx-input"
+                placeholder="Enter username"
+                autocomplete="username"
+                required
+              />
+            </div>
+            <div class="dx-field">
+              <label for="login-password">Password</label>
+              <input
+                type="password"
+                id="login-password"
+                class="dx-input"
+                placeholder="Enter password"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+            <div id="login-error" class="auth-error-msg" style="display: none"></div>
+            <button type="submit" id="btn-admin-login" class="dx-btn-primary">
+              Sign In to Cockpit
+            </button>
+          </form>
+        </div>
+
+        <!-- PANEL 2: SELF-SERVICE SIGN-UP REQUEST -->
+        <div id="auth-panel-signup" class="auth-mode-panel" style="display: none">
+          <form id="form-signup-request" class="dx-auth-form">
+            <div class="dx-field-row">
+              <div class="dx-field">
+                <label for="signup-fullname">Full Name</label>
+                <input
+                  type="text"
+                  id="signup-fullname"
+                  class="dx-input"
+                  placeholder="Alex Mercer"
+                  autocomplete="name"
+                  required
+                />
+              </div>
+              <div class="dx-field">
+                <label for="signup-username">Username</label>
+                <input
+                  type="text"
+                  id="signup-username"
+                  class="dx-input"
+                  placeholder="alexm"
+                  autocomplete="username"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="dx-field-row">
+              <div class="dx-field">
+                <label for="signup-email">Email</label>
+                <input
+                  type="email"
+                  id="signup-email"
+                  class="dx-input"
+                  placeholder="alex@example.com"
+                  autocomplete="email"
+                  required
+                />
+              </div>
+              <div class="dx-field">
+                <label for="signup-password">Desired Password</label>
+                <input
+                  type="password"
+                  id="signup-password"
+                  class="dx-input"
+                  placeholder="Minimum 8 characters"
+                  autocomplete="new-password"
+                  minlength="8"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="dx-field">
+              <label>Requested Services</label>
+              <div class="dx-check-row">
+                <label class="dx-check-pill">
+                  <input type="checkbox" id="signup-jellyfin" checked />
+                  <span>Jellyfin Cinema</span>
+                </label>
+                <label class="dx-check-pill">
+                  <input type="checkbox" id="signup-seerr" checked />
+                  <span>Seerr Requests</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="dx-field">
+              <label>Requested Libraries</label>
+              <div id="signup-libraries" class="dx-check-grid">
+                <span class="dx-muted-hint">Loading available libraries...</span>
+              </div>
+            </div>
+
+            <div class="dx-field">
+              <label for="signup-note">Devices &amp; Note</label>
+              <textarea
+                id="signup-note"
+                class="dx-input dx-textarea"
+                rows="2"
+                placeholder="e.g. Apple TV 4K + iPhone, referred by admin"
+              ></textarea>
+            </div>
+
+            <div id="signup-error" class="auth-error-msg" style="display: none"></div>
+            <button type="submit" id="btn-signup-submit" class="dx-btn-primary">
+              Submit Access Request
+            </button>
+          </form>
+        </div>
+
+        <!-- PANEL 3: REQUEST STATUS LOOKUP -->
+        <div id="auth-panel-status" class="auth-mode-panel" style="display: none">
+          <div class="dx-auth-form">
+            <div class="dx-field">
+              <label for="status-token-input">Request Status Token</label>
+              <div class="dx-token-row">
+                <input
+                  type="text"
+                  id="status-token-input"
+                  class="dx-input"
+                  placeholder="Paste status token from your submission..."
+                />
+                <button type="button" id="btn-check-status" class="dx-btn-primary">
+                  Check Status
+                </button>
+              </div>
+            </div>
+            <div id="signup-status-card" class="dx-status-card" style="display: none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         TOP NAVIGATION BAR (dx.bi)
+         ====================================================================== -->
+    <header class="top-bar">
       <div class="header-inner">
         <!-- Brand Identity -->
-        <div class="brand-wrap" onclick="switchView('apps')">
-          <div class="brand-mark">O</div>
+        <div class="brand-wrap" onclick="switchView('home')">
           <div style="display: flex; flex-direction: column">
             <div style="display: flex; align-items: center; gap: 8px">
-              <span class="brand-title">ORBIT</span>
+              <span class="dx-wordmark">ORBIT</span>
               <span class="status-breathing-dot" title="Server Online"></span>
             </div>
             <span
-              style="font-size: 0.72rem; color: #71717a; font-family: monospace"
+              style="font-size: 0.72rem; color: #8a8a96; font-family: monospace"
               id="header-ip-sub"
               >alpha-prod-orbit</span
             >
           </div>
         </div>
 
-        <!-- Segmented Navigation with 60fps sliding pill -->
-        <nav class="nav-segmented" id="main-nav">
-          <div class="nav-indicator" id="nav-pill-indicator"></div>
-          <button class="nav-tab-btn active" data-tab="apps" onclick="switchView('apps')">
-            Apps
+        <!-- Underline Navigation Tabs -->
+        <nav class="nav-tabs" id="main-nav">
+          <button class="nav-tab-btn active" data-tab="home" onclick="switchView('home')">
+            Home
           </button>
           <button class="nav-tab-btn" data-tab="downloads" onclick="switchView('downloads')">
             Downloads
-            <span id="badge-dl" class="badge-count" style="display: none">0</span>
+            <span id="badge-downloads" class="badge-count" style="display: none">0</span>
+          </button>
+          <button class="nav-tab-btn" data-tab="requests" onclick="switchView('requests')">
+            Requests
+            <span id="badge-req" class="badge-count" style="display: none">0</span>
+          </button>
+          <button class="nav-tab-btn" data-tab="access" onclick="switchView('access')">
+            Access
+            <span id="badge-access" class="badge-count" style="display: none">0</span>
           </button>
           <button class="nav-tab-btn" data-tab="logs" onclick="switchView('logs')">
             Logs
@@ -265,13 +457,9 @@
           <button class="nav-tab-btn" data-tab="metrics" onclick="switchView('metrics')">
             Metrics
           </button>
-          <button class="nav-tab-btn" data-tab="requests" onclick="switchView('requests')">
-            Requests
-            <span id="badge-req" class="badge-count" style="display: none">0</span>
-          </button>
         </nav>
 
-        <!-- Clean Telemetry Pills -->
+        <!-- Clean Telemetry Pills + Accent Switcher + Admin Session -->
         <div class="telemetry-group">
           <div class="pill-item" title="Alpha Hard Drive Free Space">
             <span>Storage:</span>
@@ -301,14 +489,98 @@
               <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
             </svg>
           </button>
+
+          <!-- dx.bi Accent Switcher -->
+          <div class="dx-accent-wrap">
+            <button
+              type="button"
+              id="btn-accent-picker"
+              class="dx-round"
+              title="Theme Accent"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              <span class="dx-accent-dot-preview"></span>
+            </button>
+            <div id="accent-popover" class="dx-accent-popover" style="display: none">
+              <div class="dx-popover-title">Accent Theme</div>
+              <div class="dx-swatch-grid">
+                <button
+                  type="button"
+                  class="dx-swatch-btn"
+                  data-accent="red"
+                  title="Netflix Red"
+                  style="--swatch: #e50914"
+                ></button>
+                <button
+                  type="button"
+                  class="dx-swatch-btn"
+                  data-accent="crimson"
+                  title="Crimson"
+                  style="--swatch: #d81f3c"
+                ></button>
+                <button
+                  type="button"
+                  class="dx-swatch-btn"
+                  data-accent="blue"
+                  title="Electric Blue"
+                  style="--swatch: #2f80ff"
+                ></button>
+                <button
+                  type="button"
+                  class="dx-swatch-btn"
+                  data-accent="purple"
+                  title="Violet"
+                  style="--swatch: #8b5cf6"
+                ></button>
+                <button
+                  type="button"
+                  class="dx-swatch-btn"
+                  data-accent="green"
+                  title="Emerald"
+                  style="--swatch: #1db954"
+                ></button>
+                <button
+                  type="button"
+                  class="dx-swatch-btn"
+                  data-accent="amber"
+                  title="Amber"
+                  style="--swatch: #f5a524"
+                ></button>
+                <button
+                  type="button"
+                  class="dx-swatch-btn"
+                  data-accent="pink"
+                  title="Magenta"
+                  style="--swatch: #ec4899"
+                ></button>
+                <button
+                  type="button"
+                  class="dx-swatch-btn"
+                  data-accent="white"
+                  title="Pure White"
+                  style="--swatch: #f4f4f5"
+                ></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admin Session Pill -->
+          <div id="admin-user-pill" class="dx-admin-pill" style="display: none">
+            <span class="dx-admin-dot"></span>
+            <span id="admin-username-label">admin</span>
+            <button type="button" id="btn-admin-logout" class="dx-logout-btn" title="Sign Out">
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     </header>
 
     <!-- Main Viewport Panes -->
     <main>
-      <!-- VIEW 1: HOMARR/CASAOS CLEAN APPS GRID (Pre-rendered for instantaneous zero-wait display) -->
-      <section id="tab-apps" class="tab-pane active">
+      <!-- VIEW 1: HOME (LIVE OBSERVABILITY + APPS LAUNCHPAD) -->
+      <section id="tab-home" class="tab-pane active" data-tab="home">
         <!-- OBSERVABILITY & MONITORING TELEMETRY (HOME TOP) -->
         <div class="home-observability-wrap">
           <div class="metrics-toolbar" style="margin-bottom: 16px">
@@ -379,7 +651,7 @@
             <div class="graph-card home-graph-card">
               <div class="graph-card-header">
                 <div class="graph-title-group">
-                  <span class="graph-indicator-dot" style="background: #06b6d4"></span>
+                  <span class="graph-indicator-dot" style="background: var(--dx-accent)"></span>
                   <span class="graph-card-title">Bandwidth Throughput</span>
                 </div>
                 <span class="graph-pill-badge" id="home-badge-peak-dl" style="color: #06b6d4"
@@ -392,7 +664,8 @@
               <div class="graph-card-footer">
                 <div class="graph-legend">
                   <span class="legend-chip"
-                    ><span class="legend-color" style="background: #06b6d4"></span>DL Speed</span
+                    ><span class="legend-color" style="background: var(--dx-accent)"></span>DL
+                    Speed</span
                   >
                   <span class="legend-chip"
                     ><span class="legend-color" style="background: #f59e0b"></span>UL Speed</span
@@ -406,8 +679,8 @@
             <div class="graph-card home-graph-card">
               <div class="graph-card-header">
                 <div class="graph-title-group">
-                  <span class="graph-indicator-dot" style="background: #8b5cf6"></span>
-                  <span class="graph-card-title">Users & Streams</span>
+                  <span class="graph-indicator-dot" style="background: var(--dx-accent)"></span>
+                  <span class="graph-card-title">Users &amp; Streams</span>
                 </div>
                 <span class="graph-pill-badge" id="home-badge-peak-streams" style="color: #a78bfa"
                   >PEAK: --</span
@@ -419,7 +692,7 @@
               <div class="graph-card-footer">
                 <div class="graph-legend">
                   <span class="legend-chip"
-                    ><span class="legend-color" style="background: #8b5cf6"></span>Streams</span
+                    ><span class="legend-color" style="background: var(--dx-accent)"></span>Streams</span
                   >
                   <span class="legend-chip"
                     ><span class="legend-color" style="background: #c084fc"></span>Users</span
@@ -460,7 +733,7 @@
             <div class="graph-card home-graph-card">
               <div class="graph-card-header">
                 <div class="graph-title-group">
-                  <span class="graph-indicator-dot" style="background: #3b82f6"></span>
+                  <span class="graph-indicator-dot" style="background: var(--dx-accent)"></span>
                   <span class="graph-card-title">Pipeline Velocity</span>
                 </div>
                 <span
@@ -476,7 +749,7 @@
               <div class="graph-card-footer">
                 <div class="graph-legend">
                   <span class="legend-chip"
-                    ><span class="legend-color" style="background: #3b82f6"></span>Torrents</span
+                    ><span class="legend-color" style="background: var(--dx-accent)"></span>Torrents</span
                   >
                 </div>
                 <span id="home-badge-cur-vel" class="graph-footnote">qBittorrent</span>
@@ -511,7 +784,7 @@
             <div class="graph-card home-graph-card">
               <div class="graph-card-header">
                 <div class="graph-title-group">
-                  <span class="graph-indicator-dot" style="background: #6366f1"></span>
+                  <span class="graph-indicator-dot" style="background: var(--dx-accent)"></span>
                   <span class="graph-card-title">Storage Trajectory</span>
                 </div>
                 <span class="graph-pill-badge" id="home-badge-storage-free" style="color: #818cf8"
@@ -524,7 +797,8 @@
               <div class="graph-card-footer">
                 <div class="graph-legend">
                   <span class="legend-chip"
-                    ><span class="legend-color" style="background: #6366f1"></span>Free Space</span
+                    ><span class="legend-color" style="background: var(--dx-accent)"></span>Free
+                    Space</span
                   >
                 </div>
                 <span id="home-badge-cur-storage" class="graph-footnote">/media/alpha</span>
@@ -536,16 +810,19 @@
         <div id="apps-container">
           <!-- Category: Media & Streaming -->
           <div class="section-category">
-            <div class="section-category-title">Media & Streaming</div>
+            <div class="section-category-title">Media &amp; Streaming</div>
             <div class="app-grid">
-              <div class="app-card" onclick="window.open('http://localhost:8096', '_blank')">
+              <div
+                class="app-card"
+                onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8096', '_blank')"
+              >
                 <div class="app-card-top">
                   <div class="app-icon-wrap">
                     <img class="app-icon-img" src="/icons/jellyfin.png" alt="Jellyfin" />
                   </div>
                   <div class="app-details">
                     <div class="app-name">Jellyfin Cinema</div>
-                    <div class="app-desc">Direct-Play cinema, movies, web series & anime.</div>
+                    <div class="app-desc">Direct-Play cinema, movies, web series &amp; anime.</div>
                   </div>
                 </div>
                 <div class="app-card-bottom">
@@ -579,14 +856,17 @@
                 </div>
               </div>
 
-              <div class="app-card" onclick="window.open('http://localhost:5055', '_blank')">
+              <div
+                class="app-card"
+                onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':5055', '_blank')"
+              >
                 <div class="app-card-top">
                   <div class="app-icon-wrap">
                     <img class="app-icon-img" src="/icons/seerr.png" alt="Seerr" />
                   </div>
                   <div class="app-details">
                     <div class="app-name">Seerr</div>
-                    <div class="app-desc">Automated media discovery & requests pipeline.</div>
+                    <div class="app-desc">Automated media discovery &amp; requests pipeline.</div>
                   </div>
                 </div>
                 <div class="app-card-bottom">
@@ -626,7 +906,10 @@
           <div class="section-category">
             <div class="section-category-title">Download Pipeline (Sandbox)</div>
             <div class="app-grid">
-              <div class="app-card" onclick="window.open('http://localhost:8081', '_blank')">
+              <div
+                class="app-card"
+                onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8081', '_blank')"
+              >
                 <div class="app-card-top">
                   <div class="app-icon-wrap">
                     <img class="app-icon-img" src="/icons/qbittorrent.png" alt="qBittorrent" />
@@ -646,14 +929,14 @@
                   <div class="app-actions">
                     <button
                       class="btn-card-action"
-                      onclick="openLogsFor(event, 'sandbox-qbittorrent')"
+                      onclick="openLogsFor(event, 'alpha-prod-qbittorrent')"
                       title="View Logs"
                     >
                       📜
                     </button>
                     <button
                       class="btn-card-action"
-                      onclick="restartService(event, 'sandbox-qbittorrent')"
+                      onclick="restartService(event, 'alpha-prod-qbittorrent')"
                       title="Restart"
                     >
                       ⟳
@@ -662,14 +945,17 @@
                 </div>
               </div>
 
-              <div class="app-card" onclick="window.open('http://localhost:7878', '_blank')">
+              <div
+                class="app-card"
+                onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':7878', '_blank')"
+              >
                 <div class="app-card-top">
                   <div class="app-icon-wrap">
                     <img class="app-icon-img" src="/icons/radarr.png" alt="Radarr" />
                   </div>
                   <div class="app-details">
                     <div class="app-name">Radarr</div>
-                    <div class="app-desc">Automated movie library tracker & downloader.</div>
+                    <div class="app-desc">Automated movie library tracker &amp; downloader.</div>
                   </div>
                 </div>
                 <div class="app-card-bottom">
@@ -680,14 +966,14 @@
                   <div class="app-actions">
                     <button
                       class="btn-card-action"
-                      onclick="openLogsFor(event, 'sandbox-radarr')"
+                      onclick="openLogsFor(event, 'alpha-prod-radarr')"
                       title="View Logs"
                     >
                       📜
                     </button>
                     <button
                       class="btn-card-action"
-                      onclick="restartService(event, 'sandbox-radarr')"
+                      onclick="restartService(event, 'alpha-prod-radarr')"
                       title="Restart"
                     >
                       ⟳
@@ -696,14 +982,17 @@
                 </div>
               </div>
 
-              <div class="app-card" onclick="window.open('http://localhost:8989', '_blank')">
+              <div
+                class="app-card"
+                onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8989', '_blank')"
+              >
                 <div class="app-card-top">
                   <div class="app-icon-wrap">
                     <img class="app-icon-img" src="/icons/sonarr.png" alt="Sonarr" />
                   </div>
                   <div class="app-details">
                     <div class="app-name">Sonarr</div>
-                    <div class="app-desc">Automated TV show & web series tracker.</div>
+                    <div class="app-desc">Automated TV show &amp; web series tracker.</div>
                   </div>
                 </div>
                 <div class="app-card-bottom">
@@ -714,14 +1003,14 @@
                   <div class="app-actions">
                     <button
                       class="btn-card-action"
-                      onclick="openLogsFor(event, 'sandbox-sonarr')"
+                      onclick="openLogsFor(event, 'alpha-prod-sonarr')"
                       title="View Logs"
                     >
                       📜
                     </button>
                     <button
                       class="btn-card-action"
-                      onclick="restartService(event, 'sandbox-sonarr')"
+                      onclick="restartService(event, 'alpha-prod-sonarr')"
                       title="Restart"
                     >
                       ⟳
@@ -730,7 +1019,10 @@
                 </div>
               </div>
 
-              <div class="app-card" onclick="window.open('http://localhost:9696', '_blank')">
+              <div
+                class="app-card"
+                onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':9696', '_blank')"
+              >
                 <div class="app-card-top">
                   <div class="app-icon-wrap">
                     <img class="app-icon-img" src="/icons/prowlarr.png" alt="Prowlarr" />
@@ -738,7 +1030,7 @@
                   <div class="app-details">
                     <div class="app-name">Prowlarr</div>
                     <div class="app-desc">
-                      Centralized torrent indexer proxy for Radarr & Sonarr.
+                      Centralized torrent indexer proxy for Radarr &amp; Sonarr.
                     </div>
                   </div>
                 </div>
@@ -750,14 +1042,14 @@
                   <div class="app-actions">
                     <button
                       class="btn-card-action"
-                      onclick="openLogsFor(event, 'sandbox-prowlarr')"
+                      onclick="openLogsFor(event, 'alpha-prod-prowlarr')"
                       title="View Logs"
                     >
                       📜
                     </button>
                     <button
                       class="btn-card-action"
-                      onclick="restartService(event, 'sandbox-prowlarr')"
+                      onclick="restartService(event, 'alpha-prod-prowlarr')"
                       title="Restart"
                     >
                       ⟳
@@ -770,9 +1062,12 @@
 
           <!-- Category: Network Gateway & Security -->
           <div class="section-category">
-            <div class="section-category-title">Network Gateway & Security</div>
+            <div class="section-category-title">Network Gateway &amp; Security</div>
             <div class="app-grid">
-              <div class="app-card" onclick="window.open('http://localhost:8000', '_blank')">
+              <div
+                class="app-card"
+                onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8000', '_blank')"
+              >
                 <div class="app-card-top">
                   <div class="app-icon-wrap">
                     <img class="app-icon-img" src="/icons/gluetun.png" alt="Gluetun" />
@@ -792,14 +1087,14 @@
                   <div class="app-actions">
                     <button
                       class="btn-card-action"
-                      onclick="openLogsFor(event, 'sandbox-gluetun')"
+                      onclick="openLogsFor(event, 'alpha-prod-gluetun')"
                       title="View Logs"
                     >
                       📜
                     </button>
                     <button
                       class="btn-card-action"
-                      onclick="restartService(event, 'sandbox-gluetun')"
+                      onclick="restartService(event, 'alpha-prod-gluetun')"
                       title="Restart"
                     >
                       ⟳
@@ -808,7 +1103,10 @@
                 </div>
               </div>
 
-              <div class="app-card" onclick="window.open('http://localhost:3000', '_blank')">
+              <div
+                class="app-card"
+                onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':3000', '_blank')"
+              >
                 <div class="app-card-top">
                   <div class="app-icon-wrap">
                     <img class="app-icon-img" src="/icons/tailscale.png" alt="Tailscale" />
@@ -816,7 +1114,7 @@
                   <div class="app-details">
                     <div class="app-name">Tailscale Mesh</div>
                     <div class="app-desc">
-                      Private WireGuard mesh network connecting laptop & phone.
+                      Private WireGuard mesh network connecting laptop &amp; phone.
                     </div>
                   </div>
                 </div>
@@ -849,7 +1147,7 @@
       </section>
 
       <!-- VIEW 2: LIVE DOWNLOADS & BANDWIDTH -->
-      <section id="tab-downloads" class="tab-pane">
+      <section id="tab-downloads" class="tab-pane" data-tab="downloads">
         <div class="bandwidth-row">
           <div class="bandwidth-card">
             <div class="bandwidth-label">Download Rate</div>
@@ -950,192 +1248,166 @@
         </div>
       </section>
 
-      <!-- VIEW 3: DEVELOPER TERMINAL & LOGS -->
-      <section id="tab-logs" class="tab-pane">
-        <div class="terminal-window">
-          <div class="terminal-header">
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
-              <select id="select-log-target" class="input-terminal" style="cursor: pointer">
-                <option value="alpha-prod-seerr">alpha-prod-seerr</option>
-                <option value="alpha-prod-jellyfin">alpha-prod-jellyfin</option>
-                <option value="alpha-prod-gatekeeper">alpha-prod-gatekeeper</option>
-                <option value="alpha-prod-gluetun">alpha-prod-gluetun</option>
-                <option value="alpha-prod-qbittorrent">alpha-prod-qbittorrent</option>
-              </select>
+      <!-- VIEW 3: DEVELOPER TERMINAL & LOGS (.dx-split-layout) -->
+      <section id="tab-logs" class="tab-pane" data-tab="logs">
+        <div class="dx-split-layout">
+          <aside class="dx-rail">
+            <div class="dx-rail-header">
+              <span>Log Sources</span>
+              <button
+                type="button"
+                class="dx-rail-refresh"
+                onclick="loadLogSources()"
+                title="Reload Sources"
+              >
+                ⟳
+              </button>
+            </div>
+            <div id="logs-rail-sources" class="dx-rail-nav">
+              <div class="dx-muted-hint">Loading sources...</div>
+            </div>
+          </aside>
 
-              <div class="filter-btn-group">
-                <button class="filter-btn active" data-log-filter="all" id="filter-all-btn">
-                  ALL
-                </button>
-                <button class="filter-btn" data-log-filter="error" id="filter-error-btn">
-                  🚨 ERRORS ONLY
-                </button>
-                <button class="filter-btn" data-log-filter="warn" id="filter-warn-btn">
-                  ⚠️ WARNINGS
-                </button>
+          <div class="dx-panel">
+            <div class="terminal-window">
+              <div class="terminal-header">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+                  <select id="select-log-target" class="input-terminal" style="cursor: pointer">
+                    <option value="alpha-prod-seerr">alpha-prod-seerr</option>
+                    <option value="alpha-prod-jellyfin">alpha-prod-jellyfin</option>
+                    <option value="alpha-prod-dashboard">alpha-prod-dashboard</option>
+                    <option value="alpha-prod-gatekeeper">alpha-prod-gatekeeper</option>
+                    <option value="alpha-prod-gluetun">alpha-prod-gluetun</option>
+                    <option value="alpha-prod-qbittorrent">alpha-prod-qbittorrent</option>
+                    <option value="alpha-prod-radarr">alpha-prod-radarr</option>
+                    <option value="alpha-prod-sonarr">alpha-prod-sonarr</option>
+                    <option value="alpha-prod-prowlarr">alpha-prod-prowlarr</option>
+                    <option value="alpha-prod-tailscale">alpha-prod-tailscale</option>
+                  </select>
+
+                  <div class="filter-btn-group">
+                    <button class="filter-btn active" data-log-filter="all" id="filter-all-btn">
+                      ALL
+                    </button>
+                    <button class="filter-btn" data-log-filter="error" id="filter-error-btn">
+                      🚨 ERRORS ONLY
+                    </button>
+                    <button class="filter-btn" data-log-filter="warn" id="filter-warn-btn">
+                      ⚠️ WARNINGS
+                    </button>
+                  </div>
+
+                  <select
+                    id="select-log-count"
+                    class="input-terminal"
+                    style="padding: 4px 8px; font-size: 0.75rem"
+                  >
+                    <option value="50">50 lines</option>
+                    <option value="150" selected>150 lines</option>
+                    <option value="300">300 lines</option>
+                    <option value="500">500 lines</option>
+                  </select>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <input
+                    type="text"
+                    id="log-search-box"
+                    class="input-terminal"
+                    placeholder="Search filter (/)..."
+                  />
+
+                  <button
+                    id="btn-autoscroll"
+                    class="btn-orbit-action"
+                    style="width: auto; padding: 0 10px; font-size: 0.75rem"
+                    title="Auto-Scroll"
+                  >
+                    Scroll: ON
+                  </button>
+
+                  <button id="btn-copy-log" class="btn-orbit-action" title="Copy Visible Logs">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                  </button>
+
+                  <button id="btn-reload-log" class="btn-orbit-action" title="Reload Logs">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
-              <select
-                id="select-log-count"
-                class="input-terminal"
-                style="padding: 4px 8px; font-size: 0.75rem"
-              >
-                <option value="50">50 lines</option>
-                <option value="150" selected>150 lines</option>
-                <option value="300">300 lines</option>
-                <option value="500">500 lines</option>
-              </select>
-            </div>
-
-            <div style="display: flex; align-items: center; gap: 8px">
-              <input
-                type="text"
-                id="log-search-box"
-                class="input-terminal"
-                placeholder="Search filter (/)..."
-              />
-
-              <button
-                id="btn-autoscroll"
-                class="btn-orbit-action"
-                style="width: auto; padding: 0 10px; font-size: 0.75rem"
-                title="Auto-Scroll"
-              >
-                Scroll: ON
-              </button>
-
-              <button id="btn-copy-log" class="btn-orbit-action" title="Copy Visible Logs">
-                <svg
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-              </button>
-
-              <button id="btn-reload-log" class="btn-orbit-action" title="Reload Logs">
-                <svg
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="terminal-logs-viewport" id="terminal-screen">
-            <div style="color: #71717a; text-align: center; padding: 40px">
-              Select a container to stream live error logs...
+              <div class="terminal-logs-viewport" id="terminal-screen">
+                <div style="color: #71717a; text-align: center; padding: 40px">
+                  Select a container to stream live error logs...
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- VIEW 4: VPN & SECURITY GATEWAY -->
-      <section id="tab-vpn" class="tab-pane">
-        <div
-          style="
-            background: #121215;
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 14px;
-            padding: 22px 24px;
-            margin-bottom: 24px;
-          "
-        >
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              flex-wrap: wrap;
-              gap: 16px;
-            "
-          >
-            <div>
-              <div
-                style="
-                  font-size: 0.75rem;
-                  text-transform: uppercase;
-                  font-weight: 700;
-                  color: #71717a;
-                  letter-spacing: 0.06em;
-                "
-              >
-                Active Tunnel Status
-              </div>
-              <div
-                style="font-size: 1.6rem; font-weight: 700; color: #fff; margin-top: 2px"
-                id="active-vpn-title"
-              >
-                Cloudflare WARP
-              </div>
-              <div style="font-size: 0.82rem; color: #71717a; margin-top: 2px" id="active-vpn-desc">
+      <!-- VIEW 4: VPN & SECURITY GATEWAY (.dx-split-layout) -->
+      <section id="tab-vpn" class="tab-pane" data-tab="vpn">
+        <div class="dx-split-layout">
+          <aside class="dx-rail">
+            <div class="dx-rail-header">
+              <span>Active Tunnel Status</span>
+            </div>
+            <div class="dx-vpn-rail-card">
+              <div class="dx-vpn-rail-name" id="active-vpn-title">Cloudflare WARP</div>
+              <div class="dx-vpn-rail-desc" id="active-vpn-desc">
                 Anycast WireGuard · High throughput · Zero credentials required
               </div>
-            </div>
 
-            <div style="display: flex; gap: 24px; font-family: monospace">
-              <div>
-                <div style="font-size: 0.72rem; color: #71717a; text-transform: uppercase">
-                  Public Egress IP
+              <div class="dx-vpn-kv-list">
+                <div class="dx-vpn-kv">
+                  <span>Public Egress IP</span>
+                  <strong id="active-vpn-ip" style="color: #38bdf8">104.28.249.154</strong>
                 </div>
-                <div
-                  style="font-size: 1.15rem; font-weight: 700; color: #38bdf8"
-                  id="active-vpn-ip"
-                >
-                  104.28.249.154
+                <div class="dx-vpn-kv">
+                  <span>Country</span>
+                  <strong id="active-vpn-country">India</strong>
                 </div>
-              </div>
-              <div>
-                <div style="font-size: 0.72rem; color: #71717a; text-transform: uppercase">
-                  Country
-                </div>
-                <div
-                  style="font-size: 1.15rem; font-weight: 700; color: #fff"
-                  id="active-vpn-country"
-                >
-                  India
+                <div class="dx-vpn-kv">
+                  <span>Kill-Switch</span>
+                  <strong style="color: #10b981">ENFORCED</strong>
                 </div>
               </div>
-              <div>
-                <div style="font-size: 0.72rem; color: #71717a; text-transform: uppercase">
-                  Kill-Switch
-                </div>
-                <div style="font-size: 1.15rem; font-weight: 700; color: #10b981">ENFORCED</div>
-              </div>
+            </div>
+          </aside>
+
+          <div class="dx-panel">
+            <div class="dx-panel-header">
+              <span>Available VPN Profiles (One-Click Switch)</span>
+            </div>
+            <div class="vpn-grid-layout" id="vpn-cards-grid">
+              <!-- Rendered by app.js with official logos -->
             </div>
           </div>
-        </div>
-
-        <div
-          style="
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #71717a;
-            margin-bottom: 12px;
-          "
-        >
-          Available VPN Profiles (One-Click Switch)
-        </div>
-        <div class="vpn-grid-layout" id="vpn-cards-grid">
-          <!-- Rendered by app.js with official logos -->
         </div>
       </section>
 
       <!-- VIEW 5: OBSERVABILITY & METRICS DASHBOARD (6 ZERO-OVERHEAD HTML5 GRAPHS) -->
-      <section id="tab-metrics" class="tab-pane">
+      <section id="tab-metrics" class="tab-pane" data-tab="metrics">
         <!-- Top Metrics Ribbon & Range Switcher -->
         <div class="metrics-toolbar">
           <div class="metrics-summary-strip">
@@ -1185,11 +1457,11 @@
             <div class="graph-card-header">
               <div>
                 <div class="graph-title-group">
-                  <span class="graph-indicator-dot" style="background: #06b6d4"></span>
-                  <span class="graph-card-title">Bandwidth Throughput & Peak Speeds</span>
+                  <span class="graph-indicator-dot" style="background: var(--dx-accent)"></span>
+                  <span class="graph-card-title">Bandwidth Throughput &amp; Peak Speeds</span>
                 </div>
                 <div class="graph-card-desc">
-                  Real-time download/upload curves & peak throughput spikes
+                  Real-time download/upload curves &amp; peak throughput spikes
                 </div>
               </div>
               <div class="graph-badge-group">
@@ -1207,7 +1479,7 @@
             <div class="graph-card-footer">
               <div class="graph-legend">
                 <span class="legend-chip"
-                  ><span class="legend-color" style="background: #06b6d4"></span>Download
+                  ><span class="legend-color" style="background: var(--dx-accent)"></span>Download
                   Speed</span
                 >
                 <span class="legend-chip"
@@ -1225,11 +1497,11 @@
             <div class="graph-card-header">
               <div>
                 <div class="graph-title-group">
-                  <span class="graph-indicator-dot" style="background: #8b5cf6"></span>
-                  <span class="graph-card-title">Active Users & Concurrent Streams</span>
+                  <span class="graph-indicator-dot" style="background: var(--dx-accent)"></span>
+                  <span class="graph-card-title">Active Users &amp; Concurrent Streams</span>
                 </div>
                 <div class="graph-card-desc">
-                  Jellyfin DirectPlay cinema sessions, client devices & viewing spikes
+                  Jellyfin DirectPlay cinema sessions, client devices &amp; viewing spikes
                 </div>
               </div>
               <div class="graph-badge-group">
@@ -1247,7 +1519,7 @@
             <div class="graph-card-footer">
               <div class="graph-legend">
                 <span class="legend-chip"
-                  ><span class="legend-color" style="background: #8b5cf6"></span>Active
+                  ><span class="legend-color" style="background: var(--dx-accent)"></span>Active
                   Streams</span
                 >
                 <span class="legend-chip"
@@ -1265,7 +1537,7 @@
               <div>
                 <div class="graph-title-group">
                   <span class="graph-indicator-dot" style="background: #10b981"></span>
-                  <span class="graph-card-title">Service Health, Latency & Downtimes</span>
+                  <span class="graph-card-title">Service Health, Latency &amp; Downtimes</span>
                 </div>
                 <div class="graph-card-desc">
                   Average response latency across 8 microservices with outage pins
@@ -1303,11 +1575,11 @@
             <div class="graph-card-header">
               <div>
                 <div class="graph-title-group">
-                  <span class="graph-indicator-dot" style="background: #3b82f6"></span>
-                  <span class="graph-card-title">Download Pipeline Velocity & Queue</span>
+                  <span class="graph-indicator-dot" style="background: var(--dx-accent)"></span>
+                  <span class="graph-card-title">Download Pipeline Velocity &amp; Queue</span>
                 </div>
                 <div class="graph-card-desc">
-                  Active torrent state, processing pipeline & request throughput
+                  Active torrent state, processing pipeline &amp; request throughput
                 </div>
               </div>
               <div class="graph-badge-group">
@@ -1325,7 +1597,7 @@
             <div class="graph-card-footer">
               <div class="graph-legend">
                 <span class="legend-chip"
-                  ><span class="legend-color" style="background: #3b82f6"></span>Active
+                  ><span class="legend-color" style="background: var(--dx-accent)"></span>Active
                   Torrents</span
                 >
                 <span class="legend-chip"
@@ -1342,10 +1614,10 @@
               <div>
                 <div class="graph-title-group">
                   <span class="graph-indicator-dot" style="background: #14b8a6"></span>
-                  <span class="graph-card-title">VPN Gateway Latency & Stability</span>
+                  <span class="graph-card-title">VPN Gateway Latency &amp; Stability</span>
                 </div>
                 <div class="graph-card-desc">
-                  WireGuard tunnel egress ping latency & killswitch integrity
+                  WireGuard tunnel egress ping latency &amp; killswitch integrity
                 </div>
               </div>
               <div class="graph-badge-group">
@@ -1379,8 +1651,8 @@
             <div class="graph-card-header">
               <div>
                 <div class="graph-title-group">
-                  <span class="graph-indicator-dot" style="background: #6366f1"></span>
-                  <span class="graph-card-title">Alpha Storage Trajectory & Capacity</span>
+                  <span class="graph-indicator-dot" style="background: var(--dx-accent)"></span>
+                  <span class="graph-card-title">Alpha Storage Trajectory &amp; Capacity</span>
                 </div>
                 <div class="graph-card-desc">
                   Drive space consumption rate and available free capacity
@@ -1401,8 +1673,8 @@
             <div class="graph-card-footer">
               <div class="graph-legend">
                 <span class="legend-chip"
-                  ><span class="legend-color" style="background: #6366f1"></span>Free Storage
-                  (GB)</span
+                  ><span class="legend-color" style="background: var(--dx-accent)"></span>Free
+                  Storage (GB)</span
                 >
                 <span class="legend-chip"
                   ><span class="legend-color" style="background: #a5b4fc"></span>Consumption
@@ -1419,7 +1691,7 @@
       </section>
 
       <!-- VIEW 6: MEDIA REQUESTS & DOWNLOAD PIPELINE -->
-      <section id="tab-requests" class="tab-pane">
+      <section id="tab-requests" class="tab-pane" data-tab="requests">
         <!-- Section Header -->
         <div
           style="
@@ -1443,7 +1715,7 @@
                 gap: 10px;
               "
             >
-              <span>Media Requests & Downloads</span>
+              <span>Media Requests &amp; Downloads</span>
               <span
                 id="req-header-pill"
                 style="
@@ -1459,7 +1731,7 @@
               >
             </h1>
             <p style="font-size: 0.85rem; color: #71717a; margin: 4px 0 0">
-              Unified Seerr requests pipeline, qBittorrent torrent swarm metrics & automated
+              Unified Seerr requests pipeline, qBittorrent torrent swarm metrics &amp; automated
               diagnosis
             </p>
           </div>
@@ -1475,6 +1747,7 @@
                 display: flex;
                 align-items: center;
                 gap: 6px;
+                width: auto;
               "
             >
               <svg
@@ -1496,7 +1769,7 @@
               id="btn-new-request"
               class="btn-primary"
               style="
-                background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                background: var(--dx-accent);
                 border: none;
                 color: #fff;
                 padding: 9px 18px;
@@ -1557,7 +1830,7 @@
             </div>
           </div>
           <div class="bandwidth-card">
-            <div class="bandwidth-label">Completed & Available</div>
+            <div class="bandwidth-label">Completed &amp; Available</div>
             <div class="bandwidth-speed" id="req-metric-completed" style="color: #10b981">0</div>
             <div style="font-size: 0.78rem; color: #71717a; margin-top: 4px">
               Ready to play in Jellyfin
@@ -1620,14 +1893,14 @@
               style="margin: 0 auto 14px auto; width: 24px; height: 24px"
             ></div>
             <div style="font-size: 0.95rem; font-weight: 600; color: #fff">
-              Connecting to Seerr & Torrent Subsystems...
+              Connecting to Seerr &amp; Torrent Subsystems...
             </div>
           </div>
         </div>
 
         <!-- NEW REQUEST MODAL -->
         <div id="modal-request" class="modal-overlay" style="display: none">
-          <div class="modal-content" style="max-width: 720px; width: 90%">
+          <div class="modal-content" style="max-width: 760px; width: 92%">
             <div class="modal-header">
               <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0">
                 Request Media
@@ -1804,7 +2077,8 @@
                         <button
                           id="btn-rediscover"
                           class="btn-orbit-action"
-                          style="font-size: 0.75rem; display: none"
+                          style="font-size: 0.75rem; width: auto; padding: 0 12px; display: none"
+                          onclick="discoverQualities()"
                         >
                           Rediscover
                         </button>
@@ -1820,7 +2094,7 @@
                       id="quality-grid"
                       style="
                         display: grid;
-                        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
                         gap: 12px;
                         max-height: 400px;
                         overflow-y: auto;
@@ -1845,7 +2119,7 @@
                   <button
                     id="btn-confirm-request"
                     class="btn-primary"
-                    style="background: linear-gradient(135deg, #3b82f6, #8b5cf6)"
+                    style="background: var(--dx-accent)"
                     disabled
                   >
                     Request
@@ -1856,10 +2130,256 @@
           </div>
         </div>
       </section>
+
+      <!-- VIEW 7: ADMIN ACCESS REQUESTS & USERS DIRECTORY (#view-access) -->
+      <section id="view-access" class="tab-pane" data-tab="access">
+        <div class="dx-split-layout">
+          <aside class="dx-rail">
+            <div class="dx-rail-header">
+              <span>Access Control</span>
+              <button
+                type="button"
+                id="btn-refresh-access"
+                class="dx-rail-refresh"
+                title="Refresh Access Queue & Users"
+              >
+                ⟳
+              </button>
+            </div>
+
+            <div class="dx-rail-nav">
+              <button
+                type="button"
+                class="dx-rail-btn active"
+                data-access-subtab="pending"
+                id="btn-access-tab-pending"
+              >
+                <span>Pending Queue</span>
+                <span id="access-rail-pending-count" class="dx-rail-pill">0</span>
+              </button>
+              <button
+                type="button"
+                class="dx-rail-btn"
+                data-access-subtab="history"
+                id="btn-access-tab-history"
+              >
+                <span>Request History</span>
+                <span id="access-rail-history-count" class="dx-rail-pill">0</span>
+              </button>
+              <button
+                type="button"
+                class="dx-rail-btn"
+                data-access-subtab="users"
+                id="btn-access-tab-users"
+              >
+                <span>Users Directory</span>
+                <span id="access-rail-users-count" class="dx-rail-pill">0</span>
+              </button>
+            </div>
+
+            <div class="dx-rail-summary">
+              <div class="dx-summary-row">
+                <span>Pending</span>
+                <strong id="access-stat-pending">0</strong>
+              </div>
+              <div class="dx-summary-row">
+                <span>Approved</span>
+                <strong id="access-stat-approved">0</strong>
+              </div>
+              <div class="dx-summary-row">
+                <span>Jellyfin Users</span>
+                <strong id="access-stat-jf-users">0</strong>
+              </div>
+            </div>
+          </aside>
+
+          <div class="dx-panel">
+            <!-- Sub-panel: Pending Queue -->
+            <div id="access-subpanel-pending" class="dx-access-subpanel">
+              <div class="dx-panel-header">
+                <div>
+                  <h2>Pending Access Requests</h2>
+                  <p>Review applicant details, requested services, and provision accounts.</p>
+                </div>
+              </div>
+              <div id="access-pending-list" class="access-list">
+                <div class="dx-empty-card">Loading pending requests...</div>
+              </div>
+            </div>
+
+            <!-- Sub-panel: Request History -->
+            <div id="access-subpanel-history" class="dx-access-subpanel" style="display: none">
+              <div class="dx-panel-header">
+                <div>
+                  <h2>Request History</h2>
+                  <p>Audit log of approved and declined onboarding decisions.</p>
+                </div>
+                <div class="filter-btn-group" id="access-history-filters">
+                  <button type="button" class="filter-btn active" data-history-filter="all">
+                    All
+                  </button>
+                  <button type="button" class="filter-btn" data-history-filter="approved">
+                    Approved
+                  </button>
+                  <button type="button" class="filter-btn" data-history-filter="rejected">
+                    Rejected
+                  </button>
+                </div>
+              </div>
+              <div id="access-history-list" class="access-list">
+                <div class="dx-empty-card">No reviewed requests yet.</div>
+              </div>
+            </div>
+
+            <!-- Sub-panel: Users Directory -->
+            <div id="access-subpanel-users" class="dx-access-subpanel" style="display: none">
+              <div class="dx-panel-header">
+                <div>
+                  <h2>Users Directory</h2>
+                  <p>Manage provisioned Jellyfin &amp; Seerr accounts.</p>
+                </div>
+                <input
+                  type="text"
+                  id="access-users-search"
+                  class="input-terminal"
+                  placeholder="Filter users..."
+                />
+              </div>
+              <div id="access-users-list" class="access-list">
+                <div class="dx-empty-card">Loading users directory...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APPROVE & PROVISION MODAL -->
+        <div id="access-approve-modal" class="modal-overlay" style="display: none">
+          <div class="modal-content" style="max-width: 560px; width: 92%">
+            <div class="modal-header">
+              <h2 style="font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0">
+                Accept &amp; Provision User
+              </h2>
+              <button type="button" class="modal-close" onclick="closeApproveModal()" title="Close">
+                &times;
+              </button>
+            </div>
+            <div class="modal-body" style="padding: 20px 24px">
+              <div id="approve-req-summary" class="dx-modal-summary"></div>
+
+              <div class="dx-field">
+                <label>Provision Services</label>
+                <div class="dx-check-row">
+                  <label class="dx-check-pill">
+                    <input type="checkbox" id="approve-grant-jellyfin" checked />
+                    <span>Jellyfin Cinema</span>
+                  </label>
+                  <label class="dx-check-pill">
+                    <input type="checkbox" id="approve-grant-seerr" checked />
+                    <span>Seerr Requests</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="dx-field">
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 6px;
+                  "
+                >
+                  <label style="margin: 0">Jellyfin Library Access</label>
+                  <label class="dx-check-inline">
+                    <input type="checkbox" id="approve-all-libraries" />
+                    <span>Grant All Libraries</span>
+                  </label>
+                </div>
+                <div id="approve-libraries-list" class="dx-check-grid">
+                  <span class="dx-muted-hint">Loading libraries...</span>
+                </div>
+              </div>
+
+              <div class="dx-field-row">
+                <div class="dx-field">
+                  <label for="approve-max-streams">Max Concurrent Streams</label>
+                  <input
+                    type="number"
+                    id="approve-max-streams"
+                    class="dx-input"
+                    min="1"
+                    max="10"
+                    value="2"
+                  />
+                </div>
+                <div class="dx-field" style="justify-content: flex-end">
+                  <label class="dx-check-pill" style="margin-top: 22px">
+                    <input type="checkbox" id="approve-seerr-autoapprove" />
+                    <span>Seerr Auto-Approve Requests</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="dx-field">
+                <label for="approve-note">Decision Note (Optional)</label>
+                <textarea
+                  id="approve-note"
+                  class="dx-input dx-textarea"
+                  rows="2"
+                  placeholder="Optional welcome message or provisioning note..."
+                ></textarea>
+              </div>
+
+              <div class="dx-modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeApproveModal()">
+                  Cancel
+                </button>
+                <button type="button" id="btn-confirm-approve" class="dx-btn-primary">
+                  Accept &amp; Provision
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DECLINE REQUEST MODAL -->
+        <div id="access-reject-modal" class="modal-overlay" style="display: none">
+          <div class="modal-content" style="max-width: 480px; width: 92%">
+            <div class="modal-header">
+              <h2 style="font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0">
+                Decline Access Request
+              </h2>
+              <button type="button" class="modal-close" onclick="closeRejectModal()" title="Close">
+                &times;
+              </button>
+            </div>
+            <div class="modal-body" style="padding: 20px 24px">
+              <div id="reject-req-summary" class="dx-modal-summary"></div>
+              <div class="dx-field">
+                <label for="reject-reason-input">Reason / Decision Note</label>
+                <textarea
+                  id="reject-reason-input"
+                  class="dx-input dx-textarea"
+                  rows="3"
+                  placeholder="Optional reason shown to applicant on status lookup..."
+                ></textarea>
+              </div>
+              <div class="dx-modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeRejectModal()">
+                  Cancel
+                </button>
+                <button type="button" id="btn-confirm-reject" class="dx-btn-danger">
+                  Decline Request
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <div class="toast-shelf" id="toast-shelf"></div>
 
-    <script src="app.js?v=2.3"></script>
+    <script src="app.js?v=3.0"></script>
   </body>
 </html>

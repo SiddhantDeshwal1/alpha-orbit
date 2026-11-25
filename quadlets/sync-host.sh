@@ -86,13 +86,13 @@ while IFS= read -r file; do
         quadlets/core/alpha-prod-tailscale*)
             restart_tailscale=true
             ;;
-        jellyfin/index.html|jellyfin/custom-*.js|jellyfin/config/*|quadlets/core/alpha-prod-jellyfin*)
+        jellyfin/index.html|jellyfin/custom-signup-request.js|jellyfin/custom-*.js|jellyfin/config/*|quadlets/core/alpha-prod-jellyfin*)
             restart_jellyfin=true
             ;;
         quadlets/core/alpha-prod-seerr*)
             restart_seerr=true
             ;;
-        quadlets/core/alpha-prod-dashboard*)
+        dashboard/lib/*|dashboard/*|quadlets/core/alpha-prod-dashboard*)
             restart_dashboard=true
             ;;
         quadlets/core/alpha-prod-gluetun*|quadlets/sandbox/alpha-prod-gluetun*)

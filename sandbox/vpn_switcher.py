@@ -16,6 +16,7 @@ import os
 import sys
 import time
 import json
+import html
 import logging
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.request import Request, urlopen
@@ -114,44 +115,378 @@ def switch_gluetun_profile(profile_name):
         logging.warning(f"Note: Gluetun API response: {e}")
         return True, f"Switched profile to {profile['display']}"
 
+DXBI_DASHBOARD_CSS = """
+        :root {
+            --dx-bg: #0b0b0d;
+            --dx-bg-raised: #131317;
+            --dx-surface: #18181d;
+            --dx-surface-hover: #212128;
+            --dx-line: rgba(255, 255, 255, 0.08);
+            --dx-line-strong: rgba(255, 255, 255, 0.16);
+            --dx-accent: #e50914;
+            --dx-accent-soft: rgba(229, 9, 20, 0.14);
+            --dx-connected: #46d369;
+            --dx-connected-soft: rgba(70, 211, 105, 0.12);
+            --dx-text: #f4f4f5;
+            --dx-text-2: #c4c4cc;
+            --dx-text-3: #8a8a96;
+            --dx-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+            --dx-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --dx-font-display: 'Bebas Neue', 'Inter', sans-serif;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background-color: var(--dx-bg);
+            background-image: radial-gradient(ellipse 75% 45% at 50% -12%, rgba(229, 9, 20, 0.14), transparent 70%);
+            color: var(--dx-text);
+            font-family: var(--dx-font-sans);
+            margin: 0;
+            padding: 28px 24px 48px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+        .container { max-width: 980px; margin: 0 auto; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            background: var(--dx-bg-raised);
+            border: 1px solid var(--dx-line);
+            border-radius: 12px;
+            padding: 16px 22px;
+            margin-bottom: 24px;
+        }
+        .brand { display: flex; align-items: center; gap: 14px; }
+        .brand-mark {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            background: var(--dx-accent);
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 20px rgba(229, 9, 20, 0.35);
+            flex-shrink: 0;
+        }
+        .brand h1 {
+            margin: 0;
+            font-family: var(--dx-font-display);
+            font-size: 1.75rem;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            line-height: 1;
+            color: #ffffff;
+        }
+        .brand-sub {
+            margin-top: 3px;
+            font-size: 0.78rem;
+            color: var(--dx-text-3);
+            letter-spacing: 0.02em;
+        }
+        .nav-links { display: flex; flex-wrap: wrap; gap: 8px; }
+        .nav-link {
+            background: var(--dx-surface);
+            border: 1px solid var(--dx-line);
+            color: var(--dx-text-2);
+            text-decoration: none;
+            padding: 7px 13px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: background 0.18s var(--dx-ease), border-color 0.18s var(--dx-ease), color 0.18s var(--dx-ease);
+        }
+        .nav-link:hover {
+            color: #ffffff;
+            background: var(--dx-surface-hover);
+            border-color: var(--dx-line-strong);
+        }
+        .banner {
+            padding: 13px 18px;
+            border-radius: 10px;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .banner.ok {
+            background: var(--dx-connected-soft);
+            border: 1px solid rgba(70, 211, 105, 0.35);
+            color: var(--dx-connected);
+        }
+        .banner.err {
+            background: var(--dx-accent-soft);
+            border: 1px solid rgba(229, 9, 20, 0.45);
+            color: #ff6b73;
+        }
+        .status-hero {
+            background: var(--dx-bg-raised);
+            border: 1px solid var(--dx-line);
+            border-top: 2px solid var(--dx-accent);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+        }
+        .hero-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        .hero-eyebrow {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--dx-accent);
+            margin-bottom: 4px;
+        }
+        .hero-profile-name {
+            font-family: var(--dx-font-display);
+            font-size: 2.25rem;
+            line-height: 1;
+            letter-spacing: 0.04em;
+            color: #ffffff;
+        }
+        .hero-badges {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .latency-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--dx-surface);
+            border: 1px solid var(--dx-line);
+            color: var(--dx-text-2);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        .latency-pill strong {
+            color: #ffffff;
+            font-variant-numeric: tabular-nums;
+        }
+        .killswitch-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--dx-connected-soft);
+            border: 1px solid rgba(70, 211, 105, 0.3);
+            color: var(--dx-connected);
+            padding: 6px 13px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+        .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--dx-connected);
+            box-shadow: 0 0 10px rgba(70, 211, 105, 0.75);
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .metric {
+            background: var(--dx-surface);
+            border: 1px solid var(--dx-line);
+            padding: 14px 16px;
+            border-radius: 10px;
+            transition: background 0.18s var(--dx-ease), border-color 0.18s var(--dx-ease);
+        }
+        .metric:hover {
+            background: var(--dx-surface-hover);
+            border-color: var(--dx-line-strong);
+        }
+        .metric-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--dx-text-3);
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            margin-bottom: 6px;
+        }
+        .metric-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dx-text);
+            font-variant-numeric: tabular-nums;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .metric-value.connected { color: var(--dx-connected); }
+        .section-title {
+            font-family: var(--dx-font-display);
+            font-size: 1.45rem;
+            letter-spacing: 0.05em;
+            margin: 0 0 14px 0;
+            color: var(--dx-text);
+            font-weight: 400;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+            gap: 16px;
+        }
+        .card {
+            background: var(--dx-surface);
+            border: 1px solid var(--dx-line);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.18s var(--dx-ease), background 0.18s var(--dx-ease), border-color 0.18s var(--dx-ease);
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            background: var(--dx-surface-hover);
+            border-color: var(--dx-line-strong);
+        }
+        .card.active-card {
+            border-color: rgba(70, 211, 105, 0.45);
+            box-shadow: 0 0 0 1px rgba(70, 211, 105, 0.18), 0 16px 36px rgba(0, 0, 0, 0.45);
+        }
+        .card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .card-title {
+            margin: 0 0 4px 0;
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .card-proto { font-size: 0.78rem; color: var(--dx-text-3); font-weight: 500; }
+        .card-desc {
+            font-size: 0.86rem;
+            color: var(--dx-text-2);
+            line-height: 1.5;
+            margin: 0 0 18px 0;
+            min-height: 40px;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.68rem;
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+        }
+        .badge.active {
+            background: var(--dx-connected-soft);
+            border: 1px solid rgba(70, 211, 105, 0.35);
+            color: var(--dx-connected);
+        }
+        .badge.tier {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--dx-line);
+            color: var(--dx-text-2);
+        }
+        .badge.tier-paid {
+            border-color: rgba(229, 9, 20, 0.35);
+            color: #ff8a90;
+            background: var(--dx-accent-soft);
+        }
+        .btn {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-family: var(--dx-font-sans);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border: none;
+            transition: background 0.16s var(--dx-ease), transform 0.12s var(--dx-ease), opacity 0.16s var(--dx-ease);
+        }
+        .btn:focus-visible {
+            outline: 2px solid var(--dx-accent);
+            outline-offset: 2px;
+        }
+        .switch-btn {
+            background: #ffffff;
+            color: #000000;
+        }
+        .switch-btn:hover { background: rgba(255, 255, 255, 0.86); }
+        .switch-btn:active { transform: scale(0.99); }
+        .active-btn {
+            background: var(--dx-connected-soft);
+            border: 1px solid rgba(70, 211, 105, 0.3);
+            color: var(--dx-connected);
+            cursor: default;
+        }
+"""
+
 def render_html_dashboard(message=None, is_error=False):
+    t0 = time.monotonic()
     ip_info = get_gluetun_public_ip()
-    pub_ip = ip_info.get("public_ip", "Unknown")
-    country = ip_info.get("country", "Unknown")
-    org = ip_info.get("organization", "Cloudflare WARP Tunnel")
+    probe_latency_ms = max(1, int(round((time.monotonic() - t0) * 1000)))
+    pub_ip = html.escape(str(ip_info.get("public_ip", "Unknown")))
+    country = html.escape(str(ip_info.get("country", "Unknown")))
+    org = html.escape(str(ip_info.get("organization", "Cloudflare WARP Tunnel")))
     current_prof = VPN_PROFILES.get(CURRENT_PROFILE, VPN_PROFILES["cloudflare"])
+    current_display = html.escape(current_prof["display"])
 
     msg_banner = ""
     if message:
-        color = "#ef4444" if is_error else "#10b981"
-        bg = "#450a0a" if is_error else "#064e3b"
-        border = "#b91c1c" if is_error else "#047857"
+        safe_msg = html.escape(str(message))
+        banner_cls = "banner err" if is_error else "banner ok"
+        icon = "!" if is_error else "✓"
         msg_banner = f"""
-        <div style="background:{bg};border:1px solid {border};color:{color};padding:12px 18px;border-radius:10px;margin-bottom:24px;display:flex;align-items:center;gap:10px;font-weight:500;">
-            <span>{'⚠️' if is_error else '✅'}</span>
-            <span>{message}</span>
+        <div class="{banner_cls}" role="status">
+            <span style="font-weight:800;">{icon}</span>
+            <span>{safe_msg}</span>
         </div>
         """
 
     cards_html = ""
     for pid, p in VPN_PROFILES.items():
         is_active = (pid == CURRENT_PROFILE)
-        status_badge = f'<span class="badge active">ACTIVE</span>' if is_active else f'<span class="badge tier">{p["tier"].upper()}</span>'
+        tier_cls = "badge tier tier-paid" if p["tier"] == "paid" else "badge tier"
+        status_badge = (
+            '<span class="badge active"><span class="pulse" style="width:6px;height:6px;"></span>ACTIVE</span>'
+            if is_active
+            else f'<span class="{tier_cls}">{html.escape(p["tier"].upper())}</span>'
+        )
         btn_class = "btn active-btn" if is_active else "btn switch-btn"
-        btn_text = "Currently Active" if is_active else f"Switch to {p['display']}"
+        btn_text = "Currently Active" if is_active else f"Switch to {html.escape(p['display'])}"
         btn_action = f'onclick="switchProfile(\'{pid}\')"' if not is_active else 'disabled'
-        border_style = "border: 2px solid #3b82f6;" if is_active else "border: 1px solid #1f2937;"
+        card_class = "card active-card" if is_active else "card"
 
         cards_html += f"""
-        <div class="card" style="{border_style}">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div class="{card_class}">
+            <div class="card-head">
                 <div>
-                    <h3 style="margin:0 0 4px 0;font-size:1.15rem;color:#f9fafb;">{p['display']}</h3>
-                    <div style="font-size:0.8rem;color:#9ca3af;">{p['protocol']}</div>
+                    <h3 class="card-title">{html.escape(p['display'])}</h3>
+                    <div class="card-proto">{html.escape(p['protocol'])}</div>
                 </div>
                 {status_badge}
             </div>
-            <p style="font-size:0.875rem;color:#9ca3af;line-height:1.45;margin-bottom:16px;min-height:38px;">{p['description']}</p>
+            <p class="card-desc">{html.escape(p['description'])}</p>
             <button {btn_action} class="{btn_class}">{btn_text}</button>
         </div>
         """
@@ -162,143 +497,49 @@ def render_html_dashboard(message=None, is_error=False):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orbit Server - VPN Control Center</title>
-    <style>
-        * {{ box-sizing: border-box; }}
-        body {{
-            background: #0b0f19;
-            color: #f3f4f6;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 24px;
-            min-height: 100vh;
-        }}
-        .container {{ max-width: 900px; margin: 0 auto; }}
-        header {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #1f2937;
-            margin-bottom: 24px;
-        }}
-        .brand {{ display: flex; align-items: center; gap: 12px; }}
-        .brand h1 {{ margin: 0; font-size: 1.4rem; font-weight: 700; color: #fff; }}
-        .nav-links {{ display: flex; gap: 10px; }}
-        .nav-link {{
-            background: #111827;
-            border: 1px solid #374151;
-            color: #9ca3af;
-            text-decoration: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.825rem;
-            transition: all 0.2s;
-        }}
-        .nav-link:hover {{ color: #fff; background: #1f2937; }}
-        .status-hero {{
-            background: linear-gradient(135deg, #111827 0%, #172033 100%);
-            border: 1px solid #1e3a8a;
-            border-radius: 14px;
-            padding: 24px;
-            margin-bottom: 28px;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
-        }}
-        .status-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-            margin-top: 16px;
-        }}
-        .metric {{ background: #0b1120; border: 1px solid #1f2937; padding: 14px; border-radius: 8px; }}
-        .metric-label {{ font-size: 0.75rem; text-transform: uppercase; color: #6b7280; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 4px; }}
-        .metric-value {{ font-size: 1.1rem; font-weight: 600; color: #f9fafb; font-family: monospace; }}
-        .grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 16px;
-        }}
-        .card {{
-            background: #111827;
-            border-radius: 12px;
-            padding: 18px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: transform 0.15s, border-color 0.15s;
-        }}
-        .card:hover {{ transform: translateY(-2px); }}
-        .badge {{
-            font-size: 0.7rem;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }}
-        .badge.active {{ background: #059669; color: #ecfdf5; }}
-        .badge.tier {{ background: #374151; color: #d1d5db; }}
-        .btn {{
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s;
-        }}
-        .switch-btn {{ background: #2563eb; color: #fff; }}
-        .switch-btn:hover {{ background: #1d4ed8; }}
-        .active-btn {{ background: #064e3b; color: #6ee7b7; cursor: default; }}
-        .killswitch-pill {{
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #064e3b;
-            color: #34d399;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }}
-        .pulse {{
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #10b981;
-            box-shadow: 0 0 8px #10b981;
-        }}
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>{DXBI_DASHBOARD_CSS}</style>
 </head>
 <body>
     <div class="container">
         <header>
             <div class="brand">
-                <span style="font-size:1.6rem;">🛡️</span>
+                <span class="brand-mark" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </span>
                 <div>
                     <h1>VPN Control Center</h1>
-                    <div style="font-size:0.8rem;color:#6b7280;">Orbit Server Zero-Trust Egress Switcher</div>
+                    <div class="brand-sub">Orbit Server Zero-Trust Egress Switcher</div>
                 </div>
             </div>
-            <div class="nav-links">
-                <a href="http://127.0.0.1:3000" class="nav-link">🏠 Homepage</a>
-                <a href="http://127.0.0.1:8081" class="nav-link">📥 qBittorrent</a>
-                <a href="http://127.0.0.1:7878" class="nav-link">🎥 Radarr</a>
-                <a href="http://127.0.0.1:5055" class="nav-link">🍿 Seerr</a>
-                <a href="http://127.0.0.1:8096" class="nav-link">🎬 Jellyfin</a>
-            </div>
+            <nav class="nav-links" aria-label="Service Shortcuts">
+                <a href="http://127.0.0.1:3000" class="nav-link">Homepage</a>
+                <a href="http://127.0.0.1:8081" class="nav-link">qBittorrent</a>
+                <a href="http://127.0.0.1:7878" class="nav-link">Radarr</a>
+                <a href="http://127.0.0.1:5055" class="nav-link">Seerr</a>
+                <a href="http://127.0.0.1:8096" class="nav-link">Jellyfin</a>
+            </nav>
         </header>
 
         {msg_banner}
 
-        <div class="status-hero">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <section class="status-hero" aria-label="Active VPN Status">
+            <div class="hero-head">
                 <div>
-                    <div style="font-size:0.85rem;color:#93c5fd;font-weight:600;margin-bottom:2px;">CONNECTED VPN PROFILE</div>
-                    <div style="font-size:1.5rem;font-weight:700;color:#fff;">{current_prof['display']}</div>
+                    <div class="hero-eyebrow">Connected VPN Profile</div>
+                    <div class="hero-profile-name">{current_display}</div>
                 </div>
-                <div class="killswitch-pill">
-                    <div class="pulse"></div>
-                    <span>IPTABLES KILL-SWITCH ENGAGED</span>
+                <div class="hero-badges">
+                    <div class="latency-pill" title="Gluetun control probe latency">
+                        <span>PROBE</span>
+                        <strong>{probe_latency_ms} ms</strong>
+                    </div>
+                    <div class="killswitch-pill">
+                        <div class="pulse"></div>
+                        <span>IPTABLES KILL-SWITCH ENGAGED</span>
+                    </div>
                 </div>
             </div>
 
@@ -309,20 +550,24 @@ def render_html_dashboard(message=None, is_error=False):
                 </div>
                 <div class="metric">
                     <div class="metric-label">Country</div>
-                    <div class="metric-value" style="font-family:inherit;">{country}</div>
+                    <div class="metric-value">{country}</div>
                 </div>
                 <div class="metric">
                     <div class="metric-label">ISP / ASN Network</div>
-                    <div class="metric-value" style="font-family:inherit;font-size:0.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{org}</div>
+                    <div class="metric-value" title="{org}">{org}</div>
                 </div>
                 <div class="metric">
                     <div class="metric-label">Leak Prevention</div>
-                    <div class="metric-value" style="color:#34d399;font-size:0.95rem;font-family:inherit;">0.0.0.0/0 Blocked</div>
+                    <div class="metric-value connected">0.0.0.0/0 Blocked</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Control Latency</div>
+                    <div class="metric-value">{probe_latency_ms} ms</div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <h2 style="font-size:1.1rem;margin:0 0 16px 0;color:#e5e7eb;font-weight:600;">Available VPN Profiles (One-Click Switch)</h2>
+        <h2 class="section-title">Available VPN Profiles (One-Click Switch)</h2>
 
         <div class="grid">
             {cards_html}

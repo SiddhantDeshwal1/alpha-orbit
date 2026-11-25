@@ -49,15 +49,35 @@ services:
     depends_on:
       tailscale:
         condition: service_started
+    security_opt:
+      - label=disable
     volumes:
       - ./dashboard:/app:ro,Z
-      - /run/user/1000/podman/podman.sock:/var/run/docker.sock:Z
-      - /run/media/banana/Alpha:/media/alpha:ro
+      - /run/user/1000/podman:/run/podman:ro
+      - ${SERVER_DATA_DIR:-./data}/dashboard:/data/dashboard:Z
+      - ${ALPHA_MOUNT_POINT:-/run/media/banana/Alpha}:/media/alpha:ro
       - ${SERVER_DATA_DIR:-./data}/sandbox/logs:/logs:ro,Z
     environment:
       - PORT=3000
       - TS_HOSTNAME=${TS_HOSTNAME:-alpha-prod-orbit}
+      - ALPHA_MOUNT_POINT=/media/alpha
+      - SERVER_DATA_DIR=/data
+      - PODMAN_SOCKET=/run/podman/podman.sock
+      - DASHBOARD_DATA_DIR=/data/dashboard
+      - DASHBOARD_ENC_SECRET=${DASHBOARD_ENC_SECRET:-}
       - SWITCHER_API_KEY=${SWITCHER_API_KEY:-}
+      - JELLYFIN_API_KEY=${JELLYFIN_API_KEY:-}
+      - JELLYFIN_URL=${JELLYFIN_URL:-http://127.0.0.1:8096}
+      - JELLYFIN_INTERNAL_URL=${JELLYFIN_INTERNAL_URL:-http://alpha-prod-tailscale:8096}
+      - SEERR_API_KEY=${SEERR_API_KEY:-}
+      - SEERR_URL=${SEERR_URL:-http://127.0.0.1:5055}
+      - RADARR_API_KEY=${RADARR_API_KEY:-}
+      - SONARR_API_KEY=${SONARR_API_KEY:-}
+      - PROWLARR_API_KEY=${PROWLARR_API_KEY:-}
+      - TMDB_API_KEY=${TMDB_API_KEY:-}
+      - NTFY_URL=${NTFY_URL:-https://ntfy.sh}
+      - NTFY_TOPIC=${NTFY_TOPIC:-alpha-prod-alerts}
+      - NTFY_TOKEN=${NTFY_TOKEN:-}
     restart: unless-stopped
 
   jellyfin:
@@ -91,6 +111,7 @@ services:
       - ./jellyfin/custom-details-hero.js:/jellyfin/jellyfin-web/custom-details-hero.js:ro,Z
       - ./jellyfin/custom-hover-preview.js:/jellyfin/jellyfin-web/custom-hover-preview.js:ro,Z
       - ./jellyfin/custom-discover-request.js:/jellyfin/jellyfin-web/custom-discover-request.js:ro,Z
+      - ./jellyfin/custom-signup-request.js:/jellyfin/jellyfin-web/custom-signup-request.js:ro,Z
       - ${SERVER_DATA_DIR:-./data}/jellyfin/data/JellyBridge:/data/JellyBridge:Z
     restart: unless-stopped
 
