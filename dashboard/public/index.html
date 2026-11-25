@@ -1279,7 +1279,12 @@
               Media Requests Queue (Seerr)
             </div>
             <a
-              href="http://localhost:5055"
+              id="seerr-browse-link"
+              href="#"
+              onclick="
+                this.href = 'http://' + window.location.hostname + ':5055';
+                return true;
+              "
               target="_blank"
               style="font-size: 0.78rem; color: #38bdf8; text-decoration: none"
               >Browse Seerr ↗</a
