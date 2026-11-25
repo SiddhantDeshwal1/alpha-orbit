@@ -18,7 +18,6 @@ ENV_FILE="$CONFIG_DIR/.env"
 if [ ! -f "$ENV_FILE" ] && [ -f "$SCRIPT_DIR/.env" ]; then
     ENV_FILE="$SCRIPT_DIR/.env"
 fi
-SERVER_DIR="$CONFIG_DIR"
 
 # Load environment variables
 if [ -f "$ENV_FILE" ]; then
@@ -39,7 +38,8 @@ if [ -f "$QUADLET_SYSTEMD_DIR/alpha-prod-qbittorrent.container" ]; then
     QUADLET_MODE=true
 fi
 
-export DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
+DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
+export DOCKER_HOST
 
 echo "=============================================================="
 echo " Stopping Orbit Server: Sandbox Download Stack              "

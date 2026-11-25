@@ -37,12 +37,13 @@ CONFIG_DIR="$SCRIPT_DIR"
 ENV_FILE="$CONFIG_DIR/.env"
 
 export PODMAN_COMPOSE_WARNING_LOGS=false
-export DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
+DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
+export DOCKER_HOST
 
 # Load environment variables if .env exists
 if [ -f "$ENV_FILE" ]; then
-    # shellcheck disable=SC1090
     set -a
+    # shellcheck disable=SC1090
     source "$ENV_FILE"
     set +a
 fi

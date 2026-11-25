@@ -18,7 +18,6 @@ if [ -t 1 ]; then
     RED=$'\033[1;31m'
     MAGENTA=$'\033[1;35m'
     WHITE=$'\033[1;37m'
-    BG_BLUE=$'\033[44m'
 else
     BOLD=''
     DIM=''
@@ -30,7 +29,6 @@ else
     RED=''
     MAGENTA=''
     WHITE=''
-    BG_BLUE=''
 fi
 
 REAL_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
@@ -39,12 +37,13 @@ CONFIG_DIR="$SCRIPT_DIR"
 ENV_FILE="$CONFIG_DIR/.env"
 
 export PODMAN_COMPOSE_WARNING_LOGS=false
-export DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
+DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
+export DOCKER_HOST
 
 # Load environment variables if .env exists
 if [ -f "$ENV_FILE" ]; then
-    # shellcheck disable=SC1090
     set -a
+    # shellcheck disable=SC1090
     source "$ENV_FILE"
     set +a
 fi

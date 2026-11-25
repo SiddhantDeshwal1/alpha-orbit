@@ -18,7 +18,6 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="$(dirname "$SCRIPT_DIR")"
-SERVER_DIR="$CONFIG_DIR"
 ENV_FILE="$CONFIG_DIR/.env"
 if [ ! -f "$ENV_FILE" ] && [ -f "$SCRIPT_DIR/.env" ]; then
     ENV_FILE="$SCRIPT_DIR/.env"
@@ -320,7 +319,6 @@ while true; do
             else
                 NOW=$(date +%s)
                 ELAPSED=$(( NOW - COOLDOWN_START ))
-                REMAINING=$(( COOLDOWN_SECONDS - ELAPSED ))
 
                 if [ $ELAPSED -ge $COOLDOWN_SECONDS ]; then
                     stop_sandbox

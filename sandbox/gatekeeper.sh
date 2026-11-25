@@ -211,7 +211,7 @@ process_file() {
                 fi
 
                 log "INFO" "[Stage 3] Extracting text subtitle stream #$SUB_IDX ($SUB_CODEC, $SUB_LANG) -> $(basename "$SRT_TARGET")"
-                if ffmpeg -v error -y -i "$file" -map "0:$SUB_IDX" -c:s srt "$SRT_TARGET" 2>> "$GATEKEEPER_LOG"; then
+                if ffmpeg -nostdin -v error -y -i "$file" -map "0:$SUB_IDX" -c:s srt "$SRT_TARGET" 2>> "$GATEKEEPER_LOG"; then
                     chmod 644 "$SRT_TARGET"
                     EXTRACTED_SRTS+=("$SRT_TARGET")
                 else
@@ -221,7 +221,7 @@ process_file() {
         fi
 
         # 3. Audio & Video stream analysis
-        local HAS_VIDEO HAS_AUDIO HAS_STEREO_AAC AUDIO_COUNT A0_LANG
+        local HAS_VIDEO HAS_STEREO_AAC AUDIO_COUNT A0_LANG
         HAS_VIDEO=$(echo "$PROBE_JSON" | jq -r '[.streams[]? | select(.codec_type=="video")] | length > 0')
         AUDIO_COUNT=$(echo "$PROBE_JSON" | jq -r '[.streams[]? | select(.codec_type=="audio")] | length')
         HAS_STEREO_AAC=$(echo "$PROBE_JSON" | jq -r '[.streams[]? | select(.codec_type=="audio")] | any(.codec_name=="aac" and (.channels != null and .channels <= 2))')

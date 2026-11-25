@@ -20,7 +20,6 @@ ENV_FILE="$CONFIG_DIR/.env"
 if [ ! -f "$ENV_FILE" ] && [ -f "$SCRIPT_DIR/.env" ]; then
     ENV_FILE="$SCRIPT_DIR/.env"
 fi
-SERVER_DIR="$CONFIG_DIR"
 
 # Load environment variables
 if [ -f "$ENV_FILE" ]; then
@@ -153,7 +152,8 @@ echo "[+] Podman socket & network ready."
 echo "[4/5] Starting sandbox containers..."
 
 export PODMAN_COMPOSE_WARNING_LOGS=false
-export DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
+DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
+export DOCKER_HOST
 
 if [ "$QUADLET_MODE" = true ]; then
     systemctl --user daemon-reload
