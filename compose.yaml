@@ -2,7 +2,7 @@
 # Alpha Prod Orbit: Core Service Stack
 # Tailscale mesh VPN sidecar with trusted streaming services
 # Services: tailscale, dashboard, jellyfin, seerr
-# Start: ./start.sh | Stop: ./stop.sh
+# Start: ./scripts/start.sh | Stop: ./scripts/stop.sh
 # Sandbox (Downloads): compose.sandbox.yaml (managed separately by supervisor)
 # ==============================================================================
 

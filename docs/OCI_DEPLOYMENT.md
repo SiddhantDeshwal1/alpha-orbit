@@ -109,7 +109,7 @@ cd /opt/alpha-orbit
 ### 3.2 Apply Network & Virtual Memory Kernel Tuning (`99-orbit-network.conf`)
 
 ```bash
-sudo cp /opt/alpha-orbit/99-orbit-network.conf /etc/sysctl.d/99-orbit-network.conf
+sudo cp /opt/alpha-orbit/scripts/99-orbit-network.conf /etc/sysctl.d/99-orbit-network.conf
 echo "tcp_bbr" | sudo tee /etc/modules-load.d/bbr.conf
 sudo modprobe tcp_bbr
 sudo sysctl --system
@@ -163,7 +163,7 @@ GLUETUN_VPN_TYPE=wireguard
 WARP_PRIVATE_KEY=<your-wireguard-private-key>
 ```
 
-> **Note on Service API Keys:** After first boot, retrieve and add `SEERR_API_KEY`, `JELLYFIN_API_KEY`, `RADARR_API_KEY`, `SONARR_API_KEY`, and `PROWLARR_API_KEY` to `.env`, then run `./quadlets/install-quadlets.sh --sync` and `./restart.sh`.
+> **Note on Service API Keys:** After first boot, retrieve and add `SEERR_API_KEY`, `JELLYFIN_API_KEY`, `RADARR_API_KEY`, `SONARR_API_KEY`, and `PROWLARR_API_KEY` to `.env`, then run `./quadlets/install-quadlets.sh --sync` and `./scripts/restart.sh`.
 
 ---
 
@@ -202,10 +202,10 @@ Access your stack from any device on your Tailnet (replace `<TAILSCALE_IP>`):
 Once Quadlets are installed (`~/.config/containers/systemd/alpha-prod-tailscale.container` exists), the repository lifecycle scripts automatically operate in `QUADLET_MODE`:
 
 ```bash
-./start.sh                 # Reloads user units, starts Core Quadlets + Gluetun/FlareSolverr + Supervisor
-./stop.sh                  # Stops Supervisor, Sandbox Quadlets, and Core Quadlets (prevents auto-restart)
-./restart.sh               # Graceful stop -> 2s cooldown -> start -> status table
-./restart.sh --with-sandbox  # Full bounce + immediately wakes all Sandbox ingestion Quadlets
+./scripts/start.sh                 # Reloads user units, starts Core Quadlets + Gluetun/FlareSolverr + Supervisor
+./scripts/stop.sh                  # Stops Supervisor, Sandbox Quadlets, and Core Quadlets (prevents auto-restart)
+./scripts/restart.sh               # Graceful stop -> 2s cooldown -> start -> status table
+./scripts/restart.sh --with-sandbox  # Full bounce + immediately wakes all Sandbox ingestion Quadlets
 ```
 
 ---
@@ -286,4 +286,4 @@ The default `FLARESOLVERR_IMAGE=ghcr.io/flaresolverr/flaresolverr:latest` publis
   rm -f "${XDG_CONFIG_HOME:-$HOME/.config}/containers/systemd/alpha-prod-flaresolverr.container"
   systemctl --user daemon-reload
   ```
-  Both `./start.sh` and `./sandbox/start_sandbox.sh` automatically detect when `alpha-prod-flaresolverr.container` is absent and continue startup without error.
+  Both `./scripts/start.sh` and `./sandbox/start_sandbox.sh` automatically detect when `alpha-prod-flaresolverr.container` is absent and continue startup without error.

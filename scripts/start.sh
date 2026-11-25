@@ -33,7 +33,7 @@ fi
 
 REAL_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(cd "$(dirname "$REAL_PATH")" && pwd)"
-CONFIG_DIR="$SCRIPT_DIR"
+CONFIG_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ENV_FILE="$CONFIG_DIR/.env"
 
 export PODMAN_COMPOSE_WARNING_LOGS=false
@@ -49,10 +49,10 @@ if [ -f "$ENV_FILE" ]; then
 fi
 
 ALPHA_MOUNT="${ALPHA_MOUNT_POINT:-/run/media/${USER:-banana}/Alpha}"
-DATA_DIR="${SERVER_DATA_DIR:-$SCRIPT_DIR/data}"
+DATA_DIR="${SERVER_DATA_DIR:-$CONFIG_DIR/data}"
 # Resolve relative paths for DATA_DIR
 if [[ "$DATA_DIR" != /* ]]; then
-    DATA_DIR="$(cd "$CONFIG_DIR" && cd "$DATA_DIR" 2>/dev/null && pwd || echo "$SCRIPT_DIR/data")"
+    DATA_DIR="$(cd "$CONFIG_DIR" && cd "$DATA_DIR" 2>/dev/null && pwd || echo "$CONFIG_DIR/data")"
 fi
 
 QUADLET_SYSTEMD_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/containers/systemd"
@@ -86,7 +86,7 @@ elif [ -z "${ALPHA_MOUNT_POINT:-}" ] && [ -n "${SERVER_DATA_DIR:-}" ] && [[ "$DA
     DRIVE_MOUNTED=true
     ALPHA_MOUNT="$(findmnt -n -o TARGET -T "$DATA_DIR" 2>/dev/null || findmnt -n -o TARGET -T "$(dirname "$DATA_DIR")" 2>/dev/null || echo "$DATA_DIR")"
 else
-    CURRENT_MOUNT="$(findmnt -n -o TARGET -T "$SCRIPT_DIR" 2>/dev/null || true)"
+    CURRENT_MOUNT="$(findmnt -n -o TARGET -T "$CONFIG_DIR" 2>/dev/null || true)"
     if [ -n "$CURRENT_MOUNT" ] && [ "$CURRENT_MOUNT" != "/" ]; then
         DRIVE_MOUNTED=true
         ALPHA_MOUNT="$CURRENT_MOUNT"
@@ -375,7 +375,7 @@ ${BOLD}## 📥 Autonomous Ingestion Pipeline${RESET}
   ${DIM}• Supervisor Engine :${RESET} ${GREEN}${BOLD}${SUPERVISOR_PID:-ACTIVE}${RESET} ${DIM}(PID: ${SUPERVISOR_PID:-N/A})${RESET}
   ${DIM}• Operational Mode  :${RESET} ${WHITE}100% On-Demand${RESET} ${DIM}(Auto-wakes VPN sandbox upon request ➜ Idle Sleep)${RESET}
   ${DIM}• Transcode Tier    :${RESET} ${MAGENTA}Tier 0 RAM-Disk tmpfs (2.5 GiB)${RESET} ${DIM}• Zero Flash Wear • AMD VAAPI HW${RESET}
-  ${DIM}• Lifecycle Control :${RESET} ${BOLD}./start.sh | ./stop.sh | ./restart.sh${RESET}
+  ${DIM}• Lifecycle Control :${RESET} ${BOLD}./scripts/start.sh | ./scripts/stop.sh | ./scripts/restart.sh${RESET}
 ${GREEN}# ════════════════════════════════════════════════════════════════════════════${RESET}
 
 EOF

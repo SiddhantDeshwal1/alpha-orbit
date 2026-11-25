@@ -1,164 +1,182 @@
-# 🍿 Orbit : The Private Cinema & Autonomous Media Ecosystem
+# Orbit
 
-<div align="center">
-
-![4K HDR Direct Play](https://img.shields.io/badge/Cinema-4K_HDR_%7C_Dolby_Vision-00A4DC?style=for-the-badge&logo=jellyfin&logoColor=white)
-![Autonomous Quality](https://img.shields.io/badge/Ingestion-MAX_Quality_Remux-10B981?style=for-the-badge&logo=torrent&logoColor=white)
-![WireGuard Encrypted](https://img.shields.io/badge/Streaming-WireGuard_Mesh-24292e?style=for-the-badge&logo=tailscale&logoColor=white)
-![Zero Ads](https://img.shields.io/badge/Privacy-Zero_Ads_%7C_Zero_Subs-ED1C24?style=for-the-badge)
-![OLED Dark Mode](https://img.shields.io/badge/UI-OLED_Cinema_Theme-892CA0?style=for-the-badge)
-
-**A private, Netflix-grade personal cinema and automated media streaming system that downloads the highest quality releases automatically, sanitizes every incoming file, and streams anywhere with zero buffering—all running 100% self-contained on external storage.**
-
-<br/>
-
-<img src="assets/dashboard-main.png" alt="Orbit Mission Control Cockpit" width="920" style="border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,0.6);" />
-
-<p><em>Orbit Mission Control: Real-time service monitoring, storage telemetry, download bandwidth, and one-click VPN switching.</em></p>
-
-</div>
+A self-hosted, private media streaming server with automated request handling, download processing, and secure remote streaming over a private encrypted mesh network.
 
 ---
 
-## 🌟 Why Orbit?
+## Overview
 
-Standard streaming services are fragmented, expensive, compress audio into low-bitrate streams, and rotate catalogs constantly. Standard home media setups, on the other hand, require constant manual torrent searching, suffer from audio transcode buffering on mobile devices, burn through SSD write endurance, and leave open network ports exposed to your local Wi-Fi.
+Orbit is a personal media server system designed to manage your media library end-to-end. It integrates media playback, discovery, automated downloading, and secure remote access into a unified platform running in lightweight, rootless containers.
 
-**Orbit solves all of this.** It is engineered as an autonomous, self-healing personal cinema appliance:
+### Core Capabilities
 
-* 🎬 **Pristine Cinema Fidelity**: Direct-Play 4K UHD Remuxes with uncompressed Dolby Atmos, TrueHD 7.1, and DTS-HD MA surround sound.
-* ⚡ **1-Click Request & Autonomous Retrieval**: Tap request on any movie or TV series—Orbit searches indexers, selects the cleanest high-bitrate release, downloads it behind an encrypted VPN, sanitizes it, and adds it to your library in minutes.
-* 🚀 **Zero-Buffering Playback Anywhere**: Stream securely to your phone, tablet, laptop, or Apple TV/Android TV across town or across the globe over a private encrypted WireGuard mesh—with **zero open router ports**.
-* 🔋 **Zero Host Wear & Auto-Sleep**: When no downloads are active, Orbit's ingestion engines enter deep sleep after 15 minutes, parking external hard drive heads and freeing 100% of CPU and RAM for your machine.
-* ✈️ **Offline Travel Ready**: When you are on a plane or traveling without internet, the entire server functions seamlessly over localhost loopback without requiring an internet connection.
-
----
-
-## 🎬 The Ultimate Personal Cinema Experience
-
-### 1. Dynamic 16:9 Trailer Hero Banners
-When you open a movie or series details page, Orbit automatically resolves the official trailer (preferring zero-transcode local high-definition assets or 1080p stream fallbacks) and plays an authentic **16:9 theatrical video banner** directly above the synopsis.
-* Includes a frosted glass speaker toggle with smooth volume ramping.
-* An intelligent scroll sensor automatically pauses trailer playback when scrolling down to cast lists, conserving system resources.
-
-### 2. Instant Card Hover Video Previews
-Browsing through horizontal library rails feels alive. Hovering your cursor over any film poster portal activates a singleton video preview overlay.
-* **Kinetic Intent Detection**: Moving your cursor faster than `0.8 px/ms` cancels preview spawning, so rapid skimming and scrolling stays butter-smooth without accidental popups.
-* **5-Tier Fallback Cascade**: Automatically cascades from local high-bitrate trailers to official remote trailers, trickplay sprite scrubbing, and subtle cinematic pan-and-scan animations.
-
-### 3. "Surprise Me" Roulette & In-App Discovery
-Can't decide what to watch tonight? 
-* Tap the **🎲 Surprise Me** button in the top navigation or slide-out drawer.
-* Orbit surfaces critically acclaimed, high-rated titles (filtered strictly for IMDb/TMDb rating ≥ 7.0 with 100+ reviews).
-* Preview the synopsis, cast, and trailer—and if it's not yet in your library, tap **"Request to Watch"** to initiate autonomous ingestion immediately without ever leaving the player.
-
-### 4. Direct-Play 4K HDR & Spatial Audio
-* Direct-stream pass-through for 4K UHD, HDR10, and Dolby Vision color profiles.
-* Multi-channel passthrough for TrueHD, Dolby Atmos, and DTS-HD Master Audio on compatible home theater systems.
+* **Media Streaming**: Centralized media library streaming video and music to phones, tablets, desktop browsers, and smart TVs.
+* **Automated Requests**: Web-based discovery interface where users can search for movies or series and submit requests with one click.
+* **Automated Retrieval & Ingestion**: Matches requests against configured release indexers, downloads files through an isolated VPN tunnel, validates file containers, and automatically moves media into the streaming library.
+* **On-Demand Resource Management**: Ingestion and download containers run only when active downloads or requests are present. When work finishes, the sandbox stack spins down to conserve host CPU and memory.
+* **Private Remote Access**: Connects to your server securely from anywhere through a private WireGuard (Tailscale) mesh with zero open ports on your home or cloud firewall.
 
 ---
 
-## ⚡ Autonomous "MAX Quality" Ingestion Engine
+## Tech Stack & Architecture
 
+### Core Services
+
+| Service | Technology | Role |
+| :--- | :--- | :--- |
+| **Media Server** | Jellyfin | Media library indexing, metadata resolution, multi-client streaming, and hardware transcoding. |
+| **Discovery & Requests** | Seerr (Jellyseerr) | Web portal for exploring titles, browsing trailers, and requesting media. |
+| **Mission Control** | Node.js (Vanilla) | Zero-dependency dashboard for system telemetry, container status, and service controls. |
+| **Remote Mesh Access** | Tailscale (WireGuard) | Zero-trust private mesh networking; exposes services privately without port forwarding. |
+| **Orchestration** | Podman Quadlets & systemd | Declarative rootless container units managed natively via systemd user services. |
+
+### Ingestion & Sandbox Services
+
+All download activities are isolated within a dedicated network namespace routing through a secure VPN gateway:
+
+| Service | Technology | Role |
+| :--- | :--- | :--- |
+| **VPN Gateway** | Gluetun | WireGuard / OpenVPN client routing all download traffic through an encrypted tunnel. |
+| **Download Client** | qBittorrent | BitTorrent client network-bound strictly to the Gluetun VPN container interface. |
+| **Media Automation** | Radarr & Sonarr | Automated release monitoring, quality profile selection, and season/movie tracking. |
+| **Indexer Proxy** | Prowlarr | Centralized indexer management and proxying for Radarr and Sonarr. |
+| **File Sanitization** | Gatekeeper & ClamAV | Inspects media files, normalizes audio streams, extracts subtitles, and scans for threats before library ingestion. |
+| **Lifecycle Daemon** | Sandbox Supervisor | Background state machine monitoring request queues to start/stop the download sandbox on demand. |
+
+---
+
+## Repository Structure
+
+```text
+alpha-orbit/
+├── .env.example                    # Template for environment configuration variables
+├── .gitignore                      # Git ignore rules (protects credentials and data)
+├── compose.yaml                    # Standalone Compose definition for core services
+├── compose.sandbox.yaml            # Standalone Compose definition for download sandbox
+├── docs/                           # Architecture specifications and deployment runbooks
+│   ├── ARCHITECTURE.md             # Detailed system architecture, data flow, and specifications
+│   ├── OCI_DEPLOYMENT.md           # Production deployment guide for Oracle Cloud (ARM64)
+│   └── assets/                     # Documentation diagrams and visual references
+├── scripts/                        # Operational lifecycle and system tuning scripts
+│   ├── start.sh                    # Core service startup and prerequisite validation
+│   ├── stop.sh                     # Graceful teardown and storage synchronization
+│   ├── restart.sh                  # Graceful bounce with optional sandbox wake flag
+│   └── 99-orbit-network.conf       # Linux kernel network and socket buffer tuning profile
+├── quadlets/                       # Production Rootless Podman Quadlet definitions
+│   ├── core/                       # Core service Quadlets (Tailscale, Dashboard, Jellyfin, Seerr)
+│   ├── sandbox/                    # Ingestion pipeline Quadlets (Gluetun, qBit, *Arrs, Gatekeeper)
+│   ├── networks/                   # Netavark container network definitions
+│   ├── systemd/                    # Supervisor daemon service and automated Git-sync timer
+│   ├── install-quadlets.sh         # Quadlet generator and compiler
+│   └── sync-host.sh                # Automated upstream synchronization script
+├── dashboard/                      # Mission Control web dashboard source code and Dockerfile
+├── jellyfin/                       # Client web modifications, plugins, and custom UI scripts
+├── sandbox/                        # Ingestion daemon scripts, rules, and supervisor logic
+└── seerr/                          # Seerr service configuration and initialization files
 ```
-[ Discover / Request ] ──▶ [ Best-Swarm Hunter ] ──▶ [ Isolated VPN Ingestion ] ──▶ [ Zero-Trust Gatekeeper ] ──▶ [ Instant Library Ready ]
-  (Jellyfin / Seerr)          (4K UHD Remux / 1080p)        (Encrypted WireGuard tun0)      (Audio Remux & ClamAV)          (Sub-1ms Atomic Move)
-```
-
-### 1. Automated Best-Release Hunter
-Orbit eliminates manual torrent searches. When a title is requested:
-* It queries verified indexers and evaluates releases against custom quality profiles: **MAX (4K UHD Remux)**, **High (1080p BluRay)**, and **Medium (720p/1080p WEB-DL)**.
-* Evaluates seed health, release groups, and audio codecs to grab the cleanest, fastest release available.
-
-### 2. ⚡ "Turbo Mode" Instant Download Queue
-When you want to watch something immediately rather than wait for background downloads:
-* Tap **⚡ Turbo** on any request inside the Mission Control dashboard.
-* Orbit pauses all competing background downloads and allocates **100% of your WAN bandwidth** exclusively to your selected movie.
-* **Triple-Redundant Auto-Resume**: Monitored by a continuous reconciler loop, completion webhooks, and status reconcilers to ensure paused downloads auto-resume the exact second the priority film finishes.
-
-### 3. Zero-Trust Autonomous File Gatekeeper
-Every incoming file passes through an automated 4-stage sanitization gate before entering your cinema library:
-1. **Container Magic Byte Verification**: Validates real media container headers (`video/*`, `application/x-matroska`), immediately purging disguised scripts or executables.
-2. **Execution Bit Stripping**: Cleans permissions to `chmod 644`, guaranteeing files cannot execute code on the host.
-3. **Audio Normalization & Subtitle Decoupling**: Video is stream-copied with zero re-encoding. If no stereo AAC track exists, the gatekeeper synthesizes a crisp AAC Stereo track on Audio Track 0 for instant playback on phones and tablets, while preserving master lossless surround audio on Audio Track 1. Text subtitles are decoupled into clean `.srt` sidecars.
-4. **Antivirus Scanning**: Streams each file to a dedicated ClamAV daemon. Clean files are atomically moved into your library using the POSIX `rename()` syscall (<1ms execution time).
-
-### 4. Smart Drive & Battery Preservation
-Unlike 24/7 seedboxes that keep your hard drive spinning and laptop fans humming:
-* The entire ingestion sandbox runs **strictly on demand**.
-* Once active downloads finish and the queue is clear, Orbit enters a 15-minute cooldown.
-* If no new requests arrive, the download containers stop completely, allowing external drive heads to safely park and returning 100% of CPU and RAM back to your laptop.
 
 ---
 
-## 🌐 Ultra-Low Latency Streaming Anywhere
-
-| Feature | How Orbit Delivers It |
-| :--- | :--- |
-| **Encrypted Mesh Access** | Connect securely over **Tailscale WireGuard**. Stream from your phone, laptop, or Android TV anywhere in the world with zero port forwarding and zero open ports on your Wi-Fi router. |
-| **Silicon-Tuned Hardware Transcoding** | Zero-copy VAAPI hardware acceleration optimized for AMD Radeon graphics. Transcodes video in GPU VRAM with under 8% CPU utilization across all cores. |
-| **Tier 0 RAM Transcode Buffer** | Real-time video streaming chunks are written directly to a 2.5 GB in-memory RAM scratchpad (`tmpfs`). Enjoy instantaneous seeking with **zero flash SSD wear**. |
-| **Indian Broadband DPI Bypass** | Circumvents aggressive ISP Deep Packet Inspection on metadata services via an internal encrypted proxy tunnel with ~4ms latency. |
-| **Offline Airplane Mode** | When traveling without internet, the entire server is accessible locally over `http://127.0.0.1:8096`. |
-
----
-
-## 🎛️ Mission Control Dashboard
-
-Accessible at `http://127.0.0.1:3000`:
-* **Zero Dependencies**: Pure Node.js standard libraries—zero `node_modules` bloat.
-* **Live System Telemetry**: CPU load, memory utilization, and real-time external storage disk gauges.
-* **Download Fleet Status**: Active torrents, transfer rates, ETA, and priority management.
-* **Hot-Swappable VPN Switcher**: Switch VPN profiles (Cloudflare WARP, ProtonVPN, Windscribe, Mullvad, AirVPN) with a single click.
-
----
-
-## 🚀 Quickstart Guide
+## Quickstart
 
 ### 1. Prerequisites
-Ensure your Linux system has Podman, Podman Compose, and WireGuard tools:
-```bash
-# Arch Linux / Manjaro
-sudo pacman -S podman podman-compose wireguard-tools ffmpeg jq curl
 
-# Enable user Podman socket
-systemctl --user enable --now podman.socket
-```
+* Linux system (x86_64 or ARM64) with systemd
+* Podman 4.4+ and `podman-compose`
+* Active Tailscale account (for remote access)
 
-### 2. Configure Environment
-Copy the sanitized environment template:
+### 2. Configuration
+
 ```bash
+# Clone the repository
+git clone https://github.com/<your-username>/alpha-orbit.git
+cd alpha-orbit
+
+# Create environment file from template
 cp .env.example .env
 chmod 600 .env
-```
-*Add your Tailscale configuration and any desired VPN or API credentials to `.env`.*
 
-### 3. Launch Orbit
+# Edit .env with your credentials and storage paths
+nano .env
+```
+
+### 3. Apply Kernel Tuning (Recommended)
+
 ```bash
-./start.sh
+sudo cp scripts/99-orbit-network.conf /etc/sysctl.d/99-orbit-network.conf
+echo "tcp_bbr" | sudo tee /etc/modules-load.d/bbr.conf
+sudo modprobe tcp_bbr
+sudo sysctl --system
 ```
-*Verifies storage mounts, initializes NVMe high-speed cache, starts trusted streaming services, joins your Tailscale mesh, and activates the background supervisor.*
 
-Open **`http://localhost:3000`** to access your Mission Control cockpit, or **`http://localhost:8096`** for Jellyfin Cinema.
+### 4. Deploy Services
 
-### Lifecycle Commands
-* **Graceful Teardown**: `./stop.sh` (Safely flushes write buffers, stops containers, and releases all system resources).
-* **Graceful Restart**: `./restart.sh` (or `./restart.sh --with-sandbox` to immediately wake the download pipeline).
+#### Option A: Rootless Podman Quadlets (Recommended for Production)
+
+```bash
+# Compile and install Quadlets to ~/.config/containers/systemd
+./quadlets/install-quadlets.sh --sync
+```
+
+#### Option B: Standalone Lifecycle Scripts
+
+```bash
+# Start core services and supervisor
+./scripts/start.sh
+
+# Stop all services cleanly
+./scripts/stop.sh
+
+# Graceful restart
+./scripts/restart.sh
+```
 
 ---
 
-## 🔒 Security & Privacy Posture
+## Service Endpoints
 
-* **Rootless Podman**: Containers execute inside unprivileged user namespaces (UID 1000). Root exploits terminate in unmapped host UIDs.
-* **No-New-Privileges**: Declared across all containers, blocking privilege escalation via setuid binaries.
-* **Zero LAN Port Exposure**: Binds strictly to `127.0.0.1` and encrypted WireGuard mesh. Invisible to local network scans.
-* **Zero Credential Leaking**: Live keys, databases, Tailscale machine keys, and personal configs are strictly isolated and ignored by Git.
+Once running, services bind to localhost and your private Tailscale mesh IP:
 
-For in-depth systems specifications, network namespace maps, and kernel optimization profiles, consult the [Architecture Specification](ARCHITECTURE.md).
+| Interface | Port | Local Endpoint | Remote (Tailscale) |
+| :--- | :--- | :--- | :--- |
+| **Mission Control Dashboard** | 3000 | `http://localhost:3000` | `http://<tailscale-ip>:3000` |
+| **Jellyfin Streaming** | 8096 | `http://localhost:8096` | `http://<tailscale-ip>:8096` |
+| **Seerr Request Portal** | 5055 | `http://localhost:5055` | `http://<tailscale-ip>:5055` |
 
 ---
 
-## 📜 License
+## Operations & Lifecycle Management
 
-Architected by the **Alpha Prod Orbit Engineering Team**.  
+| Operation | Command |
+| :--- | :--- |
+| **Start Core Stack** | `./scripts/start.sh` |
+| **Stop All Services** | `./scripts/stop.sh` |
+| **Restart Core Stack** | `./scripts/restart.sh` |
+| **Restart Stack + Wake Sandbox** | `./scripts/restart.sh --with-sandbox` |
+| **Sync Host Quadlets** | `./quadlets/install-quadlets.sh --sync` |
+| **Trigger Upstream Git Sync** | `systemctl --user start alpha-orbit-git-sync.service` |
+| **Check Active Containers** | `podman ps` |
+| **View Supervisor Logs** | `journalctl --user -u alpha-orbit-supervisor.service -f` |
+
+---
+
+## Security
+
+* **Rootless Containers**: All containers run inside unprivileged user namespaces.
+* **No Open Firewall Ports**: Services communicate exclusively through localhost and the encrypted Tailscale WireGuard mesh.
+* **Isolated Ingestion**: Download tools run inside an isolated network namespace attached to Gluetun VPN with no access to local LAN subnets.
+* **Ingestion Sanitization**: Incoming files are validated and scanned for anomalies before being made available in the streaming library.
+* **Secret Protection**: `.env` and application databases are excluded from version control.
+
+---
+
+## Documentation
+
+* [System Architecture Specification](docs/ARCHITECTURE.md): Network diagrams, state machine design, storage caching tiers, and security controls.
+* [Oracle Cloud Deployment Runbook](docs/OCI_DEPLOYMENT.md): Step-by-step instructions for deploying Orbit on Oracle Cloud Infrastructure (ARM64).
+
+---
+
+## License
+
 Released under the [MIT License](LICENSE).

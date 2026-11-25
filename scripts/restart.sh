@@ -33,7 +33,7 @@ fi
 
 REAL_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(cd "$(dirname "$REAL_PATH")" && pwd)"
-CONFIG_DIR="$SCRIPT_DIR"
+CONFIG_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ENV_FILE="$CONFIG_DIR/.env"
 
 export PODMAN_COMPOSE_WARNING_LOGS=false
@@ -49,9 +49,9 @@ if [ -f "$ENV_FILE" ]; then
 fi
 
 ALPHA_MOUNT="${ALPHA_MOUNT_POINT:-/run/media/${USER:-banana}/Alpha}"
-DATA_DIR="${SERVER_DATA_DIR:-$SCRIPT_DIR/data}"
+DATA_DIR="${SERVER_DATA_DIR:-$CONFIG_DIR/data}"
 if [[ "$DATA_DIR" != /* ]]; then
-    DATA_DIR="$(cd "$CONFIG_DIR" && cd "$DATA_DIR" 2>/dev/null && pwd || echo "$SCRIPT_DIR/data")"
+    DATA_DIR="$(cd "$CONFIG_DIR" && cd "$DATA_DIR" 2>/dev/null && pwd || echo "$CONFIG_DIR/data")"
 fi
 
 QUADLET_SYSTEMD_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/containers/systemd"
@@ -70,7 +70,7 @@ ${CYAN}#   Alpha Prod Orbit Restart Manager : CLI Manual                        
 ${CYAN}# ════════════════════════════════════════════════════════════════════════════${RESET}
 
 ${BOLD}Usage:${RESET}
-  ${WHITE}./restart.sh${RESET} ${CYAN}[OPTIONS]${RESET}
+  ${WHITE}./scripts/restart.sh${RESET} ${CYAN}[OPTIONS]${RESET}
 
 ${BOLD}Options:${RESET}
   ${GREEN}-s, --with-sandbox${RESET}    Force immediate launch of the download sandbox stack
@@ -79,8 +79,8 @@ ${BOLD}Options:${RESET}
   ${YELLOW}-h, --help${RESET}            Display this help manual and exit.
 
 ${BOLD}Examples:${RESET}
-  ${CYAN}./restart.sh${RESET}                 ${DIM}# Graceful restart of core services & supervisor${RESET}
-  ${CYAN}./restart.sh --with-sandbox${RESET}  ${DIM}# Full stack bounce + immediate sandbox wake${RESET}
+  ${CYAN}./scripts/restart.sh${RESET}                 ${DIM}# Graceful restart of core services & supervisor${RESET}
+  ${CYAN}./scripts/restart.sh --with-sandbox${RESET}  ${DIM}# Full stack bounce + immediate sandbox wake${RESET}
 
 ${CYAN}# ════════════════════════════════════════════════════════════════════════════${RESET}
 
@@ -100,7 +100,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         *)
             echo -e "${RED}✖ ERROR:${RESET} Unknown option: ${BOLD}$1${RESET}"
-            echo -e "  Run ${CYAN}./restart.sh --help${RESET} for usage manual."
+            echo -e "  Run ${CYAN}./scripts/restart.sh --help${RESET} for usage manual."
             exit 1
             ;;
     esac
@@ -130,7 +130,7 @@ elif [ -z "${ALPHA_MOUNT_POINT:-}" ] && [ -n "${SERVER_DATA_DIR:-}" ] && [[ "$DA
     DRIVE_MOUNTED=true
     ALPHA_MOUNT="$(findmnt -n -o TARGET -T "$DATA_DIR" 2>/dev/null || findmnt -n -o TARGET -T "$(dirname "$DATA_DIR")" 2>/dev/null || echo "$DATA_DIR")"
 else
-    CURRENT_MOUNT="$(findmnt -n -o TARGET -T "$SCRIPT_DIR" 2>/dev/null || true)"
+    CURRENT_MOUNT="$(findmnt -n -o TARGET -T "$CONFIG_DIR" 2>/dev/null || true)"
     if [ -n "$CURRENT_MOUNT" ] && [ "$CURRENT_MOUNT" != "/" ]; then
         DRIVE_MOUNTED=true
         ALPHA_MOUNT="$CURRENT_MOUNT"
@@ -148,7 +148,7 @@ echo -e "  ${GREEN}✔${RESET} ${DIM}Storage drive verified mounted at:${RESET} 
 # 2. Execute Clean Teardown via stop.sh
 # ------------------------------------------------------------------------------
 echo -e "\n${BOLD}${BLUE}🛑 [2/4] Executing clean teardown via stop.sh...${RESET}"
-"$CONFIG_DIR/stop.sh"
+"$SCRIPT_DIR/stop.sh"
 
 # Cooldown pause: allow kernel network namespaces, cgroups, and sockets to clear
 echo -e "  ${YELLOW}⏳ Cooldown:${RESET} ${DIM}Allowing 2s for kernel socket & cgroups namespace clearance...${RESET}"
@@ -158,7 +158,7 @@ sleep 2
 # 3. Execute Startup via start.sh
 # ------------------------------------------------------------------------------
 echo -e "\n${BOLD}${BLUE}🚀 [3/4] Bringing up Alpha Prod Orbit core stack via start.sh...${RESET}"
-"$CONFIG_DIR/start.sh"
+"$SCRIPT_DIR/start.sh"
 
 # ------------------------------------------------------------------------------
 # 4. Optional: Bring up Sandbox Stack if requested

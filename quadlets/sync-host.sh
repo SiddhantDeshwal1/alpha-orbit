@@ -61,7 +61,7 @@ log "INFO" "Upstream update detected (${LOCAL_SHA:0:7} -> ${REMOTE_SHA:0:7}). Ap
 git -C "$CONFIG_DIR" reset --hard origin/main --quiet
 
 shopt -s nullglob
-for script_file in "$CONFIG_DIR"/*.sh "$CONFIG_DIR"/sandbox/*.sh "$CONFIG_DIR"/sandbox/*.py "$CONFIG_DIR"/quadlets/*.sh; do
+for script_file in "$CONFIG_DIR"/*.sh "$CONFIG_DIR"/scripts/*.sh "$CONFIG_DIR"/sandbox/*.sh "$CONFIG_DIR"/sandbox/*.py "$CONFIG_DIR"/quadlets/*.sh; do
     chmod +x "$script_file"
 done
 shopt -u nullglob

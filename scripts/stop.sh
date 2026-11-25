@@ -29,7 +29,7 @@ fi
 
 REAL_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(cd "$(dirname "$REAL_PATH")" && pwd)"
-CONFIG_DIR="$SCRIPT_DIR"
+CONFIG_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ENV_FILE="$CONFIG_DIR/.env"
 
 export PODMAN_COMPOSE_WARNING_LOGS=false
@@ -44,10 +44,10 @@ if [ -f "$ENV_FILE" ]; then
     set +a
 fi
 
-DATA_DIR="${SERVER_DATA_DIR:-$SCRIPT_DIR/data}"
+DATA_DIR="${SERVER_DATA_DIR:-$CONFIG_DIR/data}"
 # Resolve relative paths for DATA_DIR
 if [[ "$DATA_DIR" != /* ]]; then
-    DATA_DIR="$(cd "$CONFIG_DIR" && cd "$DATA_DIR" 2>/dev/null && pwd || echo "$SCRIPT_DIR/data")"
+    DATA_DIR="$(cd "$CONFIG_DIR" && cd "$DATA_DIR" 2>/dev/null && pwd || echo "$CONFIG_DIR/data")"
 fi
 
 QUADLET_SYSTEMD_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/containers/systemd"

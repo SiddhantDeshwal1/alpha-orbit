@@ -60,8 +60,8 @@
 │ Zero Local Footprint         │ Container ports bind strictly to 127.0.0.1 or route over Tailscale│
 │                              │ WireGuard. Zero ports are exposed on 0.0.0.0 or physical LAN NICs.│
 ├──────────────────────────────┼───────────────────────────────────────────────────────────────────┤
-│ Ephemeral Container Lifecycle│ The stack materializes on demand via ./start.sh and completely    │
-│                              │ dissolves via ./stop.sh, returning 100% CPU and RAM to the host.  │
+│ Ephemeral Container Lifecycle│ The stack materializes on demand via ./scripts/start.sh and      │
+│                              │ dissolves via ./scripts/stop.sh, returning 100% CPU and RAM.     │
 ├──────────────────────────────┼───────────────────────────────────────────────────────────────────┤
 │ Externalized Persistence     │ All media, configurations, databases, caches, and cryptographic   │
 │                              │ keys reside exclusively on external Alpha media (/run/media/...). │
@@ -719,7 +719,7 @@ Moving gigabyte-scale video files across directories can cause disk bottleneckin
 
 ### 4.8 Sandbox Supervisor State Machine
 
-The Sandbox Supervisor daemon (`/sandbox/sandbox_supervisor.sh`) is launched in the background by `./start.sh` and ensures the download stack runs **only when active work exists**:
+The Sandbox Supervisor daemon (`/sandbox/sandbox_supervisor.sh`) is launched in the background by `./scripts/start.sh` (or managed via `alpha-orbit-supervisor.service`) and ensures the download stack runs **only when active work exists**:
 
 ```mermaid
 stateDiagram-v2
@@ -789,29 +789,31 @@ stateDiagram-v2
 ### Storage Mount Layout & Directory Mappings
 
 ```
-/run/media/banana/Alpha/project/alpha/alpha-prod-orbit/
-├── compose.yaml                    # Core services stack definition
-├── compose.sandbox.yaml            # Download sandbox stack definition
-├── .env                            # Active environment configuration
-├── start.sh / stop.sh / restart.sh # Lifecycle management runbooks
+alpha-orbit/
+├── compose.yaml                    # Core services stack definition (fallback)
+├── compose.sandbox.yaml            # Download sandbox stack definition (fallback)
+├── .env.example                    # Sanitized environment template
+├── docs/                           # Architectural specs, runbooks, and guides
+│   ├── ARCHITECTURE.md
+│   ├── OCI_DEPLOYMENT.md
+│   └── assets/
+├── scripts/                        # Operational lifecycle & host tuning runbooks
+│   ├── start.sh
+│   ├── stop.sh
+│   ├── restart.sh
+│   └── 99-orbit-network.conf
+├── quadlets/                       # Production Rootless Podman Quadlets & systemd units
+│   ├── networks/                   # Netavark isolated container networks
+│   ├── core/                       # 24/7 trusted streaming services
+│   ├── sandbox/                    # On-demand isolated ingestion pipeline
+│   ├── systemd/                    # Supervisor daemon & Git-sync timers
+│   ├── install-quadlets.sh         # Idempotent installer & compiler
+│   └── sync-host.sh                # Automated git-sync & state reconciliation
 ├── dashboard/                      # Mission Control Cockpit source
 ├── jellyfin/                       # Jellyfin configs, plugins, and web client overrides
 ├── seerr/                          # Seerr application configuration & database
-├── sandbox/                        # Sandbox configs (qBit, Radarr, Sonarr, scripts)
-└── data/                           # Persistent application state directory
-    ├── tailscale/                  # Tailscale node state & cryptographic machine keys
-    ├── jellyfin/
-    │   ├── media/Entertainment/    # Master Cinema Library (Movies, Series)
-    │   └── data/JellyBridge/       # Bridge state
-    ├── seerr/media/download/
-    │   ├── incomplete/             # Active torrent write buffer (512MB RAM cache)
-    │   ├── staging/                # Gatekeeper sanitization staging area
-    │   └── completed/              # Sanitized media library ready for playback
-    └── sandbox/
-        ├── clamav/db/              # ClamAV virus signature database
-        ├── ntfy/                   # Push notification cache
-        └── logs/                   # Structured audit and execution logs
-```
+├── sandbox/                        # Sandbox configs (qBit, Radarr, Sonarr, gatekeeper)
+└── data/                           # Persistent application state directory (ignored by git)
 
 ---
 
@@ -838,8 +840,8 @@ stateDiagram-v2
 │ Read-Only File Mounts         │ Scripts, web assets, and configs mounted read-only (:ro,Z).    │
 │ SELinux / Container Labels    │ All volume mounts utilize ':Z' or ':z' private container relabel│
 ├───────────────────────────────┼────────────────────────────────────────────────────────────────┤
-│ Ephemeral Execution           │ ./stop.sh flushes caches, stops containers, and unlinks virtual│
-│                               │ networks, leaving zero residual background execution on host.  │
+│ Ephemeral Execution           │ ./scripts/stop.sh flushes caches, stops containers, and unlinks│
+│                               │ virtual networks, leaving zero residual background execution.  │
 └───────────────────────────────┴────────────────────────────────────────────────────────────────┘
 ```
 
@@ -853,36 +855,35 @@ All operations are executed via standardized scripts in the project root:
 
 #### Launching the Infrastructure
 ```bash
-cd /run/media/banana/Alpha/project/alpha/alpha-prod-orbit/
-./start.sh
+./scripts/start.sh
 ```
 *Actions performed*:
-1. Verifies storage mount at `/run/media/banana/Alpha`.
+1. Verifies storage mount.
 2. Creates all required directories and initializes permissions.
 3. Prepares the Tier 1 NVMe cache directory with Btrfs NoCoW (`chattr +C /var/tmp/jellyfin-cache`).
-4. Launches the Core Stack (`compose.yaml`).
+4. Launches the Core Stack (Quadlet services or `compose.yaml`).
 5. Verifies Tailscale mesh connectivity.
 6. Spawns the Sandbox Supervisor daemon (`sandbox_supervisor.sh`) in the background.
 
 #### Stopping the Infrastructure
 ```bash
-./stop.sh
+./scripts/stop.sh
 ```
 *Actions performed*:
 1. Terminates the Sandbox Supervisor daemon.
-2. Stops and removes all Sandbox containers (`compose.sandbox.yaml`).
-3. Stops and removes all Core containers (`compose.yaml`).
+2. Stops and removes all Sandbox containers (`compose.sandbox.yaml` or Quadlets).
+3. Stops and removes all Core containers (`compose.yaml` or Quadlets).
 4. Flushes dirty pages from system RAM to external disk (`sync`).
 5. Destroys ephemeral virtual bridge networks (`alpha_prod_default`, `alpha_prod_sandbox_net`).
 6. Releases 100% of host CPU and RAM.
 
 #### Graceful Full-Stack Restart
 ```bash
-./restart.sh
+./scripts/restart.sh
 ```
 *Options*:
-- `./restart.sh`: Graceful bounce of Core services while leaving Sandbox in on-demand sleep.
-- `./restart.sh --with-sandbox`: Full stack bounce and immediate wake of the download sandbox.
+- `./scripts/restart.sh`: Graceful bounce of Core services while leaving Sandbox in on-demand sleep.
+- `./scripts/restart.sh --with-sandbox`: Full stack bounce and immediate wake of the download sandbox.
 
 ---
 

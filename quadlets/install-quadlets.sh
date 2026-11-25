@@ -325,7 +325,7 @@ ensure_directories() {
 
     shopt -s nullglob
     local f
-    for f in "$CONFIG_DIR"/*.sh "$CONFIG_DIR"/sandbox/*.sh "$CONFIG_DIR"/sandbox/*.py "$CONFIG_DIR"/quadlets/*.sh; do
+    for f in "$CONFIG_DIR"/*.sh "$CONFIG_DIR"/scripts/*.sh "$CONFIG_DIR"/sandbox/*.sh "$CONFIG_DIR"/sandbox/*.py "$CONFIG_DIR"/quadlets/*.sh; do
         chmod +x "$f"
     done
     shopt -u nullglob

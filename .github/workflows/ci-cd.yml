@@ -45,7 +45,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y shellcheck
           fi
-          shellcheck -S warning start.sh stop.sh restart.sh sandbox/*.sh quadlets/*.sh
+          shellcheck -S warning scripts/*.sh sandbox/*.sh quadlets/*.sh
 
       - name: Check JS syntax & Prettier formatting
         run: |
