@@ -93,7 +93,10 @@ function isHttpsRequest(req) {
 }
 
 function hashToken(token) {
-  return crypto.createHash('sha256').update(String(token || ''), 'utf8').digest('hex');
+  return crypto
+    .createHash('sha256')
+    .update(String(token || ''), 'utf8')
+    .digest('hex');
 }
 
 function safeEqualString(a, b) {
@@ -321,11 +324,7 @@ function createAccessManager(configOrGetter = () => process.env) {
   async function jellyfinFetch(apiPath, options = {}, timeoutMs = 4500) {
     const includeToken = options.includeToken !== undefined ? options.includeToken : true;
     const headers = jellyfinHeaders(includeToken, options.headers || {});
-    return requestServiceCandidate(
-      getJellyfinUrls(apiPath),
-      { ...options, headers },
-      timeoutMs
-    );
+    return requestServiceCandidate(getJellyfinUrls(apiPath), { ...options, headers }, timeoutMs);
   }
 
   async function seerrFetch(apiPath, options = {}, timeoutMs = 4500) {
@@ -602,12 +601,7 @@ function createAccessManager(configOrGetter = () => process.env) {
 
   function sanitizeRequest(record) {
     if (!record) return null;
-    const {
-      encryptedPassword,
-      statusToken,
-      statusTokenHash,
-      ...rest
-    } = record;
+    const { encryptedPassword, statusToken, statusTokenHash, ...rest } = record;
     return {
       ...rest,
       hasStoredPassword: Boolean(encryptedPassword),
@@ -648,7 +642,12 @@ function createAccessManager(configOrGetter = () => process.env) {
 
     const configuredUrl = getEnv('NTFY_URL').trim();
     const ntfyCandidates = configuredUrl
-      ? dedupeUrls([configuredUrl, 'http://alpha-prod-ntfy:80', 'http://127.0.0.1:8003', 'http://127.0.0.1:8088'])
+      ? dedupeUrls([
+          configuredUrl,
+          'http://alpha-prod-ntfy:80',
+          'http://127.0.0.1:8003',
+          'http://127.0.0.1:8088'
+        ])
       : dedupeUrls(['http://alpha-prod-ntfy:80', 'http://127.0.0.1:8003', 'http://127.0.0.1:8088']);
 
     const urls = ntfyCandidates.map((base) => `${base}/${encodeURIComponent(topic)}`);
@@ -720,11 +719,11 @@ function createAccessManager(configOrGetter = () => process.env) {
           : payload.jellyfin !== undefined
             ? Boolean(payload.jellyfin)
             : true,
-      seerr:
-        rawAccess.seerr !== undefined
-          ? Boolean(rawAccess.seerr)
-          : Boolean(payload.seerr),
-      libraries: rawLibraries.map((x) => String(x).trim()).filter(Boolean).slice(0, 50),
+      seerr: rawAccess.seerr !== undefined ? Boolean(rawAccess.seerr) : Boolean(payload.seerr),
+      libraries: rawLibraries
+        .map((x) => String(x).trim())
+        .filter(Boolean)
+        .slice(0, 50),
       deviceNote: String(rawAccess.deviceNote || payload.deviceNote || payload.note || '')
         .trim()
         .slice(0, 300)
@@ -906,10 +905,7 @@ function createAccessManager(configOrGetter = () => process.env) {
       } else {
         const body = await parseResponseBody(createRes);
         const detail = typeof body === 'string' ? body : body?.title || body?.message || '';
-        throw new HttpError(
-          400,
-          `Jellyfin rejected user creation${detail ? `: ${detail}` : ''}`
-        );
+        throw new HttpError(400, `Jellyfin rejected user creation${detail ? `: ${detail}` : ''}`);
       }
     } else {
       throw new HttpError(502, `Jellyfin user creation failed with HTTP ${createRes.status}`);
@@ -922,7 +918,11 @@ function createAccessManager(configOrGetter = () => process.env) {
     // Fetch complete current policy before updating
     let currentPolicy = jfUser.Policy || {};
     try {
-      const userRes = await jellyfinFetch(`/Users/${encodeURIComponent(jfUser.Id)}`, { method: 'GET' }, 4500);
+      const userRes = await jellyfinFetch(
+        `/Users/${encodeURIComponent(jfUser.Id)}`,
+        { method: 'GET' },
+        4500
+      );
       if (userRes.ok) {
         const fullUser = await userRes.json();
         if (fullUser && fullUser.Policy) currentPolicy = fullUser.Policy;
@@ -952,14 +952,18 @@ function createAccessManager(configOrGetter = () => process.env) {
       );
       if (!polRes.ok) {
         const errBody = await parseResponseBody(polRes);
-        throw new Error(`HTTP ${polRes.status} ${typeof errBody === 'string' ? errBody : ''}`.trim());
+        throw new Error(
+          `HTTP ${polRes.status} ${typeof errBody === 'string' ? errBody : ''}`.trim()
+        );
       }
     } catch (err) {
       if (createdFresh) {
         // Best-effort rollback so failed policy setup doesn't strand an unconfigured user
-        await jellyfinFetch(`/Users/${encodeURIComponent(jfUser.Id)}`, { method: 'DELETE' }, 3000).catch(
-          () => {}
-        );
+        await jellyfinFetch(
+          `/Users/${encodeURIComponent(jfUser.Id)}`,
+          { method: 'DELETE' },
+          3000
+        ).catch(() => {});
       }
       throw new HttpError(502, `Failed to apply Jellyfin user policy: ${err.message}`);
     }
@@ -1008,8 +1012,7 @@ function createAccessManager(configOrGetter = () => process.env) {
       if (importRes.ok) {
         const imported = await importRes.json();
         if (Array.isArray(imported) && imported.length > 0) {
-          seerrUser =
-            imported.find((u) => u && u.jellyfinUserId === jfUserId) || imported[0];
+          seerrUser = imported.find((u) => u && u.jellyfinUserId === jfUserId) || imported[0];
         }
       } else {
         const errBody = await parseResponseBody(importRes);
@@ -1052,7 +1055,10 @@ function createAccessManager(configOrGetter = () => process.env) {
       }
       return { seerrUserId: seerrUser.id, warning: null };
     } catch (err) {
-      return { seerrUserId: seerrUser?.id || null, warning: `Seerr provisioning error: ${err.message}` };
+      return {
+        seerrUserId: seerrUser?.id || null,
+        warning: `Seerr provisioning error: ${err.message}`
+      };
     }
   }
 
@@ -1093,7 +1099,9 @@ function createAccessManager(configOrGetter = () => process.env) {
           ? Math.max(0, Math.floor(parsedStreams))
           : 2;
       const seerrAutoApprove = Boolean(options.seerrAutoApprove);
-      const decisionNote = String(options.decisionNote || '').trim().slice(0, 500);
+      const decisionNote = String(options.decisionNote || '')
+        .trim()
+        .slice(0, 500);
       const passwordOverride = String(options.passwordOverride || '');
 
       let password = '';
@@ -1196,7 +1204,9 @@ function createAccessManager(configOrGetter = () => process.env) {
       }
       delete rec.encryptedPassword;
       rec.status = 'rejected';
-      rec.decisionNote = String(note || '').trim().slice(0, 500);
+      rec.decisionNote = String(note || '')
+        .trim()
+        .slice(0, 500);
       rec.reviewedAt = new Date().toISOString();
       rec.reviewedBy = adminUsername || 'admin';
       writeStore(store);
@@ -1218,7 +1228,9 @@ function createAccessManager(configOrGetter = () => process.env) {
     const seerrKey = getEnv('SEERR_API_KEY');
     const [jfResult, seerrResult] = await Promise.allSettled([
       jellyfinFetch('/Users', { method: 'GET' }, 4500),
-      seerrKey ? seerrFetch('/api/v1/user?take=100', { method: 'GET' }, 4500) : Promise.resolve(null)
+      seerrKey
+        ? seerrFetch('/api/v1/user?take=100', { method: 'GET' }, 4500)
+        : Promise.resolve(null)
     ]);
 
     if (jfResult.status !== 'fulfilled' || !jfResult.value.ok) {
@@ -1248,9 +1260,7 @@ function createAccessManager(configOrGetter = () => process.env) {
     const users = (Array.isArray(jfUsers) ? jfUsers : []).map((u) => {
       const policy = u.Policy || {};
       const matchedSeerr =
-        seerrByJfId.get(u.Id) ||
-        seerrByUsername.get(String(u.Name || '').toLowerCase()) ||
-        null;
+        seerrByJfId.get(u.Id) || seerrByUsername.get(String(u.Name || '').toLowerCase()) || null;
 
       return {
         id: u.Id,
@@ -1310,9 +1320,14 @@ function createAccessManager(configOrGetter = () => process.env) {
 
     const jfUser = await userRes.json();
     const nextDisabled =
-      disabled !== undefined ? Boolean(disabled) : !Boolean(jfUser.Policy && jfUser.Policy.IsDisabled);
+      disabled !== undefined
+        ? Boolean(disabled)
+        : !Boolean(jfUser.Policy && jfUser.Policy.IsDisabled);
 
-    if (nextDisabled && (isSelfUser(jfUser, actor) || (jfUser.Policy && jfUser.Policy.IsAdministrator))) {
+    if (
+      nextDisabled &&
+      (isSelfUser(jfUser, actor) || (jfUser.Policy && jfUser.Policy.IsAdministrator))
+    ) {
       throw new HttpError(403, 'Cannot disable an administrator or your own active account');
     }
 
@@ -1360,10 +1375,7 @@ function createAccessManager(configOrGetter = () => process.env) {
 
     const jfUser = await userRes.json();
     if (isSelfUser(jfUser, actor) || (jfUser.Policy && jfUser.Policy.IsAdministrator)) {
-      throw new HttpError(
-        403,
-        'Refusing to delete an administrator or your own active account'
-      );
+      throw new HttpError(403, 'Refusing to delete an administrator or your own active account');
     }
 
     let seerrDeleted = false;

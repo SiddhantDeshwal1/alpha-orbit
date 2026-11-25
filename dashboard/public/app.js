@@ -695,7 +695,10 @@
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setAuthError('signup-error', data.error || data.message || `Submission failed (${res.status})`);
+        setAuthError(
+          'signup-error',
+          data.error || data.message || `Submission failed (${res.status})`
+        );
         return;
       }
 
@@ -798,7 +801,11 @@
 
     const status = String(req.status || 'pending').toLowerCase();
     const statusLabel =
-      status === 'approved' ? 'Approved & Provisioned' : status === 'rejected' ? 'Declined' : 'Pending Review';
+      status === 'approved'
+        ? 'Approved & Provisioned'
+        : status === 'rejected'
+          ? 'Declined'
+          : 'Pending Review';
     const host = window.location.hostname || 'localhost';
     const jellyfinUrl = `http://${host}:8096`;
     const seerrUrl = `http://${host}:5055`;
@@ -859,7 +866,9 @@
 
     document.getElementById('form-admin-login')?.addEventListener('submit', handleAdminLogin);
     document.getElementById('form-signup-request')?.addEventListener('submit', handleSignupSubmit);
-    document.getElementById('btn-check-status')?.addEventListener('click', () => checkSignupStatus());
+    document
+      .getElementById('btn-check-status')
+      ?.addEventListener('click', () => checkSignupStatus());
     document.getElementById('status-token-input')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -1426,7 +1435,9 @@
         const dotClass = isOnline ? 'dot-status-healthy' : 'dot-status-down';
 
         const host = window.location.hostname || 'localhost';
-        const openUrl = item.path ? `http://${host}:${item.port}${item.path}` : `http://${host}:${item.port}`;
+        const openUrl = item.path
+          ? `http://${host}:${item.port}${item.path}`
+          : `http://${host}:${item.port}`;
         const tsUrl = item.path
           ? `http://${state.tailscaleIp}:${item.port}${item.path}`
           : `http://${state.tailscaleIp}:${item.port}`;
@@ -1884,10 +1895,10 @@
         const hasSeerr = Boolean(user.hasSeerr || user.seerrId || user.seerrUser);
         const isProtected = Boolean(
           user.isPrimaryAdmin ||
-            user.isCurrentUser ||
-            user.protected ||
-            isAdmin ||
-            username === state.auth.username
+          user.isCurrentUser ||
+          user.protected ||
+          isAdmin ||
+          username === state.auth.username
         );
 
         return `
@@ -1944,7 +1955,10 @@
     container.innerHTML = libs
       .map((lib) => {
         const checked =
-          disableBoxes || reqSet.size === 0 || reqSet.has(String(lib.id)) || reqSet.has(String(lib.name));
+          disableBoxes ||
+          reqSet.size === 0 ||
+          reqSet.has(String(lib.id)) ||
+          reqSet.has(String(lib.name));
         return `
           <label class="dx-check-pill">
             <input type="checkbox" name="approve-library" value="${escapeHtml(lib.id)}" ${checked ? 'checked' : ''} ${disableBoxes ? 'disabled' : ''} />
@@ -2031,7 +2045,8 @@
     const grantJellyfin = Boolean(document.getElementById('approve-grant-jellyfin')?.checked);
     const grantSeerr = Boolean(document.getElementById('approve-grant-seerr')?.checked);
     const enableAllLibraries = Boolean(document.getElementById('approve-all-libraries')?.checked);
-    const maxStreams = parseInt(document.getElementById('approve-max-streams')?.value || '2', 10) || 2;
+    const maxStreams =
+      parseInt(document.getElementById('approve-max-streams')?.value || '2', 10) || 2;
     const seerrAutoApprove = Boolean(document.getElementById('approve-seerr-autoapprove')?.checked);
     const note = (document.getElementById('approve-note')?.value || '').trim();
     const enabledLibraries = Array.from(
@@ -2232,7 +2247,9 @@
       });
     });
 
-    document.getElementById('btn-confirm-approve')?.addEventListener('click', confirmApproveRequest);
+    document
+      .getElementById('btn-confirm-approve')
+      ?.addEventListener('click', confirmApproveRequest);
     document.getElementById('btn-confirm-reject')?.addEventListener('click', confirmRejectRequest);
 
     document.getElementById('access-approve-modal')?.addEventListener('click', (e) => {
@@ -2348,7 +2365,12 @@
     document.addEventListener('keydown', (e) => {
       if (!state.auth.authenticated) return;
       const tag = e.target?.tagName;
-      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || e.target?.isContentEditable) {
+      if (
+        tag === 'INPUT' ||
+        tag === 'SELECT' ||
+        tag === 'TEXTAREA' ||
+        e.target?.isContentEditable
+      ) {
         if (e.key === 'Escape') e.target.blur();
         return;
       }
@@ -3774,7 +3796,9 @@
     if (filterTabs) {
       filterTabs.querySelectorAll('.req-filter-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
-          filterTabs.querySelectorAll('.req-filter-btn').forEach((b) => b.classList.remove('active'));
+          filterTabs
+            .querySelectorAll('.req-filter-btn')
+            .forEach((b) => b.classList.remove('active'));
           btn.classList.add('active');
           state.reqFilterStatus = btn.dataset.filter || 'all';
           renderRequests();
@@ -3826,7 +3850,9 @@
 
   function init() {
     applyAccent(state.accent, false);
-    state.logSource = normalizeLogSource(localStorage.getItem('alpha_log_source') || state.logSource);
+    state.logSource = normalizeLogSource(
+      localStorage.getItem('alpha_log_source') || state.logSource
+    );
     localStorage.setItem('alpha_log_source', state.logSource);
     syncLogSourceControls(state.logSource);
 

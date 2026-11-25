@@ -51,7 +51,9 @@ jobs:
         run: |
           for file in \
             dashboard/server.js \
+            dashboard/lib/accessManager.js \
             dashboard/public/app.js \
+            jellyfin/custom-signup-request.js \
             jellyfin/custom-discover-request.js \
             jellyfin/custom-hover-preview.js \
             jellyfin/custom-details-hero.js \
