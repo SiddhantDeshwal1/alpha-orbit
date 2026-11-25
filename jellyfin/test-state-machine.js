@@ -7,6 +7,7 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const assert = require('assert');
 const { execSync } = require('child_process');
 
@@ -839,6 +840,7 @@ const mockWindow = {
   location: {
     origin: 'http://localhost:8096',
     host: 'localhost:8096',
+    hostname: 'localhost',
     protocol: 'http:',
     pathname: '/web/index.html',
     hash: '#/home',
@@ -921,10 +923,26 @@ mockWindow.ApiClient = {
   appVersion: () => '10.9.0'
 };
 
+mockWindow.__TEST_TMDB_PROXY_CALLS__ = [];
+
 global.fetch = async function (url, options = {}) {
   const urlStr = String(url);
+  let tmdbProxyPath = '';
+  if (urlStr.includes('/api/tmdb/proxy')) {
+    mockWindow.__TEST_TMDB_PROXY_CALLS__.push(urlStr);
+    try {
+      const parsed = new URL(urlStr, 'http://localhost:3000');
+      tmdbProxyPath = parsed.searchParams.get('path') || '';
+    } catch {}
+  }
 
-  if (urlStr.includes('/discover/movies') || urlStr.includes('/discover/trending') || urlStr.includes('api.themoviedb.org/3/discover/movie')) {
+  if (
+    urlStr.includes('/discover/movies') ||
+    urlStr.includes('/discover/trending') ||
+    urlStr.includes('api.themoviedb.org/3/discover/movie') ||
+    tmdbProxyPath === 'discover/movie' ||
+    tmdbProxyPath.startsWith('discover/movie')
+  ) {
     return {
       ok: true,
       json: async () => ({
@@ -954,7 +972,7 @@ global.fetch = async function (url, options = {}) {
     };
   }
 
-  if (urlStr.includes('api.themoviedb.org/3/movie/')) {
+  if (urlStr.includes('api.themoviedb.org/3/movie/') || tmdbProxyPath.startsWith('movie/')) {
     return {
       ok: true,
       json: async () => ({
@@ -1054,7 +1072,7 @@ function sleep(ms) {
 
 async function runTestSuite() {
   console.log(`${BOLD}--- Suite 1: Plugin Configuration Validation ---${RESET}`);
-  const xmlPath = '/run/media/banana/Alpha/server/serverConfig/jellyfin/plugins/configurations/Jellyfin.Plugin.MediaBarEnhanced.xml';
+  const xmlPath = path.join(__dirname, 'plugins', 'configurations', 'Jellyfin.Plugin.MediaBarEnhanced.xml');
   const xmlContent = fs.readFileSync(xmlPath, 'utf8');
 
   const startMutedMatch = xmlContent.match(/<StartMuted>(.*?)<\/StartMuted>/);
@@ -1174,9 +1192,9 @@ async function runTestSuite() {
   drawerContainer.appendChild(drawerHome);
 
   console.log(`\n${BOLD}--- Executing Client Extension Scripts ---${RESET}`);
-  require('/run/media/banana/Alpha/server/serverConfig/jellyfin/custom-details-hero.js');
-  require('/run/media/banana/Alpha/server/serverConfig/jellyfin/custom-hover-preview.js');
-  const discoverModule = require('/run/media/banana/Alpha/server/serverConfig/jellyfin/custom-discover-request.js');
+  require(path.join(__dirname, 'custom-details-hero.js'));
+  require(path.join(__dirname, 'custom-hover-preview.js'));
+  const discoverModule = require(path.join(__dirname, 'custom-discover-request.js'));
 
   await sleep(50);
   assertCondition(mockWindow.__JELLYFIN_VIDEO_HERO_INITIALIZED__ === true, `custom-details-hero.js loaded & initialized`);
@@ -1407,8 +1425,8 @@ async function runTestSuite() {
   // Scenario G: Verify 1080p Quality Directive Enforcement
   // =============================================================
   console.log(`\n${BOLD}--- Scenario G: Verify 1080p Quality Directive Enforcement ---${RESET}`);
-  const heroCode = fs.readFileSync('/run/media/banana/Alpha/server/serverConfig/jellyfin/custom-details-hero.js', 'utf8');
-  const hoverCode = fs.readFileSync('/run/media/banana/Alpha/server/serverConfig/jellyfin/custom-hover-preview.js', 'utf8');
+  const heroCode = fs.readFileSync(path.join(__dirname, 'custom-details-hero.js'), 'utf8');
+  const hoverCode = fs.readFileSync(path.join(__dirname, 'custom-hover-preview.js'), 'utf8');
 
   // Assert created YouTube <iframe> elements have explicit width="1920" and height="1080" attributes
   assertCondition(
@@ -1468,7 +1486,7 @@ async function runTestSuite() {
   // Scenario H: Verify Total Absence of Pause Buttons
   // =============================================================
   console.log(`\n${BOLD}--- Scenario H: Verify Total Absence of Pause Buttons ---${RESET}`);
-  const brandingXml = fs.readFileSync('/run/media/banana/Alpha/server/serverConfig/jellyfin/config/branding.xml', 'utf8');
+  const brandingXml = fs.readFileSync(path.join(__dirname, 'config', 'branding.xml'), 'utf8');
 
   // Assert that #slides-container .pause-button is hidden (display: none) or scavenged from DOM
   assertCondition(brandingXml.includes('.pause-button') && brandingXml.includes('display: none !important'), `branding.xml hides .pause-button with display: none !important`);
@@ -1623,10 +1641,24 @@ async function runTestSuite() {
   // 1. Syntax validation via node -c
   let syntaxOk = false;
   try {
-    execSync('node -c serverConfig/jellyfin/custom-discover-request.js', { stdio: 'pipe' });
+    execSync(`node -c ${JSON.stringify(path.join(__dirname, 'custom-discover-request.js'))}`, { stdio: 'pipe' });
     syntaxOk = true;
   } catch {}
   assertCondition(syntaxOk === true, `custom-discover-request.js syntax validation (node -c) passed`);
+
+  const discoverCode = fs.readFileSync(path.join(__dirname, 'custom-discover-request.js'), 'utf8');
+  assertCondition(
+    !heroCode.includes('api.themoviedb.org') &&
+    !hoverCode.includes('api.themoviedb.org') &&
+    !discoverCode.includes('api.themoviedb.org'),
+    `All client JS modules contain zero direct api.themoviedb.org URLs`
+  );
+  assertCondition(
+    !heroCode.includes('TMDB_PUBLIC_API_KEY') &&
+    !hoverCode.includes('TMDB_PUBLIC_API_KEY') &&
+    !discoverCode.includes('TMDB_PUBLIC_API_KEY'),
+    `All client JS modules contain zero hardcoded TMDB_PUBLIC_API_KEY constants`
+  );
 
   // 2. Module initialization & exports
   assertCondition(mockWindow.__JELLYFIN_DISCOVER_REQUEST_INITIALIZED__ === true, `window.__JELLYFIN_DISCOVER_REQUEST_INITIALIZED__ is true`);
@@ -1665,6 +1697,15 @@ async function runTestSuite() {
   // 5. Modal rendering, glassmorphic styles & backdrop
   await mockWindow.JellyfinDiscover.open();
   await sleep(100);
+
+  assertCondition(
+    mockWindow.__TEST_TMDB_PROXY_CALLS__.some(
+      u => u.startsWith('http://localhost:3000/api/tmdb/proxy?') &&
+           u.includes('path=movie%2F') &&
+           u.includes('append_to_response=credits%2Cvideos')
+    ),
+    `TMDb enrichment requests route through Dashboard proxy (/api/tmdb/proxy)`
+  );
 
   const modal = mockDocument.getElementById('jellyfinDiscoverModal');
   assertCondition(!!modal, `Discovery Modal (#jellyfinDiscoverModal) mounted into DOM`);

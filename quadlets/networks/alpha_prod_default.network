@@ -1,0 +1,10 @@
+[Unit]
+Description=Alpha Prod Orbit Core Network (alpha_prod_default)
+
+[Network]
+NetworkName=alpha_prod_default
+Driver=bridge
+Subnet=10.89.0.0/24
+
+[Install]
+WantedBy=default.target

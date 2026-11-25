@@ -1,0 +1,31 @@
+[Unit]
+Description=Alpha Prod Radarr (Movie Indexer & Library Manager)
+After=alpha-prod-gluetun.service alpha-prod-qbittorrent.service
+BindsTo=alpha-prod-gluetun.service
+
+[Container]
+Image=lscr.io/linuxserver/radarr:latest
+ContainerName=alpha-prod-radarr
+Network=alpha-prod-gluetun.container
+
+Environment=PUID=1000
+Environment=PGID=1000
+Environment=TZ=Asia/Kolkata
+
+Volume=__APP_DIR__/sandbox/radarr:/config:Z
+Volume=__DATA_DIR__:/data:z
+
+Tmpfs=/tmp:rw,noexec,nosuid,size=128M
+NoNewPrivileges=true
+SecurityLabelDisable=false
+
+HealthCmd=curl -s -f http://127.0.0.1:7878/ping >/dev/null || exit 1
+HealthInterval=15s
+HealthTimeout=5s
+HealthRetries=5
+HealthStartPeriod=30s
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=300
+MemoryMax=384M

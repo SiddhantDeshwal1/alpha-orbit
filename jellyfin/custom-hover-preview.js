@@ -45,7 +45,19 @@
   const AUDIO_RAMP_DURATION_MS = 250; // ms
   const TRICKPLAY_FPS = 4; // 4 frames per second
   const TRICKPLAY_INTERVAL_MS = 1000 / TRICKPLAY_FPS; // 250ms
-  const TMDB_PUBLIC_API_KEY = 'f090bb54758cabf231fb605d3e3e0468';
+
+  function buildTmdbProxyUrl(tmdbPath, params = {}) {
+    const proto = (typeof window !== 'undefined' && window.location && window.location.protocol) || 'http:';
+    const host = (typeof window !== 'undefined' && window.location && window.location.hostname) || 'localhost';
+    const qs = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== null) {
+        qs.set(key, String(value));
+      }
+    }
+    const queryStr = qs.toString();
+    return `${proto}//${host}:3000/api/tmdb/proxy?path=${encodeURIComponent(tmdbPath)}${queryStr ? `&${queryStr}` : ''}`;
+  }
 
   const STORAGE_KEY_MUTED = 'jellyfin_hover_preview_muted';
 
@@ -1089,7 +1101,9 @@
 
     const tryFetchVideos = async (type) => {
       try {
-        const url = `https://api.themoviedb.org/3/${type}/${encodeURIComponent(tmdbId)}/videos?api_key=${TMDB_PUBLIC_API_KEY}&include_video_language=hi,en,ko,ja,es,fr,null`;
+        const url = buildTmdbProxyUrl(`${type}/${encodeURIComponent(tmdbId)}/videos`, {
+          include_video_language: 'hi,en,ko,ja,es,fr,null'
+        });
         const res = await fetch(url, { signal: abortSignal });
         if (!res.ok) return null;
         const data = await res.json();
@@ -1135,8 +1149,15 @@
 
     for (const type of searchTypes) {
       try {
-        const yearParam = year ? (type === 'tv' ? `&first_air_date_year=${encodeURIComponent(year)}` : `&year=${encodeURIComponent(year)}`) : '';
-        let url = `https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_PUBLIC_API_KEY}&query=${encodeURIComponent(title)}${yearParam}`;
+        const params = { query: title };
+        if (year) {
+          if (type === 'tv') {
+            params.first_air_date_year = year;
+          } else {
+            params.year = year;
+          }
+        }
+        let url = buildTmdbProxyUrl(`search/${type}`, params);
         let res = await fetch(url, { signal: abortSignal });
         if (res.ok) {
           let data = await res.json();
@@ -1146,7 +1167,7 @@
         }
         // Fallback without year if year search had no match
         if (year) {
-          url = `https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_PUBLIC_API_KEY}&query=${encodeURIComponent(title)}`;
+          url = buildTmdbProxyUrl(`search/${type}`, { query: title });
           res = await fetch(url, { signal: abortSignal });
           if (res.ok) {
             let data = await res.json();

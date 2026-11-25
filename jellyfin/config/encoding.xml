@@ -10,9 +10,9 @@
   <ThrottleDelaySeconds>45</ThrottleDelaySeconds>
   <EnableSegmentDeletion>true</EnableSegmentDeletion>
   <SegmentKeepSeconds>120</SegmentKeepSeconds>
-  <HardwareAccelerationType>vaapi</HardwareAccelerationType>
+  <HardwareAccelerationType>none</HardwareAccelerationType>
   <EncoderAppPathDisplay>/usr/lib/jellyfin-ffmpeg/ffmpeg</EncoderAppPathDisplay>
-  <VaapiDevice>/dev/dri/renderD128</VaapiDevice>
+  <VaapiDevice />
   <QsvDevice />
   <EnableTonemapping>false</EnableTonemapping>
   <EnableVppTonemapping>false</EnableVppTonemapping>
@@ -38,7 +38,7 @@
   <PreferSystemNativeHwDecoder>true</PreferSystemNativeHwDecoder>
   <EnableIntelLowPowerH264HwEncoder>false</EnableIntelLowPowerH264HwEncoder>
   <EnableIntelLowPowerHevcHwEncoder>false</EnableIntelLowPowerHevcHwEncoder>
-  <EnableHardwareEncoding>true</EnableHardwareEncoding>
+  <EnableHardwareEncoding>false</EnableHardwareEncoding>
   <AllowHevcEncoding>true</AllowHevcEncoding>
   <AllowAv1Encoding>false</AllowAv1Encoding>
   <EnableSubtitleExtraction>true</EnableSubtitleExtraction>

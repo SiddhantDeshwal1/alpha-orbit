@@ -38,6 +38,9 @@ SCRIPT_DIR="$(cd "$(dirname "$REAL_PATH")" && pwd)"
 CONFIG_DIR="$SCRIPT_DIR"
 ENV_FILE="$CONFIG_DIR/.env"
 
+export PODMAN_COMPOSE_WARNING_LOGS=false
+export DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
+
 # Load environment variables if .env exists
 if [ -f "$ENV_FILE" ]; then
     # shellcheck disable=SC1090
@@ -51,6 +54,12 @@ DATA_DIR="${SERVER_DATA_DIR:-$SCRIPT_DIR/data}"
 # Resolve relative paths for DATA_DIR
 if [[ "$DATA_DIR" != /* ]]; then
     DATA_DIR="$(cd "$CONFIG_DIR" && cd "$DATA_DIR" 2>/dev/null && pwd || echo "$SCRIPT_DIR/data")"
+fi
+
+QUADLET_SYSTEMD_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/containers/systemd"
+QUADLET_MODE=false
+if [ -f "$QUADLET_SYSTEMD_DIR/alpha-prod-tailscale.container" ]; then
+    QUADLET_MODE=true
 fi
 
 cat <<EOF
@@ -72,6 +81,11 @@ if findmnt -M "$ALPHA_MOUNT" >/dev/null 2>&1; then
     DRIVE_MOUNTED=true
 elif mountpoint -q "$ALPHA_MOUNT" 2>/dev/null; then
     DRIVE_MOUNTED=true
+elif [[ "$ALPHA_MOUNT" != /run/media/* && "$ALPHA_MOUNT" != /media/* && "$ALPHA_MOUNT" != /mnt/* ]] && [ -n "${ALPHA_MOUNT_POINT:-}" ] && { [ -d "$ALPHA_MOUNT" ] || [ -d "$(dirname "$ALPHA_MOUNT")" ]; }; then
+    DRIVE_MOUNTED=true
+elif [ -z "${ALPHA_MOUNT_POINT:-}" ] && [ -n "${SERVER_DATA_DIR:-}" ] && [[ "$DATA_DIR" != /run/media/* && "$DATA_DIR" != /media/* && "$DATA_DIR" != /mnt/* ]] && { [ -d "$DATA_DIR" ] || [ -d "$(dirname "$DATA_DIR")" ]; }; then
+    DRIVE_MOUNTED=true
+    ALPHA_MOUNT="$(findmnt -n -o TARGET -T "$DATA_DIR" 2>/dev/null || findmnt -n -o TARGET -T "$(dirname "$DATA_DIR")" 2>/dev/null || echo "$DATA_DIR")"
 else
     CURRENT_MOUNT="$(findmnt -n -o TARGET -T "$SCRIPT_DIR" 2>/dev/null || true)"
     if [ -n "$CURRENT_MOUNT" ] && [ "$CURRENT_MOUNT" != "/" ]; then
@@ -135,7 +149,12 @@ fi
 echo -e "  ${GREEN}✔${RESET} ${DIM}User Podman socket active:${RESET} ${WHITE}unix:///run/user/$(id -u)/podman/podman.sock${RESET}"
 
 # Ensure default network exists before starting containers
-if ! podman network exists alpha_prod_default 2>/dev/null; then
+if [ "$QUADLET_MODE" = true ]; then
+    systemctl --user daemon-reload
+    for net_unit in alpha_prod_default-network.service alpha_prod_sandbox_net-network.service; do
+        systemctl --user start "$net_unit" >/dev/null 2>&1 || true
+    done
+elif ! podman network exists alpha_prod_default 2>/dev/null; then
     podman network create alpha_prod_default >/dev/null 2>&1 || true
 fi
 echo -e "  ${GREEN}✔${RESET} ${DIM}Inter-container bridge network verified:${RESET} ${WHITE}alpha_prod_default${RESET}"
@@ -147,40 +166,109 @@ if command -v nmcli >/dev/null 2>&1; then
 fi
 
 # ------------------------------------------------------------------------------
-# 3. Execute Podman Compose UP in detached mode for Core Stack
+# 3. Materialize Core Stack (Quadlets via systemd OR Podman Compose fallback)
 # ------------------------------------------------------------------------------
-echo -e "\n${BOLD}${BLUE}🚀 [3/4] Spinning up Alpha Prod Core containers in detached mode...${RESET}"
+if [ "$QUADLET_MODE" = true ]; then
+    echo -e "\n${BOLD}${BLUE}🚀 [3/4] Starting Alpha Prod Core Quadlet units via systemd...${RESET}"
+    systemctl --user daemon-reload
 
-if command -v podman-compose >/dev/null 2>&1; then
-    COMPOSE_CMD="podman-compose -f $CONFIG_DIR/compose.yaml"
+    for unit in \
+        alpha-prod-tailscale \
+        alpha-prod-dashboard \
+        alpha-prod-jellyfin \
+        alpha-prod-seerr; do
+        if ! systemctl --user start "${unit}.service"; then
+            echo -e "  ${RED}✖ ERROR:${RESET} Failed to start core Quadlet service: ${BOLD}${unit}.service${RESET}"
+            echo -e "    ${DIM}Inspect logs: journalctl --user -u ${unit}.service -n 50 --no-pager${RESET}"
+            exit 1
+        fi
+    done
+    echo -e "  ${GREEN}✔${RESET} ${DIM}All core Quadlet services started successfully${RESET}"
+
+    # Ensure Gluetun VPN Gateway & FlareSolverr proxy are active for Seerr TMDb proxying
+    echo -e "  ${YELLOW}➜${RESET} ${DIM}Ensuring Gluetun VPN Gateway & FlareSolverr proxy are active...${RESET}"
+    for unit in alpha-prod-gluetun alpha-prod-flaresolverr; do
+        if [ ! -f "$QUADLET_SYSTEMD_DIR/${unit}.container" ]; then
+            continue
+        fi
+        systemctl --user start "${unit}.service" >/dev/null 2>&1 || \
+            echo -e "  ${YELLOW}⚠${RESET} ${DIM}Proxy unit warning (${unit}.service) — check: journalctl --user -u ${unit}.service -n 30${RESET}"
+    done
+    echo -e "  ${GREEN}✔${RESET} ${DIM}Gluetun VPN Gateway & FlareSolverr TMDb proxy active${RESET}"
 else
-    COMPOSE_CMD="podman compose --project-directory $CONFIG_DIR -f $CONFIG_DIR/compose.yaml"
-fi
+    echo -e "\n${BOLD}${BLUE}🚀 [3/4] Spinning up Alpha Prod Core containers in detached mode...${RESET}"
 
-COMPOSE_ERR=$(mktemp)
-if ! $COMPOSE_CMD up -d 2>"$COMPOSE_ERR"; then
-    echo -e "  ${YELLOW}⚠${RESET} ${DIM}Compose startup conflict detected. Auto-realigning container namespaces...${RESET}"
-    # Remove dependent containers first, then network container
-    podman ps -a --filter "name=alpha-prod-" --format "{{.Names}}" 2>/dev/null | grep -v "alpha-prod-tailscale" | xargs -r podman rm -f 2>/dev/null || true
-    podman rm -f alpha-prod-tailscale 2>/dev/null || true
-    if ! $COMPOSE_CMD up -d 2>"$COMPOSE_ERR"; then
-        echo -e "  ${RED}✖ ERROR:${RESET} Failed to materialize core container stack."
-        cat "$COMPOSE_ERR"
-        rm -f "$COMPOSE_ERR"
-        exit 1
+    # Pre-flight conflict check: ensure core ports (3000, 8096, 5055) and names are clear
+    LEGACY_GHOST_RUNNING="$(podman ps -a --format "{{.Names}}" 2>/dev/null | grep -E "^ghost-(tailscale|dashboard|jellyfin|seerr|immich|sftpgo|audiobookshelf)" || true)"
+    STALE_CORE_DEAD="$(podman ps -a --filter "name=alpha-prod-" --filter "status=created" --filter "status=exited" --format "{{.Names}}" 2>/dev/null || true)"
+    PORT_HOLDERS="$(podman ps -a --format "{{.ID}} {{.Ports}}" 2>/dev/null | grep -E ':(3000|8096|5055)->' | awk '{print $1}' || true)"
+
+    if [ -n "$LEGACY_GHOST_RUNNING" ] || [ -n "$STALE_CORE_DEAD" ] || [ -n "$PORT_HOLDERS" ]; then
+        echo -e "  ${YELLOW}➜${RESET} ${DIM}Pre-flight: Realigning container namespaces & releasing ports...${RESET}"
+        # Remove dependent containers first
+        podman ps -a --format "{{.Names}}" 2>/dev/null | grep -E "^(alpha-prod|ghost)-(dashboard|jellyfin|seerr|immich-server|immich-postgres|immich-redis|immich-ml|sftpgo|audiobookshelf)$" | xargs -r podman rm -f >/dev/null 2>&1 || true
+        # Remove network containers
+        podman rm -f alpha-prod-tailscale ghost-tailscale >/dev/null 2>&1 || true
+        # Sweep any lingering container holding port 3000, 8096, or 5055
+        podman ps -a --format "{{.ID}} {{.Ports}}" 2>/dev/null | grep -E ':(3000|8096|5055)->' | awk '{print $1}' | xargs -r podman rm -f >/dev/null 2>&1 || true
+        sleep 1
     fi
-fi
-rm -f "$COMPOSE_ERR"
-echo -e "  ${GREEN}✔${RESET} ${DIM}All core containers materialized successfully${RESET}"
 
-# Ensure Gluetun VPN Gateway & FlareSolverr proxy are active for Seerr TMDb proxying
-echo -e "  ${YELLOW}➜${RESET} ${DIM}Ensuring Gluetun VPN Gateway & FlareSolverr proxy are active...${RESET}"
-if command -v podman-compose >/dev/null 2>&1; then
-    podman-compose -f "$CONFIG_DIR/compose.sandbox.yaml" up -d gluetun flaresolverr >/dev/null 2>&1 || true
-else
-    podman compose --project-directory "$CONFIG_DIR" -f "$CONFIG_DIR/compose.sandbox.yaml" up -d gluetun flaresolverr >/dev/null 2>&1 || true
+    if command -v podman-compose >/dev/null 2>&1; then
+        COMPOSE_CMD="podman-compose -f $CONFIG_DIR/compose.yaml"
+    else
+        COMPOSE_CMD="podman compose --project-directory $CONFIG_DIR -f $CONFIG_DIR/compose.yaml"
+    fi
+
+    COMPOSE_ERR=$(mktemp)
+    if ! $COMPOSE_CMD up -d 2>"$COMPOSE_ERR"; then
+        echo -e "  ${YELLOW}⚠${RESET} ${DIM}Compose startup conflict detected. Auto-realigning container namespaces...${RESET}"
+        # Remove dependent containers first, then network container (both alpha-prod and ghost)
+        podman ps -a --format "{{.Names}}" 2>/dev/null | grep -E "^(alpha-prod|ghost)-(dashboard|jellyfin|seerr|immich-server|immich-postgres|immich-redis|immich-ml|sftpgo|audiobookshelf)$" | xargs -r podman rm -f >/dev/null 2>&1 || true
+        podman rm -f alpha-prod-tailscale ghost-tailscale >/dev/null 2>&1 || true
+
+        # Sweep any remaining containers holding core stack ports
+        podman ps -a --format "{{.ID}} {{.Ports}}" 2>/dev/null | grep -E ':(3000|8096|5055)->' | awk '{print $1}' | xargs -r podman rm -f >/dev/null 2>&1 || true
+        sleep 1
+
+        if ! $COMPOSE_CMD up -d 2>"$COMPOSE_ERR"; then
+            echo -e "  ${RED}✖ ERROR:${RESET} Failed to materialize core container stack."
+            cat "$COMPOSE_ERR"
+            rm -f "$COMPOSE_ERR"
+            exit 1
+        fi
+    fi
+    rm -f "$COMPOSE_ERR"
+    echo -e "  ${GREEN}✔${RESET} ${DIM}All core containers materialized successfully${RESET}"
+
+    # Ensure Gluetun VPN Gateway & FlareSolverr proxy are active for Seerr TMDb proxying
+    echo -e "  ${YELLOW}➜${RESET} ${DIM}Ensuring Gluetun VPN Gateway & FlareSolverr proxy are active...${RESET}"
+
+    # Clean any legacy sandbox containers that hold proxy/VPN ports (8000, 8888, 8081, 8191)
+    LEGACY_SANDBOX_RUNNING="$(podman ps -a --format "{{.Names}}" 2>/dev/null | grep -E "^sandbox-(gluetun|flaresolverr|qbittorrent|radarr|sonarr|prowlarr|clamav|ntfy|gatekeeper|retention|vpn-switcher)$" || true)"
+    if [ -n "$LEGACY_SANDBOX_RUNNING" ]; then
+        podman ps -a --format "{{.Names}}" 2>/dev/null | grep -E "^sandbox-(flaresolverr|qbittorrent|radarr|sonarr|prowlarr|clamav|ntfy|gatekeeper|retention|vpn-switcher)$" | xargs -r podman rm -f >/dev/null 2>&1 || true
+        podman rm -f sandbox-gluetun >/dev/null 2>&1 || true
+        sleep 1
+    fi
+
+    if command -v podman-compose >/dev/null 2>&1; then
+        SANDBOX_COMPOSE_CMD="podman-compose -f $CONFIG_DIR/compose.sandbox.yaml"
+    else
+        SANDBOX_COMPOSE_CMD="podman compose --project-directory $CONFIG_DIR -f $CONFIG_DIR/compose.sandbox.yaml"
+    fi
+
+    SANDBOX_ERR=$(mktemp)
+    if ! $SANDBOX_COMPOSE_CMD up -d gluetun flaresolverr 2>"$SANDBOX_ERR"; then
+        echo -e "  ${YELLOW}⚠${RESET} ${DIM}Sandbox proxy startup conflict detected. Auto-realigning sandbox namespaces...${RESET}"
+        podman ps -a --format "{{.Names}}" 2>/dev/null | grep -E "^(alpha-prod|sandbox)-(flaresolverr|qbittorrent|radarr|sonarr|prowlarr|clamav|gatekeeper|retention|vpn-switcher|ntfy)$" | xargs -r podman rm -f >/dev/null 2>&1 || true
+        podman rm -f alpha-prod-gluetun sandbox-gluetun >/dev/null 2>&1 || true
+        sleep 1
+        $SANDBOX_COMPOSE_CMD up -d gluetun flaresolverr >/dev/null 2>&1 || true
+    fi
+    rm -f "$SANDBOX_ERR"
+    echo -e "  ${GREEN}✔${RESET} ${DIM}Gluetun VPN Gateway & FlareSolverr TMDb proxy active${RESET}"
 fi
-echo -e "  ${GREEN}✔${RESET} ${DIM}Gluetun VPN Gateway & FlareSolverr TMDb proxy active${RESET}"
 
 # ------------------------------------------------------------------------------
 # 4. Ping Tailscale container and confirm VPN mesh connectivity
@@ -238,18 +326,26 @@ done
 SUPERVISOR_PID_FILE="$CONFIG_DIR/sandbox/supervisor.pid"
 SUPERVISOR_PID=""
 
-if [ -f "$SUPERVISOR_PID_FILE" ]; then
-    OLD_PID="$(cat "$SUPERVISOR_PID_FILE" 2>/dev/null || true)"
-    if [ -n "$OLD_PID" ] && kill -0 "$OLD_PID" 2>/dev/null && grep -qa "sandbox_supervisor" "/proc/$OLD_PID/cmdline" 2>/dev/null; then
-        SUPERVISOR_PID="$OLD_PID"
+if [ "$QUADLET_MODE" = true ]; then
+    systemctl --user start alpha-orbit-supervisor.service 2>/dev/null || true
+    SUPERVISOR_PID="$(systemctl --user show -p MainPID --value alpha-orbit-supervisor.service 2>/dev/null || true)"
+    if [ "$SUPERVISOR_PID" = "0" ]; then
+        SUPERVISOR_PID=""
     fi
-fi
+else
+    if [ -f "$SUPERVISOR_PID_FILE" ]; then
+        OLD_PID="$(cat "$SUPERVISOR_PID_FILE" 2>/dev/null || true)"
+        if [ -n "$OLD_PID" ] && kill -0 "$OLD_PID" 2>/dev/null && grep -qa "sandbox_supervisor" "/proc/$OLD_PID/cmdline" 2>/dev/null; then
+            SUPERVISOR_PID="$OLD_PID"
+        fi
+    fi
 
-if [ -z "$SUPERVISOR_PID" ] && [ -x "$CONFIG_DIR/sandbox/sandbox_supervisor.sh" ]; then
-    mkdir -p "$DATA_DIR/sandbox/logs"
-    setsid "$CONFIG_DIR/sandbox/sandbox_supervisor.sh" </dev/null >> "$DATA_DIR/sandbox/logs/supervisor.log" 2>&1 &
-    SUPERVISOR_PID=$!
-    echo "$SUPERVISOR_PID" > "$SUPERVISOR_PID_FILE"
+    if [ -z "$SUPERVISOR_PID" ] && [ -x "$CONFIG_DIR/sandbox/sandbox_supervisor.sh" ]; then
+        mkdir -p "$DATA_DIR/sandbox/logs"
+        setsid "$CONFIG_DIR/sandbox/sandbox_supervisor.sh" </dev/null >> "$DATA_DIR/sandbox/logs/supervisor.log" 2>&1 &
+        SUPERVISOR_PID=$!
+        echo "$SUPERVISOR_PID" > "$SUPERVISOR_PID_FILE"
+    fi
 fi
 
 if [ "$CONNECTED" = true ]; then

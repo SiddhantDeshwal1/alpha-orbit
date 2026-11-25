@@ -1,0 +1,37 @@
+[Unit]
+Description=Alpha Prod ntfy (Self-Hosted Push Notification Service)
+
+[Container]
+Image=docker.io/binwiederhier/ntfy:latest
+ContainerName=alpha-prod-ntfy
+Network=alpha_prod_sandbox_net.network
+Network=alpha_prod_default.network
+Exec=serve
+PublishPort=127.0.0.1:8003:80
+
+Environment=TZ=Asia/Kolkata
+Environment=NTFY_BASE_URL=http://localhost:8003
+Environment=NTFY_UPSTREAM_BASE_URL=https://ntfy.sh
+Environment=NTFY_USER_DIR=/var/cache/ntfy
+Environment=NTFY_ATTACHMENT_CACHE_DIR=/var/cache/ntfy/attachments
+Environment=NTFY_ATTACHMENT_EXPIRY=72h
+Environment=NTFY_ATTACHMENT_MAX_SIZE=50M
+Environment=NTFY_VISIT_LOG=1
+Environment=NTFY_METRICS_LISTEN=0.0.0.0:9090
+
+Volume=__APP_DIR__/sandbox/ntfy/cache:/var/cache/ntfy:Z
+
+Tmpfs=/tmp:rw,noexec,nosuid,size=64M
+NoNewPrivileges=true
+SecurityLabelDisable=false
+
+HealthCmd=wget -qO- http://localhost:80/v1/health
+HealthInterval=30s
+HealthTimeout=5s
+HealthRetries=3
+HealthStartPeriod=10s
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=300
+MemoryMax=128M

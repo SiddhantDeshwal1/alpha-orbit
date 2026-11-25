@@ -1,0 +1,30 @@
+[Unit]
+Description=Alpha Prod Orbit - Central Cockpit Dashboard
+After=alpha-prod-tailscale.service podman.socket
+BindsTo=alpha-prod-tailscale.service
+PartOf=alpha-prod-tailscale.service
+Wants=podman.socket
+
+[Container]
+ContainerName=alpha-prod-dashboard
+Image=__GHCR_DASHBOARD_IMAGE__
+AutoUpdate=registry
+Network=alpha-prod-tailscale.container
+EnvironmentFile=__APP_DIR__/.env
+Environment=PORT=3000
+Environment=TS_HOSTNAME=__TS_HOSTNAME__
+Environment=ALPHA_MOUNT_POINT=/media/alpha
+Environment=SERVER_DATA_DIR=/data
+Volume=%t/podman/podman.sock:/var/run/docker.sock:Z
+Volume=__MOUNT_POINT__:/media/alpha:ro
+Volume=__DATA_DIR__/sandbox/logs:/logs:ro,Z
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=300
+MemoryHigh=192M
+MemoryMax=256M
+
+[Install]
+WantedBy=default.target

@@ -33,6 +33,12 @@ if [[ "$SERVER_DATA_DIR" != /* ]]; then
     SERVER_DATA_DIR="$(cd "$CONFIG_DIR" && cd "$SERVER_DATA_DIR" 2>/dev/null && pwd || echo "$CONFIG_DIR/data")"
 fi
 
+QUADLET_SYSTEMD_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/containers/systemd"
+QUADLET_MODE=false
+if [ -f "$QUADLET_SYSTEMD_DIR/alpha-prod-qbittorrent.container" ]; then
+    QUADLET_MODE=true
+fi
+
 export DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
 
 echo "=============================================================="
@@ -66,7 +72,13 @@ echo "[+] Active torrents: $ACTIVE_TORRENTS"
 # Selective sleep: Stop disk-intensive ingestion workers (protect HDD lifespan)
 # Keep Radarr, Sonarr, Prowlarr & Gluetun warm in memory (0% disk I/O, prevents Seerr UI lag)
 echo "[3/4] Parking disk-intensive download engines (qBit, ClamAV, Gatekeeper)..."
-podman stop alpha-prod-qbittorrent alpha-prod-gatekeeper alpha-prod-clamav 2>/dev/null || true
+if [ "$QUADLET_MODE" = true ]; then
+    for unit in alpha-prod-qbittorrent alpha-prod-gatekeeper alpha-prod-clamav; do
+        systemctl --user stop "${unit}.service" 2>/dev/null || true
+    done
+else
+    podman stop alpha-prod-qbittorrent alpha-prod-gatekeeper alpha-prod-clamav 2>/dev/null || true
+fi
 
 # Flush write buffers to Alpha drive
 echo "[4/4] Flushing write buffers to Alpha drive..."

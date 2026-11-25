@@ -36,6 +36,9 @@ SCRIPT_DIR="$(cd "$(dirname "$REAL_PATH")" && pwd)"
 CONFIG_DIR="$SCRIPT_DIR"
 ENV_FILE="$CONFIG_DIR/.env"
 
+export PODMAN_COMPOSE_WARNING_LOGS=false
+export DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
+
 # Load environment variables if .env exists
 if [ -f "$ENV_FILE" ]; then
     # shellcheck disable=SC1090
@@ -48,6 +51,12 @@ ALPHA_MOUNT="${ALPHA_MOUNT_POINT:-/run/media/${USER:-banana}/Alpha}"
 DATA_DIR="${SERVER_DATA_DIR:-$SCRIPT_DIR/data}"
 if [[ "$DATA_DIR" != /* ]]; then
     DATA_DIR="$(cd "$CONFIG_DIR" && cd "$DATA_DIR" 2>/dev/null && pwd || echo "$SCRIPT_DIR/data")"
+fi
+
+QUADLET_SYSTEMD_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/containers/systemd"
+QUADLET_MODE=false
+if [ -f "$QUADLET_SYSTEMD_DIR/alpha-prod-tailscale.container" ]; then
+    QUADLET_MODE=true
 fi
 
 WITH_SANDBOX=false
@@ -114,6 +123,11 @@ if findmnt -M "$ALPHA_MOUNT" >/dev/null 2>&1; then
     DRIVE_MOUNTED=true
 elif mountpoint -q "$ALPHA_MOUNT" 2>/dev/null; then
     DRIVE_MOUNTED=true
+elif [[ "$ALPHA_MOUNT" != /run/media/* && "$ALPHA_MOUNT" != /media/* && "$ALPHA_MOUNT" != /mnt/* ]] && [ -n "${ALPHA_MOUNT_POINT:-}" ] && { [ -d "$ALPHA_MOUNT" ] || [ -d "$(dirname "$ALPHA_MOUNT")" ]; }; then
+    DRIVE_MOUNTED=true
+elif [ -z "${ALPHA_MOUNT_POINT:-}" ] && [ -n "${SERVER_DATA_DIR:-}" ] && [[ "$DATA_DIR" != /run/media/* && "$DATA_DIR" != /media/* && "$DATA_DIR" != /mnt/* ]] && { [ -d "$DATA_DIR" ] || [ -d "$(dirname "$DATA_DIR")" ]; }; then
+    DRIVE_MOUNTED=true
+    ALPHA_MOUNT="$(findmnt -n -o TARGET -T "$DATA_DIR" 2>/dev/null || findmnt -n -o TARGET -T "$(dirname "$DATA_DIR")" 2>/dev/null || echo "$DATA_DIR")"
 else
     CURRENT_MOUNT="$(findmnt -n -o TARGET -T "$SCRIPT_DIR" 2>/dev/null || true)"
     if [ -n "$CURRENT_MOUNT" ] && [ "$CURRENT_MOUNT" != "/" ]; then
@@ -153,6 +167,10 @@ if [ "$WITH_SANDBOX" = true ]; then
     echo -e "  ${YELLOW}➜${RESET} ${DIM}Explicit sandbox startup requested (--with-sandbox)...${RESET}"
     if [ -x "$CONFIG_DIR/sandbox/start_sandbox.sh" ]; then
         "$CONFIG_DIR/sandbox/start_sandbox.sh"
+    elif [ "$QUADLET_MODE" = true ]; then
+        for unit in alpha-prod-gluetun alpha-prod-flaresolverr alpha-prod-qbittorrent alpha-prod-radarr alpha-prod-sonarr alpha-prod-prowlarr alpha-prod-clamav alpha-prod-gatekeeper alpha-prod-retention alpha-prod-vpn-switcher alpha-prod-ntfy; do
+            systemctl --user start "${unit}.service" 2>/dev/null || true
+        done
     elif command -v podman-compose >/dev/null 2>&1; then
         podman-compose -f "$CONFIG_DIR/compose.sandbox.yaml" up -d
     else
@@ -172,7 +190,7 @@ ${BOLD}## 📋 Active Container Fleet (Alpha Prod Orbit)${RESET}
 EOF
 
 # Render clean, aligned container table with status badges
-podman ps --filter "name=alpha-prod-" --format "{{.Names}}\t{{.Status}}\t{{.Ports}}" | awk -F'\t' -v green="$GREEN" -v yellow="$YELLOW" -v cyan="$CYAN" -v reset="$RESET" -v dim="$DIM" -v bold="$BOLD" '
+podman ps -a --filter "name=alpha-prod-" --format "{{.Names}}\t{{.Status}}\t{{.Ports}}" | awk -F'\t' -v green="$GREEN" -v yellow="$YELLOW" -v cyan="$CYAN" -v red="$RED" -v reset="$RESET" -v dim="$DIM" -v bold="$BOLD" '
 BEGIN {
     printf "%s┌──────────────────────────┬──────────────────────────────┬──────────────────────────────────┐%s\n", dim, reset
     printf "%s│%s %-24s %s│%s %-28s %s│%s %-32s %s│%s\n", dim, reset, "CONTAINER", dim, reset, "STATUS", dim, reset, "PORT BINDINGS", dim, reset
@@ -181,7 +199,8 @@ BEGIN {
 {
     status_color = cyan
     if ($2 ~ /healthy/) { status_color = green }
-    else if ($2 ~ /starting|unhealthy/) { status_color = yellow }
+    else if ($2 ~ /starting/) { status_color = yellow }
+    else if ($2 ~ /unhealthy|Exited|Created/) { status_color = red }
 
     printf "%s│%s %-24s %s│%s %s%-28s%s %s│%s %-32s %s│%s\n", dim, reset, $1, dim, reset, status_color, substr($2, 1, 28), reset, dim, reset, substr($3, 1, 32), dim, reset
 }

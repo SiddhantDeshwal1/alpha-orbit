@@ -24,8 +24,9 @@
   --accent-indigo: #6366f1;
 
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
-  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
 }
 
 * {
@@ -64,14 +65,30 @@ body {
 
 /* 60FPS Animation keyframes */
 @keyframes breathe {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.9); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
 }
 
 @keyframes pulseGlow {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
-  70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
 }
 
 @keyframes cardEnter {
@@ -86,13 +103,21 @@ body {
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .animate-spin {
@@ -180,7 +205,9 @@ header {
   background: #27272a;
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  transition: transform 0.28s var(--ease-spring), width 0.28s var(--ease-spring);
+  transition:
+    transform 0.28s var(--ease-spring),
+    width 0.28s var(--ease-spring);
   pointer-events: none;
   z-index: 1;
 }
@@ -293,7 +320,9 @@ main {
   display: none;
   opacity: 0;
   transform: translateY(8px);
-  transition: opacity 0.25s var(--ease-spring), transform 0.25s var(--ease-spring);
+  transition:
+    opacity 0.25s var(--ease-spring),
+    transform 0.25s var(--ease-spring);
 }
 
 .tab-pane.active {
@@ -322,7 +351,7 @@ main {
 }
 
 .section-category-title::after {
-  content: "";
+  content: '';
   flex: 1;
   height: 1px;
   background: var(--border-subtle);
@@ -348,10 +377,11 @@ main {
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.28s var(--ease-spring),
-              box-shadow 0.28s var(--ease-spring),
-              border-color 0.28s ease,
-              background 0.28s ease;
+  transition:
+    transform 0.28s var(--ease-spring),
+    box-shadow 0.28s var(--ease-spring),
+    border-color 0.28s ease,
+    background 0.28s ease;
   will-change: transform, box-shadow;
 }
 
@@ -359,7 +389,9 @@ main {
   transform: translateY(-4px) scale(1.008);
   background: var(--bg-surface-hover);
   border-color: var(--border-hover);
-  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 16px 36px -10px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .app-card-top {
@@ -658,9 +690,18 @@ main {
   flex-shrink: 0;
 }
 
-.badge-err { background: #e11d48; color: #fff; }
-.badge-wrn { background: #d97706; color: #000; }
-.badge-inf { background: #2563eb; color: #fff; }
+.badge-err {
+  background: #e11d48;
+  color: #fff;
+}
+.badge-wrn {
+  background: #d97706;
+  color: #000;
+}
+.badge-inf {
+  background: #2563eb;
+  color: #fff;
+}
 
 /* ==============================================================================
    VIEW 4: VPN & SECURITY GATEWAY
@@ -829,7 +870,9 @@ main {
   flex-direction: column;
   justify-content: space-between;
   position: relative;
-  transition: border-color 0.25s ease, background 0.25s ease;
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease;
 }
 
 .graph-card:hover {
@@ -997,12 +1040,27 @@ main {
 }
 
 @media (max-width: 768px) {
-  header { padding: 10px 16px; }
-  main { padding: 20px 16px; }
-  .header-inner { flex-direction: column; align-items: stretch; gap: 12px; }
-  .nav-segmented { width: 100%; overflow-x: auto; }
-  .telemetry-group { justify-content: space-between; }
-  .app-grid { grid-template-columns: 1fr; }
+  header {
+    padding: 10px 16px;
+  }
+  main {
+    padding: 20px 16px;
+  }
+  .header-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .nav-segmented {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .telemetry-group {
+    justify-content: space-between;
+  }
+  .app-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ==============================================================================
@@ -1041,7 +1099,9 @@ main {
   font-size: 0.85rem;
   font-family: var(--font-sans);
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .req-search-input:focus {
@@ -1107,7 +1167,10 @@ main {
   display: flex;
   gap: 20px;
   align-items: flex-start;
-  transition: transform 0.2s var(--ease-spring), border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s var(--ease-spring),
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   position: relative;
   overflow: hidden;
 }
@@ -1462,7 +1525,11 @@ main {
 .req-card.priority-active {
   border-color: rgba(245, 158, 11, 0.75) !important;
   box-shadow: 0 0 28px rgba(245, 158, 11, 0.28) !important;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(18, 18, 21, 0.95) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.05) 0%,
+    rgba(18, 18, 21, 0.95) 100%
+  ) !important;
 }
 
 .req-turbo-badge {
@@ -1482,8 +1549,13 @@ main {
 }
 
 @keyframes turboPulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.2); }
-  50% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.45); }
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
+  }
 }
 
 .pulsing-bolt {
@@ -1492,8 +1564,15 @@ main {
 }
 
 @keyframes boltFlicker {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.8; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
 }
 
 .req-btn-prioritize {

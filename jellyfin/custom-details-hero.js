@@ -34,7 +34,19 @@
   const HERO_STYLES_ID = 'jellyfinDetailsVideoHeroStyles';
   const TRAILER_CACHE_PREFIX = 'jellyfin_tmdb_trailer_';
   const TRAILER_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-  const TMDB_PUBLIC_API_KEY = 'f090bb54758cabf231fb605d3e3e0468';
+
+  function buildTmdbProxyUrl(tmdbPath, params = {}) {
+    const proto = (typeof window !== 'undefined' && window.location && window.location.protocol) || 'http:';
+    const host = (typeof window !== 'undefined' && window.location && window.location.hostname) || 'localhost';
+    const qs = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== null) {
+        qs.set(key, String(value));
+      }
+    }
+    const queryStr = qs.toString();
+    return `${proto}//${host}:3000/api/tmdb/proxy?path=${encodeURIComponent(tmdbPath)}${queryStr ? `&${queryStr}` : ''}`;
+  }
 
   const DETAIL_HERO_SELECTORS = [
     '.detailPageWrapperContainer',
@@ -1071,7 +1083,9 @@
 
     const tryFetchVideos = async (type) => {
       try {
-        const url = `https://api.themoviedb.org/3/${type}/${encodeURIComponent(tmdbId)}/videos?api_key=${TMDB_PUBLIC_API_KEY}&include_video_language=hi,en,ko,ja,es,fr,null`;
+        const url = buildTmdbProxyUrl(`${type}/${encodeURIComponent(tmdbId)}/videos`, {
+          include_video_language: 'hi,en,ko,ja,es,fr,null'
+        });
         const res = await fetch(url, { signal });
         if (!res.ok) return null;
         const data = await res.json();
@@ -1116,14 +1130,15 @@
 
     const trySearch = async (endpoint, useYear) => {
       try {
-        let url = `https://api.themoviedb.org/3/search/${endpoint}?api_key=${TMDB_PUBLIC_API_KEY}&query=${encodeURIComponent(cleanTitle)}`;
+        const params = { query: cleanTitle };
         if (useYear && year) {
           if (endpoint === 'tv') {
-            url += `&first_air_date_year=${encodeURIComponent(year)}`;
+            params.first_air_date_year = year;
           } else {
-            url += `&year=${encodeURIComponent(year)}`;
+            params.year = year;
           }
         }
+        const url = buildTmdbProxyUrl(`search/${endpoint}`, params);
         const res = await fetch(url, { signal });
         if (!res.ok) return null;
         const data = await res.json();

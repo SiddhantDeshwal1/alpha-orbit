@@ -1,0 +1,21 @@
+[Unit]
+Description=Alpha Prod Orbit - FlareSolverr Cloudflare Challenge Proxy
+
+[Container]
+ContainerName=alpha-prod-flaresolverr
+Image=__FLARESOLVERR_IMAGE__
+Network=alpha_prod_sandbox_net.network:ip=172.31.0.19
+NetworkAlias=alpha-prod-flaresolverr
+Environment=LOG_LEVEL=info
+Environment=CAPTCHA_SOLVER=none
+Environment=TZ=Asia/Kolkata
+PublishPort=127.0.0.1:8191:8191
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=300
+MemoryMax=384M
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,15 @@
+node_modules/
+data/
+jellyfin/plugins/
+jellyfin/config/
+sandbox/prowlarr/
+sandbox/radarr/
+sandbox/sonarr/
+sandbox/qbittorrent/
+sandbox/gluetun/
+sandbox/ntfy/
+assets/
+*.md
+*.png
+*.ico
+*.xml

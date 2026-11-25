@@ -1,0 +1,11 @@
+[Unit]
+Description=Alpha Prod Orbit Sandbox Network (alpha_prod_sandbox_net)
+
+[Network]
+NetworkName=alpha_prod_sandbox_net
+Driver=bridge
+Internal=false
+Subnet=172.31.0.0/24
+
+[Install]
+WantedBy=default.target

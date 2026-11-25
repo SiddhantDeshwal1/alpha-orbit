@@ -1,0 +1,21 @@
+[Unit]
+Description=Alpha Prod Orbit Sandbox Supervisor Daemon
+Documentation=file://__APP_DIR__/ARCHITECTURE.md
+After=network-online.target podman.socket alpha-prod-tailscale.service alpha-prod-seerr.service
+Wants=network-online.target podman.socket
+
+[Service]
+Type=simple
+WorkingDirectory=__APP_DIR__
+EnvironmentFile=-__APP_DIR__/.env
+Environment=DOCKER_HOST=unix://%t/podman/podman.sock
+ExecStart=/usr/bin/env bash -c 'mkdir -p "__DATA_DIR__/sandbox/logs" && exec > >(/usr/bin/env tee -a "__DATA_DIR__/sandbox/logs/supervisor.log") 2>&1 && exec "__APP_DIR__/sandbox/sandbox_supervisor.sh"'
+Restart=always
+RestartSec=15s
+TimeoutStopSec=30s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=alpha-orbit-supervisor
+
+[Install]
+WantedBy=default.target

@@ -38,13 +38,25 @@
   window.__JELLYFIN_DISCOVER_REQUEST_INITIALIZED__ = true;
 
   // --- CONFIGURATION CONSTANTS ---
-  const TMDB_PUBLIC_API_KEY = 'f090bb54758cabf231fb605d3e3e0468';
   const SEERR_INTERNAL_PROXY = '/JellyfinEnhanced/jellyseerr';
   const SEERR_DIRECT_API = 'http://127.0.0.1:5055/api/v1';
   const SEERR_API_KEY = '';
   const MIN_VOTE_AVERAGE = 7.0;
   const MIN_VOTE_COUNT = 100;
   const MAX_RANDOM_PAGE = 30;
+
+  function buildTmdbProxyUrl(tmdbPath, params = {}) {
+    const proto = (typeof window !== 'undefined' && window.location && window.location.protocol) || 'http:';
+    const host = (typeof window !== 'undefined' && window.location && window.location.hostname) || 'localhost';
+    const qs = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== null) {
+        qs.set(key, String(value));
+      }
+    }
+    const queryStr = qs.toString();
+    return `${proto}//${host}:3000/api/tmdb/proxy?path=${encodeURIComponent(tmdbPath)}${queryStr ? `&${queryStr}` : ''}`;
+  }
 
   const MODAL_ID = 'jellyfinDiscoverModal';
   const TOAST_ID = 'jellyfinDiscoverToast';
@@ -767,9 +779,14 @@
       console.debug('[DiscoverRequest] Tier 3 Direct Seerr failed, falling back to TMDB:', e.message);
     }
 
-    // Tier 4: Public TMDB Discover API
+    // Tier 4: Dashboard TMDB Proxy API
     try {
-      const url = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_PUBLIC_API_KEY}&sort_by=vote_average.desc&vote_count.gte=${MIN_VOTE_COUNT}&vote_average.gte=${MIN_VOTE_AVERAGE}&page=${randomPage}`;
+      const url = buildTmdbProxyUrl('discover/movie', {
+        sort_by: 'vote_average.desc',
+        'vote_count.gte': MIN_VOTE_COUNT,
+        'vote_average.gte': MIN_VOTE_AVERAGE,
+        page: randomPage
+      });
       const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
       if (res.ok) {
         const data = await res.json();
@@ -810,7 +827,9 @@
     if (movie._enriched) return movie;
 
     try {
-      const url = `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${TMDB_PUBLIC_API_KEY}&append_to_response=credits,videos`;
+      const url = buildTmdbProxyUrl(`movie/${encodeURIComponent(movie.id)}`, {
+        append_to_response: 'credits,videos'
+      });
       const res = await fetch(url, { signal: AbortSignal.timeout(4500) });
       if (res.ok) {
         const details = await res.json();

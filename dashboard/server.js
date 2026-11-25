@@ -39,10 +39,11 @@ const PODMAN_SOCKET = getPodmanSocketPath();
 // Find Alpha drive mount point
 function getAlphaPath() {
   const candidates = [
+    process.env.ALPHA_MOUNT_POINT,
     '/media/alpha',
     `/run/media/${process.env.USER || 'banana'}/Alpha`,
     '/run/media/banana/Alpha'
-  ];
+  ].filter(Boolean);
   for (const c of candidates) {
     try {
       if (fs.existsSync(c)) return c;
@@ -54,12 +55,13 @@ function getAlphaPath() {
 // Find logs folder
 function getLogsDir() {
   const candidates = [
+    process.env.SERVER_DATA_DIR ? path.join(process.env.SERVER_DATA_DIR, 'sandbox/logs') : null,
     '/logs',
     path.join(__dirname, '../data/sandbox/logs'),
     '/run/media/banana/Alpha/project/alpha/alpha-prod-orbit/data/sandbox/logs',
     path.join(__dirname, '../../serverData/sandbox/logs'),
     '/run/media/banana/Alpha/server/serverData/sandbox/logs'
-  ];
+  ].filter(Boolean);
   for (const c of candidates) {
     try {
       if (fs.existsSync(c)) return c;
@@ -77,7 +79,8 @@ async function getMediaMetadata(type, tmdbId) {
   const now = Date.now();
   if (mediaMetadataCache.has(key)) {
     const cached = mediaMetadataCache.get(key);
-    if (now - cached.cachedAt < 3600000) { // 1 hour TTL
+    if (now - cached.cachedAt < 3600000) {
+      // 1 hour TTL
       return cached;
     }
   }
@@ -88,13 +91,16 @@ async function getMediaMetadata(type, tmdbId) {
   try {
     const ctrl = new AbortController();
     const tId = setTimeout(() => ctrl.abort(), 3000);
-    const res = await fetchCandidate([
-      `http://127.0.0.1:5055/api/v1/${endpoint}`,
-      `http://alpha-prod-seerr:5055/api/v1/${endpoint}`
-    ], {
-      headers: { 'X-Api-Key': seerrKey },
-      signal: ctrl.signal
-    });
+    const res = await fetchCandidate(
+      [
+        `http://127.0.0.1:5055/api/v1/${endpoint}`,
+        `http://alpha-prod-seerr:5055/api/v1/${endpoint}`
+      ],
+      {
+        headers: { 'X-Api-Key': seerrKey },
+        signal: ctrl.signal
+      }
+    );
     clearTimeout(tId);
     if (res.ok) {
       const data = await res.json();
@@ -109,7 +115,13 @@ async function getMediaMetadata(type, tmdbId) {
     }
   } catch (_) {}
 
-  const fallback = { title: `Media #${tmdbId}`, year: 0, posterUrl: '', overview: '', cachedAt: now };
+  const fallback = {
+    title: `Media #${tmdbId}`,
+    year: 0,
+    posterUrl: '',
+    overview: '',
+    cachedAt: now
+  };
   mediaMetadataCache.set(key, fallback);
   return fallback;
 }
@@ -145,21 +157,25 @@ function demuxDockerLogs(buffer) {
     offset += 8;
     if (offset + size > buffer.length) {
       const rest = buffer.subarray(offset).toString('utf8');
-      if (rest.trim()) lines.push({ stream: streamType === 2 ? 'stderr' : 'stdout', text: rest.trimEnd() });
+      if (rest.trim())
+        lines.push({ stream: streamType === 2 ? 'stderr' : 'stdout', text: rest.trimEnd() });
       break;
     }
     const chunk = buffer.subarray(offset, offset + size).toString('utf8');
     offset += size;
-    chunk.split('\n').forEach(line => {
+    chunk.split('\n').forEach((line) => {
       if (line.trim().length > 0) {
         lines.push({ stream: streamType === 2 ? 'stderr' : 'stdout', text: line.trimEnd() });
       }
     });
   }
   if (lines.length === 0 && buffer.length > 0) {
-    buffer.toString('utf8').split('\n').forEach(line => {
-      if (line.trim().length > 0) lines.push({ stream: 'stdout', text: line.trimEnd() });
-    });
+    buffer
+      .toString('utf8')
+      .split('\n')
+      .forEach((line) => {
+        if (line.trim().length > 0) lines.push({ stream: 'stdout', text: line.trimEnd() });
+      });
   }
   return lines;
 }
@@ -180,7 +196,7 @@ function requestPodman(apiPath, method = 'GET', body = null) {
     }
     const req = http.request(options, (res) => {
       const chunks = [];
-      res.on('data', c => chunks.push(c));
+      res.on('data', (c) => chunks.push(c));
       res.on('end', () => {
         resolve({
           statusCode: res.statusCode,
@@ -200,14 +216,87 @@ function requestPodman(apiPath, method = 'GET', body = null) {
 
 // Services configuration for ping latency checks
 const MONITORED_SERVICES = [
-  { id: 'jellyfin', name: 'Jellyfin Cinema', port: 8096, urls: ['http://alpha-prod-jellyfin:8096/System/Info/Public', 'http://127.0.0.1:8096/System/Info/Public'], category: 'media', icon: 'film', desc: 'Direct-Play Cinema & Shows' },
-  { id: 'seerr', name: 'Seerr Netflix UI', port: 5055, urls: ['http://alpha-prod-seerr:5055/api/v1/status', 'http://127.0.0.1:5055/api/v1/status'], category: 'media', icon: 'compass', desc: 'Media Discovery & Automated Requests' },
-  { id: 'gluetun', name: 'Gluetun VPN Gateway', port: 8000, urls: ['http://alpha-prod-gluetun:8000/v1/publicip/ip', 'http://127.0.0.1:8000/v1/publicip/ip'], category: 'security', icon: 'shield', desc: 'WireGuard Tunnel with Kill-Switch' },
-  { id: 'qbittorrent', name: 'qBittorrent Engine', port: 8081, urls: ['http://alpha-prod-gluetun:8080/api/v2/app/version', 'http://127.0.0.1:8081/api/v2/app/version'], category: 'download', icon: 'download-cloud', desc: 'Zero-Upload Torrent Pipeline' },
-  { id: 'vpn-switcher', name: 'VPN Switcher API', port: 8001, urls: ['http://alpha-prod-vpn-switcher:8001/api/v1/status', 'http://127.0.0.1:8001/api/v1/status'], category: 'security', icon: 'refresh-cw', desc: 'Hot-Swap VPN Tunnel Manager' },
-  { id: 'radarr', name: 'Radarr (Movies)', port: 7878, urls: ['http://alpha-prod-gluetun:7878/ping', 'http://127.0.0.1:7878/ping'], category: 'download', icon: 'video', desc: 'Movie Indexer & Quality Manager' },
-  { id: 'sonarr', name: 'Sonarr (Series)', port: 8989, urls: ['http://alpha-prod-gluetun:8989/ping', 'http://127.0.0.1:8989/ping'], category: 'download', icon: 'tv', desc: 'TV Series & Anime Manager' },
-  { id: 'prowlarr', name: 'Prowlarr (Indexers)', port: 9696, urls: ['http://alpha-prod-gluetun:9696/ping', 'http://127.0.0.1:9696/ping'], category: 'download', icon: 'search', desc: 'Indexer Aggregator & Proxy' }
+  {
+    id: 'jellyfin',
+    name: 'Jellyfin Cinema',
+    port: 8096,
+    urls: [
+      'http://alpha-prod-jellyfin:8096/System/Info/Public',
+      'http://127.0.0.1:8096/System/Info/Public'
+    ],
+    category: 'media',
+    icon: 'film',
+    desc: 'Direct-Play Cinema & Shows'
+  },
+  {
+    id: 'seerr',
+    name: 'Seerr Netflix UI',
+    port: 5055,
+    urls: ['http://alpha-prod-seerr:5055/api/v1/status', 'http://127.0.0.1:5055/api/v1/status'],
+    category: 'media',
+    icon: 'compass',
+    desc: 'Media Discovery & Automated Requests'
+  },
+  {
+    id: 'gluetun',
+    name: 'Gluetun VPN Gateway',
+    port: 8000,
+    urls: ['http://alpha-prod-gluetun:8000/v1/publicip/ip', 'http://127.0.0.1:8000/v1/publicip/ip'],
+    category: 'security',
+    icon: 'shield',
+    desc: 'WireGuard Tunnel with Kill-Switch'
+  },
+  {
+    id: 'qbittorrent',
+    name: 'qBittorrent Engine',
+    port: 8081,
+    urls: [
+      'http://alpha-prod-gluetun:8080/api/v2/app/version',
+      'http://127.0.0.1:8081/api/v2/app/version'
+    ],
+    category: 'download',
+    icon: 'download-cloud',
+    desc: 'Zero-Upload Torrent Pipeline'
+  },
+  {
+    id: 'vpn-switcher',
+    name: 'VPN Switcher API',
+    port: 8001,
+    urls: [
+      'http://alpha-prod-vpn-switcher:8001/api/v1/status',
+      'http://127.0.0.1:8001/api/v1/status'
+    ],
+    category: 'security',
+    icon: 'refresh-cw',
+    desc: 'Hot-Swap VPN Tunnel Manager'
+  },
+  {
+    id: 'radarr',
+    name: 'Radarr (Movies)',
+    port: 7878,
+    urls: ['http://alpha-prod-gluetun:7878/ping', 'http://127.0.0.1:7878/ping'],
+    category: 'download',
+    icon: 'video',
+    desc: 'Movie Indexer & Quality Manager'
+  },
+  {
+    id: 'sonarr',
+    name: 'Sonarr (Series)',
+    port: 8989,
+    urls: ['http://alpha-prod-gluetun:8989/ping', 'http://127.0.0.1:8989/ping'],
+    category: 'download',
+    icon: 'tv',
+    desc: 'TV Series & Anime Manager'
+  },
+  {
+    id: 'prowlarr',
+    name: 'Prowlarr (Indexers)',
+    port: 9696,
+    urls: ['http://alpha-prod-gluetun:9696/ping', 'http://127.0.0.1:9696/ping'],
+    category: 'download',
+    icon: 'search',
+    desc: 'Indexer Aggregator & Proxy'
+  }
 ];
 
 // Helper to fetch with multiple candidate URLs
@@ -258,12 +347,9 @@ function savePriorityState() {
 }
 
 async function callQbit(endpoint, params = {}, method = 'POST') {
-  const qbitHosts = [
-    'http://alpha-prod-gluetun:8080',
-    'http://127.0.0.1:8081'
-  ];
+  const qbitHosts = ['http://alpha-prod-gluetun:8080', 'http://127.0.0.1:8081'];
   const urlParams = new URLSearchParams(params).toString();
-  const urls = qbitHosts.map(h => `${h}/api/v2/${endpoint}${urlParams ? '?' + urlParams : ''}`);
+  const urls = qbitHosts.map((h) => `${h}/api/v2/${endpoint}${urlParams ? '?' + urlParams : ''}`);
   const ctrl = new AbortController();
   const tId = setTimeout(() => ctrl.abort(), 4000);
   try {
@@ -278,7 +364,9 @@ async function callQbit(endpoint, params = {}, method = 'POST') {
 
 async function autoResumePriority(reason = 'completion') {
   if (!priorityState.active) return { success: true };
-  console.log(`[PRIORITY] Auto-resuming background downloads (Reason: ${reason}) for '${priorityState.title}'`);
+  console.log(
+    `[PRIORITY] Auto-resuming background downloads (Reason: ${reason}) for '${priorityState.title}'`
+  );
 
   const { pausedBySystemHashes, targetHashes } = priorityState;
 
@@ -286,7 +374,9 @@ async function autoResumePriority(reason = 'completion') {
   if (pausedBySystemHashes && pausedBySystemHashes.length > 0) {
     try {
       await callQbit('torrents/resume', { hashes: pausedBySystemHashes.join('|') });
-      console.log(`[PRIORITY] Successfully resumed ${pausedBySystemHashes.length} background torrent(s)`);
+      console.log(
+        `[PRIORITY] Successfully resumed ${pausedBySystemHashes.length} background torrent(s)`
+      );
     } catch (err) {
       console.error('[PRIORITY] Error resuming background torrents:', err.message);
     }
@@ -321,10 +411,13 @@ setInterval(async () => {
   try {
     const ctrl = new AbortController();
     const tId = setTimeout(() => ctrl.abort(), 3000);
-    const qRes = await fetchCandidate([
-      'http://alpha-prod-gluetun:8080/api/v2/torrents/info?filter=all',
-      'http://127.0.0.1:8081/api/v2/torrents/info?filter=all'
-    ], { signal: ctrl.signal });
+    const qRes = await fetchCandidate(
+      [
+        'http://alpha-prod-gluetun:8080/api/v2/torrents/info?filter=all',
+        'http://127.0.0.1:8081/api/v2/torrents/info?filter=all'
+      ],
+      { signal: ctrl.signal }
+    );
     clearTimeout(tId);
     if (!qRes.ok) return;
     const allTorrents = await qRes.json();
@@ -332,27 +425,37 @@ setInterval(async () => {
     // Swarm Watcher: if waiting for target torrent to be pushed to qBit
     if (priorityState.targetHashes.length === 0 && priorityState.title) {
       const cTitle = cleanTitle(priorityState.title);
-      const matches = allTorrents.filter(t => cleanTitle(t.name).includes(cTitle));
+      const matches = allTorrents.filter((t) => cleanTitle(t.name).includes(cTitle));
       if (matches.length > 0) {
-        const newHashes = matches.map(t => t.hash.toLowerCase());
+        const newHashes = matches.map((t) => t.hash.toLowerCase());
         priorityState.targetHashes = newHashes;
         await callQbit('torrents/topPrio', { hashes: newHashes.join('|') });
         await callQbit('torrents/setForceStart', { hashes: newHashes.join('|'), value: 'true' });
         await callQbit('torrents/setDownloadLimit', { hashes: newHashes.join('|'), limit: '0' });
         await callQbit('torrents/resume', { hashes: newHashes.join('|') });
         savePriorityState();
-        console.log(`[PRIORITY] Detected newly queued torrent for '${priorityState.title}'. Turbo mode applied.`);
+        console.log(
+          `[PRIORITY] Detected newly queued torrent for '${priorityState.title}'. Turbo mode applied.`
+        );
       }
     }
 
     // Completion Check: all target torrents complete
     if (priorityState.targetHashes.length > 0) {
-      const targets = allTorrents.filter(t => priorityState.targetHashes.includes(t.hash.toLowerCase()));
-      const allDone = targets.length > 0 && targets.every(t =>
-        (t.progress >= 1.0) || ['uploading', 'stalledUP', 'pausedUP', 'completed'].includes(t.state)
+      const targets = allTorrents.filter((t) =>
+        priorityState.targetHashes.includes(t.hash.toLowerCase())
       );
+      const allDone =
+        targets.length > 0 &&
+        targets.every(
+          (t) =>
+            t.progress >= 1.0 ||
+            ['uploading', 'stalledUP', 'pausedUP', 'completed'].includes(t.state)
+        );
       if (allDone) {
-        console.log(`[PRIORITY] Reconciler verified download completion for '${priorityState.title}'.`);
+        console.log(
+          `[PRIORITY] Reconciler verified download completion for '${priorityState.title}'.`
+        );
         await autoResumePriority('reconciler_completion_detected');
       }
     }
@@ -470,7 +573,7 @@ setInterval(() => runPings().catch(() => {}), 10000);
 class MetricsStore {
   constructor() {
     this.shortBuffer = []; // 360 points (10s intervals = 1 hour)
-    this.longBuffer = [];  // 1440 points (60s intervals = 24 hours)
+    this.longBuffer = []; // 1440 points (60s intervals = 24 hours)
     this.sampleCounter = 0;
     this.seedHistoricalData();
   }
@@ -481,16 +584,22 @@ class MetricsStore {
     let currentFreeGB = 461;
     try {
       const stats = fs.statfsSync(alphaMount);
-      currentFreeGB = +(stats.bavail * stats.bsize / (1024 * 1024 * 1024)).toFixed(1);
+      currentFreeGB = +((stats.bavail * stats.bsize) / (1024 * 1024 * 1024)).toFixed(1);
     } catch (_) {}
 
     // Pre-populate 1440 1-minute historical buckets backwards from now
     // Provides immediate, beautiful, diurnal observability curves without waiting 24 hours
     for (let i = 1440; i > 0; i--) {
-      const t = now - (i * 60);
+      const t = now - i * 60;
       const hour = new Date(t * 1000).getHours();
       const isEveningPeak = hour >= 18 && hour <= 23;
-      const baseStreams = isEveningPeak ? (hour % 2 === 0 ? 1 : 2) : (hour >= 12 && hour <= 14 ? 1 : 0);
+      const baseStreams = isEveningPeak
+        ? hour % 2 === 0
+          ? 1
+          : 2
+        : hour >= 12 && hour <= 14
+          ? 1
+          : 0;
       const baseDl = isEveningPeak ? 1200000 : 35000;
       const baseUl = isEveningPeak ? 90000 : 12000;
       const jitter = Math.sin(i / 18) * 0.25;
@@ -506,13 +615,13 @@ class MetricsStore {
         down: 0,
         downList: [],
         vpnLatency: Math.max(10, Math.round(15 + Math.cos(i / 15) * 2)),
-        freeGB: +(currentFreeGB + (i * 0.0015)).toFixed(2)
+        freeGB: +(currentFreeGB + i * 0.0015).toFixed(2)
       });
     }
 
     // Pre-populate 360 10-second high-resolution buckets backwards
     for (let i = 360; i > 0; i--) {
-      const t = now - (i * 10);
+      const t = now - i * 10;
       const ref = this.longBuffer[this.longBuffer.length - 1];
       this.shortBuffer.push({
         t: t,
@@ -535,14 +644,19 @@ class MetricsStore {
     const t = Math.floor(Date.now() / 1000);
 
     // 1. qBittorrent Speeds & Active Torrents
-    let dlSpeed = 0, ulSpeed = 0, torrentCount = 0;
+    let dlSpeed = 0,
+      ulSpeed = 0,
+      torrentCount = 0;
     try {
       const ctrl = new AbortController();
       const tId = setTimeout(() => ctrl.abort(), 1200);
-      const trRes = await fetchCandidate([
-        'http://alpha-prod-gluetun:8080/api/v2/transfer/info',
-        'http://127.0.0.1:8081/api/v2/transfer/info'
-      ], { signal: ctrl.signal });
+      const trRes = await fetchCandidate(
+        [
+          'http://alpha-prod-gluetun:8080/api/v2/transfer/info',
+          'http://127.0.0.1:8081/api/v2/transfer/info'
+        ],
+        { signal: ctrl.signal }
+      );
       clearTimeout(tId);
       if (trRes.ok) {
         const trData = await trRes.json();
@@ -554,10 +668,13 @@ class MetricsStore {
     try {
       const ctrl = new AbortController();
       const tId = setTimeout(() => ctrl.abort(), 1200);
-      const torRes = await fetchCandidate([
-        'http://alpha-prod-gluetun:8080/api/v2/torrents/info?filter=all',
-        'http://127.0.0.1:8081/api/v2/torrents/info?filter=all'
-      ], { signal: ctrl.signal });
+      const torRes = await fetchCandidate(
+        [
+          'http://alpha-prod-gluetun:8080/api/v2/torrents/info?filter=all',
+          'http://127.0.0.1:8081/api/v2/torrents/info?filter=all'
+        ],
+        { signal: ctrl.signal }
+      );
       clearTimeout(tId);
       if (torRes.ok) {
         const tors = await torRes.json();
@@ -566,30 +683,33 @@ class MetricsStore {
     } catch (_) {}
 
     // 2. Jellyfin Active Playback Sessions & Users
-    let jfStreams = 0, jfUsers = 0;
+    let jfStreams = 0,
+      jfUsers = 0;
     try {
       const ctrl = new AbortController();
       const tId = setTimeout(() => ctrl.abort(), 1200);
       const jfRes = await fetch('http://127.0.0.1:8096/Sessions', {
-        headers: { 'Authorization': `MediaBrowser Token="${JELLYFIN_API_KEY}"` },
+        headers: { Authorization: `MediaBrowser Token="${JELLYFIN_API_KEY}"` },
         signal: ctrl.signal
       });
       clearTimeout(tId);
       if (jfRes.ok) {
         const sessions = await jfRes.json();
         if (Array.isArray(sessions)) {
-          jfUsers = new Set(sessions.map(s => s.UserId).filter(Boolean)).size;
+          jfUsers = new Set(sessions.map((s) => s.UserId).filter(Boolean)).size;
           // Active streaming: sessions with active playback item
-          jfStreams = sessions.filter(s => s.NowPlayingItem).length;
+          jfStreams = sessions.filter((s) => s.NowPlayingItem).length;
         }
       }
     } catch (_) {}
 
     // 3. Service Latency & Down Count from latestPings
-    let avgLatency = 0, downCount = 0;
+    let avgLatency = 0,
+      downCount = 0;
     const downList = [];
     if (latestPings && latestPings.length > 0) {
-      let sum = 0, count = 0;
+      let sum = 0,
+        count = 0;
       for (const p of latestPings) {
         if (p.status === 'down') {
           downCount++;
@@ -604,7 +724,7 @@ class MetricsStore {
 
     // 4. VPN Latency
     let vpnLatency = 16;
-    const vpnSvc = (latestPings || []).find(p => p.id === 'gluetun' || p.id === 'vpn-switcher');
+    const vpnSvc = (latestPings || []).find((p) => p.id === 'gluetun' || p.id === 'vpn-switcher');
     if (vpnSvc && vpnSvc.latencyMs) {
       vpnLatency = vpnSvc.latencyMs;
     }
@@ -613,7 +733,7 @@ class MetricsStore {
     let freeGB = 461;
     try {
       const stats = fs.statfsSync(getAlphaPath());
-      freeGB = +(stats.bavail * stats.bsize / (1024 * 1024 * 1024)).toFixed(2);
+      freeGB = +((stats.bavail * stats.bsize) / (1024 * 1024 * 1024)).toFixed(2);
     } catch (_) {}
 
     const point = {
@@ -642,11 +762,11 @@ class MetricsStore {
         dl: Math.round(recent.reduce((a, b) => a + b.dl, 0) / recent.length),
         ul: Math.round(recent.reduce((a, b) => a + b.ul, 0) / recent.length),
         torrents: Math.round(recent.reduce((a, b) => a + b.torrents, 0) / recent.length),
-        streams: Math.max(...recent.map(b => b.streams)),
-        users: Math.max(...recent.map(b => b.users)),
+        streams: Math.max(...recent.map((b) => b.streams)),
+        users: Math.max(...recent.map((b) => b.users)),
         latency: Math.round(recent.reduce((a, b) => a + b.latency, 0) / recent.length),
-        down: Math.max(...recent.map(b => b.down)),
-        downList: recent.flatMap(b => b.downList),
+        down: Math.max(...recent.map((b) => b.down)),
+        downList: recent.flatMap((b) => b.downList),
         vpnLatency: Math.round(recent.reduce((a, b) => a + b.vpnLatency, 0) / recent.length),
         freeGB: freeGB
       };
@@ -705,9 +825,10 @@ class MetricsStore {
     }
 
     const avgLatency = dataset.length > 0 ? Math.round(latencySum / dataset.length) : 0;
-    const uptimePercent = dataset.length > 0
-      ? +(((dataset.length - downtimeMinutes) / dataset.length) * 100).toFixed(2)
-      : 100;
+    const uptimePercent =
+      dataset.length > 0
+        ? +(((dataset.length - downtimeMinutes) / dataset.length) * 100).toFixed(2)
+        : 100;
 
     return {
       range: range,
@@ -741,6 +862,22 @@ const MIME_TYPES = {
   '.png': 'image/png',
   '.ico': 'image/x-icon'
 };
+
+const TMDB_PROXY_PATH_RE =
+  /^(discover\/movie|search\/(movie|tv|multi)|(movie|tv)\/\d+(\/videos)?)$/;
+const TMDB_PROXY_ALLOWED_PARAMS = [
+  'sort_by',
+  'vote_count.gte',
+  'vote_average.gte',
+  'page',
+  'append_to_response',
+  'include_video_language',
+  'query',
+  'year',
+  'first_air_date_year',
+  'language',
+  'include_adult'
+];
 
 function sendJSON(res, statusCode, data) {
   res.writeHead(statusCode, {
@@ -821,8 +958,8 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, resp.statusCode, { error: resp.body });
       }
       const rawList = JSON.parse(resp.body);
-      const containers = rawList.map(c => {
-        const name = (c.Names && c.Names[0]) ? c.Names[0].replace(/^\//, '') : 'unknown';
+      const containers = rawList.map((c) => {
+        const name = c.Names && c.Names[0] ? c.Names[0].replace(/^\//, '') : 'unknown';
         return {
           id: c.Id.slice(0, 12),
           name: name,
@@ -842,7 +979,7 @@ const server = http.createServer(async (req, res) => {
   // --- API: Container Restart ---
   if (pathname === '/api/containers/restart' && req.method === 'POST') {
     let bodyData = '';
-    req.on('data', c => bodyData += c);
+    req.on('data', (c) => (bodyData += c));
     req.on('end', async () => {
       try {
         const payload = JSON.parse(bodyData || '{}');
@@ -850,9 +987,15 @@ const server = http.createServer(async (req, res) => {
         if (!containerName) {
           return sendJSON(res, 400, { error: 'Missing container name' });
         }
-        const resp = await requestPodman(`/v1.41/containers/${encodeURIComponent(containerName)}/restart?t=5`, 'POST');
+        const resp = await requestPodman(
+          `/v1.41/containers/${encodeURIComponent(containerName)}/restart?t=5`,
+          'POST'
+        );
         if (resp.statusCode >= 200 && resp.statusCode < 300) {
-          return sendJSON(res, 200, { success: true, message: `Container ${containerName} restarted successfully` });
+          return sendJSON(res, 200, {
+            success: true,
+            message: `Container ${containerName} restarted successfully`
+          });
         }
         return sendJSON(res, resp.statusCode, { error: resp.body });
       } catch (err) {
@@ -887,14 +1030,23 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/downloads' && req.method === 'GET') {
     try {
       // 1. Fetch qBittorrent transfer info
-      let transfer = { dl_info_speed: 0, up_info_speed: 0, dl_info_data: 0, up_info_data: 0, connection_status: 'unknown' };
+      let transfer = {
+        dl_info_speed: 0,
+        up_info_speed: 0,
+        dl_info_data: 0,
+        up_info_data: 0,
+        connection_status: 'unknown'
+      };
       try {
         const ctrl = new AbortController();
         const tId = setTimeout(() => ctrl.abort(), 2000);
-        const trRes = await fetchCandidate([
-          'http://alpha-prod-gluetun:8080/api/v2/transfer/info',
-          'http://127.0.0.1:8081/api/v2/transfer/info'
-        ], { signal: ctrl.signal });
+        const trRes = await fetchCandidate(
+          [
+            'http://alpha-prod-gluetun:8080/api/v2/transfer/info',
+            'http://127.0.0.1:8081/api/v2/transfer/info'
+          ],
+          { signal: ctrl.signal }
+        );
         clearTimeout(tId);
         if (trRes.ok) transfer = await trRes.json();
       } catch (_) {}
@@ -904,14 +1056,17 @@ const server = http.createServer(async (req, res) => {
       try {
         const ctrl = new AbortController();
         const tId = setTimeout(() => ctrl.abort(), 2000);
-        const torRes = await fetchCandidate([
-          'http://alpha-prod-gluetun:8080/api/v2/torrents/info?filter=all',
-          'http://127.0.0.1:8081/api/v2/torrents/info?filter=all'
-        ], { signal: ctrl.signal });
+        const torRes = await fetchCandidate(
+          [
+            'http://alpha-prod-gluetun:8080/api/v2/torrents/info?filter=all',
+            'http://127.0.0.1:8081/api/v2/torrents/info?filter=all'
+          ],
+          { signal: ctrl.signal }
+        );
         clearTimeout(tId);
         if (torRes.ok) {
           const rawTorrents = await torRes.json();
-          torrents = rawTorrents.map(t => ({
+          torrents = rawTorrents.map((t) => ({
             hash: t.hash,
             name: t.name,
             size: t.size,
@@ -940,7 +1095,7 @@ const server = http.createServer(async (req, res) => {
         clearTimeout(tId);
         if (sRes.ok) {
           const sData = await sRes.json();
-          seerrRequests = (sData.results || []).map(r => ({
+          seerrRequests = (sData.results || []).map((r) => ({
             id: r.id,
             type: r.type,
             status: r.status, // 2=Pending, 3=Processing, 4=Approved, 5=Available
@@ -973,15 +1128,16 @@ const server = http.createServer(async (req, res) => {
   // --- API: Torrent Action (Pause / Resume) ---
   if (pathname === '/api/downloads/action' && req.method === 'POST') {
     let bodyData = '';
-    req.on('data', c => bodyData += c);
+    req.on('data', (c) => (bodyData += c));
     req.on('end', async () => {
       try {
         const { action, hash } = JSON.parse(bodyData || '{}');
         if (!action || !hash) {
           return sendJSON(res, 400, { error: 'Missing action or torrent hash' });
         }
-        const endpoint = action === 'pause' ? 'pause' : (action === 'resume' ? 'resume' : null);
-        if (!endpoint) return sendJSON(res, 400, { error: 'Invalid action. Supported: pause, resume' });
+        const endpoint = action === 'pause' ? 'pause' : action === 'resume' ? 'resume' : null;
+        if (!endpoint)
+          return sendJSON(res, 400, { error: 'Invalid action. Supported: pause, resume' });
 
         const candidates = [
           `http://alpha-prod-gluetun:8080/api/v2/torrents/${endpoint}?hashes=${encodeURIComponent(hash)}`,
@@ -1009,58 +1165,78 @@ const server = http.createServer(async (req, res) => {
           try {
             const ctrl = new AbortController();
             const tId = setTimeout(() => ctrl.abort(), 3500);
-            const res = await fetchCandidate([
-              'http://127.0.0.1:5055/api/v1/request?take=50',
-              'http://alpha-prod-seerr:5055/api/v1/request?take=50'
-            ], {
-              headers: { 'X-Api-Key': seerrKey },
-              signal: ctrl.signal
-            });
+            const res = await fetchCandidate(
+              [
+                'http://127.0.0.1:5055/api/v1/request?take=50',
+                'http://alpha-prod-seerr:5055/api/v1/request?take=50'
+              ],
+              {
+                headers: { 'X-Api-Key': seerrKey },
+                signal: ctrl.signal
+              }
+            );
             clearTimeout(tId);
             return res.ok ? await res.json() : { results: [] };
-          } catch (_) { return { results: [] }; }
+          } catch (_) {
+            return { results: [] };
+          }
         })(),
         (async () => {
           try {
             const ctrl = new AbortController();
             const tId = setTimeout(() => ctrl.abort(), 2500);
-            const res = await fetchCandidate([
-              'http://alpha-prod-gluetun:8080/api/v2/torrents/info?filter=all',
-              'http://127.0.0.1:8081/api/v2/torrents/info?filter=all'
-            ], { signal: ctrl.signal });
+            const res = await fetchCandidate(
+              [
+                'http://alpha-prod-gluetun:8080/api/v2/torrents/info?filter=all',
+                'http://127.0.0.1:8081/api/v2/torrents/info?filter=all'
+              ],
+              { signal: ctrl.signal }
+            );
             clearTimeout(tId);
             return res.ok ? await res.json() : [];
-          } catch (_) { return []; }
+          } catch (_) {
+            return [];
+          }
         })(),
         (async () => {
           try {
             const ctrl = new AbortController();
             const tId = setTimeout(() => ctrl.abort(), 2500);
-            const res = await fetchCandidate([
-              'http://alpha-prod-gluetun:7878/api/v3/queue?includeMovie=true',
-              'http://127.0.0.1:7878/api/v3/queue?includeMovie=true'
-            ], {
-              headers: { 'X-Api-Key': radarrKey },
-              signal: ctrl.signal
-            });
+            const res = await fetchCandidate(
+              [
+                'http://alpha-prod-gluetun:7878/api/v3/queue?includeMovie=true',
+                'http://127.0.0.1:7878/api/v3/queue?includeMovie=true'
+              ],
+              {
+                headers: { 'X-Api-Key': radarrKey },
+                signal: ctrl.signal
+              }
+            );
             clearTimeout(tId);
             return res.ok ? await res.json() : { records: [] };
-          } catch (_) { return { records: [] }; }
+          } catch (_) {
+            return { records: [] };
+          }
         })(),
         (async () => {
           try {
             const ctrl = new AbortController();
             const tId = setTimeout(() => ctrl.abort(), 2500);
-            const res = await fetchCandidate([
-              'http://alpha-prod-gluetun:8989/api/v3/queue?includeSeries=true&includeEpisode=true',
-              'http://127.0.0.1:8989/api/v3/queue?includeSeries=true&includeEpisode=true'
-            ], {
-              headers: { 'X-Api-Key': sonarrKey },
-              signal: ctrl.signal
-            });
+            const res = await fetchCandidate(
+              [
+                'http://alpha-prod-gluetun:8989/api/v3/queue?includeSeries=true&includeEpisode=true',
+                'http://127.0.0.1:8989/api/v3/queue?includeSeries=true&includeEpisode=true'
+              ],
+              {
+                headers: { 'X-Api-Key': sonarrKey },
+                signal: ctrl.signal
+              }
+            );
             clearTimeout(tId);
             return res.ok ? await res.json() : { records: [] };
-          } catch (_) { return { records: [] }; }
+          } catch (_) {
+            return { records: [] };
+          }
         })()
       ]);
 
@@ -1068,7 +1244,9 @@ const server = http.createServer(async (req, res) => {
       const torrents = qRes || [];
       const radarrRecords = rRes.records || [];
       const sonarrRecords = snRes.records || [];
-      console.log(`[REQUESTS API] seerrRequests: ${seerrRequests.length}, torrents: ${torrents.length}, radarr: ${radarrRecords.length}`);
+      console.log(
+        `[REQUESTS API] seerrRequests: ${seerrRequests.length}, torrents: ${torrents.length}, radarr: ${radarrRecords.length}`
+      );
 
       // 2. Correlate requests
       const unifiedList = await Promise.all(
@@ -1080,24 +1258,53 @@ const server = http.createServer(async (req, res) => {
           const cTitle = cleanTitle(title);
 
           // Find matches in Radarr & Sonarr queues
-          const radarrMatch = radarrRecords.filter(rr => rr.movie?.tmdbId === tmdbId);
-          const sonarrMatch = sonarrRecords.filter(sr => (cTitle.length >= 3 && cleanTitle(sr.series?.title).includes(cTitle)) || (sr.series?.tvdbId && sr.series?.tvdbId === req.media?.tvdbId));
+          const radarrMatch = radarrRecords.filter((rr) => rr.movie?.tmdbId === tmdbId);
+          const sonarrMatch = sonarrRecords.filter(
+            (sr) =>
+              (cTitle.length >= 3 && cleanTitle(sr.series?.title).includes(cTitle)) ||
+              (sr.series?.tvdbId && sr.series?.tvdbId === req.media?.tvdbId)
+          );
 
           // Match torrents from qBittorrent
-          const matchingTorrents = torrents.filter(t => {
+          const matchingTorrents = torrents.filter((t) => {
             if (cTitle.length >= 3 && cleanTitle(t.name).includes(cTitle)) return true;
-            if (radarrMatch.some(rr => rr.downloadId && rr.downloadId.toLowerCase() === t.hash.toLowerCase())) return true;
-            if (sonarrMatch.some(sr => sr.downloadId && sr.downloadId.toLowerCase() === t.hash.toLowerCase())) return true;
+            if (
+              radarrMatch.some(
+                (rr) => rr.downloadId && rr.downloadId.toLowerCase() === t.hash.toLowerCase()
+              )
+            )
+              return true;
+            if (
+              sonarrMatch.some(
+                (sr) => sr.downloadId && sr.downloadId.toLowerCase() === t.hash.toLowerCase()
+              )
+            )
+              return true;
             return false;
           });
 
           // Metrics aggregation
-          let totalBytes = 0, downloadedBytes = 0, speed = 0, eta = -1;
+          let totalBytes = 0,
+            downloadedBytes = 0,
+            speed = 0,
+            eta = -1;
           if (matchingTorrents.length > 0) {
-            totalBytes = matchingTorrents.reduce((acc, t) => acc + (t.size > 0 ? t.size : (t.total_size > 0 ? t.total_size : 0)), 0);
-            downloadedBytes = matchingTorrents.reduce((acc, t) => acc + (t.completed || t.downloaded || (t.size > 0 ? Math.round(t.size * (t.progress || 0)) : 0)), 0);
+            totalBytes = matchingTorrents.reduce(
+              (acc, t) => acc + (t.size > 0 ? t.size : t.total_size > 0 ? t.total_size : 0),
+              0
+            );
+            downloadedBytes = matchingTorrents.reduce(
+              (acc, t) =>
+                acc +
+                (t.completed ||
+                  t.downloaded ||
+                  (t.size > 0 ? Math.round(t.size * (t.progress || 0)) : 0)),
+              0
+            );
             speed = matchingTorrents.reduce((acc, t) => acc + (t.dlspeed || 0), 0);
-            const etas = matchingTorrents.map(t => t.eta > 0 && t.eta < 8640000 ? t.eta : -1).filter(e => e > 0);
+            const etas = matchingTorrents
+              .map((t) => (t.eta > 0 && t.eta < 8640000 ? t.eta : -1))
+              .filter((e) => e > 0);
             eta = etas.length > 0 ? Math.max(...etas) : -1;
           }
 
@@ -1108,7 +1315,11 @@ const server = http.createServer(async (req, res) => {
           } else if (totalBytes > 0) {
             progress = Math.min(100, Math.round((downloadedBytes / totalBytes) * 100));
           } else if (matchingTorrents.length > 0) {
-            progress = Math.round((matchingTorrents.reduce((acc, t) => acc + (t.progress || 0), 0) / matchingTorrents.length) * 100);
+            progress = Math.round(
+              (matchingTorrents.reduce((acc, t) => acc + (t.progress || 0), 0) /
+                matchingTorrents.length) *
+                100
+            );
           }
 
           // State determination
@@ -1120,24 +1331,35 @@ const server = http.createServer(async (req, res) => {
             status = 'completed';
             statusLabel = 'Available in Jellyfin';
           } else if (matchingTorrents.length > 0) {
-            if (progress >= 100 || matchingTorrents.every(t => t.progress >= 1 || t.state === 'uploading' || t.state === 'stalledUP')) {
+            if (
+              progress >= 100 ||
+              matchingTorrents.every(
+                (t) => t.progress >= 1 || t.state === 'uploading' || t.state === 'stalledUP'
+              )
+            ) {
               status = 'completed';
               statusLabel = 'Completed';
-            } else if (speed > 0 || matchingTorrents.some(t => t.state === 'downloading')) {
+            } else if (speed > 0 || matchingTorrents.some((t) => t.state === 'downloading')) {
               status = 'downloading';
               statusLabel = 'Downloading';
-            } else if (matchingTorrents.some(t => t.state === 'stalledDL' || (t.state === 'metaDL' && t.num_seeds === 0))) {
+            } else if (
+              matchingTorrents.some(
+                (t) => t.state === 'stalledDL' || (t.state === 'metaDL' && t.num_seeds === 0)
+              )
+            ) {
               status = 'stalled';
               statusLabel = 'Stalled (0 seeds)';
-            } else if (matchingTorrents.some(t => t.state === 'metaDL')) {
+            } else if (matchingTorrents.some((t) => t.state === 'metaDL')) {
               status = 'downloading';
               statusLabel = 'Resolving Metadata';
-            } else if (matchingTorrents.some(t => t.state === 'queuedDL')) {
+            } else if (matchingTorrents.some((t) => t.state === 'queuedDL')) {
               status = 'pending';
               statusLabel = 'Queued in Torrent Client';
             }
           } else if (radarrMatch.length > 0 || sonarrMatch.length > 0) {
-            const hasError = radarrMatch.some(r => r.trackedDownloadStatus === 'error') || sonarrMatch.some(s => s.trackedDownloadStatus === 'error');
+            const hasError =
+              radarrMatch.some((r) => r.trackedDownloadStatus === 'error') ||
+              sonarrMatch.some((s) => s.trackedDownloadStatus === 'error');
             if (hasError) {
               status = 'failed';
               statusLabel = 'Download Error';
@@ -1158,26 +1380,31 @@ const server = http.createServer(async (req, res) => {
 
           // Diagnose failure reason
           if (status === 'stalled') {
-            const isMeta = matchingTorrents.some(t => t.state === 'metaDL');
+            const isMeta = matchingTorrents.some((t) => t.state === 'metaDL');
             if (isMeta) {
               failureReason = {
                 code: 'TRACKER_TIMEOUT',
                 summary: 'Metadata resolution stalled: Trackers unresponsive',
-                details: 'Magnet link could not retrieve torrent metadata. DHT / PEX may be throttled or blocked over current VPN interface.',
-                suggestedFix: 'Switch VPN provider via Switcher tab (e.g. ProtonVPN/AirVPN) or retry search in Radarr.'
+                details:
+                  'Magnet link could not retrieve torrent metadata. DHT / PEX may be throttled or blocked over current VPN interface.',
+                suggestedFix:
+                  'Switch VPN provider via Switcher tab (e.g. ProtonVPN/AirVPN) or retry search in Radarr.'
               };
-            } else if (matchingTorrents.some(t => t.num_seeds === 0)) {
+            } else if (matchingTorrents.some((t) => t.num_seeds === 0)) {
               failureReason = {
                 code: 'NO_SEEDS',
                 summary: 'Swarm stalled at 0 B/s: 0 active seeds in swarm',
-                details: 'No seeders currently possess complete files. In addition, Cloudflare WARP tunnel does not support port forwarding, preventing incoming peer connections.',
-                suggestedFix: 'Switch to a VPN with port forwarding enabled (AirVPN/Proton) or re-index with Quality Orchestrator.'
+                details:
+                  'No seeders currently possess complete files. In addition, Cloudflare WARP tunnel does not support port forwarding, preventing incoming peer connections.',
+                suggestedFix:
+                  'Switch to a VPN with port forwarding enabled (AirVPN/Proton) or re-index with Quality Orchestrator.'
               };
             } else {
               failureReason = {
                 code: 'NO_RELEASES',
                 summary: 'No releases found on any configured indexer',
-                details: 'Prowlarr indexers returned 0 releases matching quality profile requirements over the past 24 hours.',
+                details:
+                  'Prowlarr indexers returned 0 releases matching quality profile requirements over the past 24 hours.',
                 suggestedFix: 'Trigger re-search in Radarr or broaden quality profile constraints.'
               };
             }
@@ -1201,7 +1428,9 @@ const server = http.createServer(async (req, res) => {
             requestedBy: {
               id: req.requestedBy?.id || 1,
               displayName: req.requestedBy?.displayName || 'User',
-              avatarUrl: req.requestedBy?.avatar ? `/avatarproxy${req.requestedBy.avatar.replace(/^\/avatarproxy/, '')}` : ''
+              avatarUrl: req.requestedBy?.avatar
+                ? `/avatarproxy${req.requestedBy.avatar.replace(/^\/avatarproxy/, '')}`
+                : ''
             },
             requestedAt: req.createdAt,
             relativeTime: formatRelativeTime(req.createdAt),
@@ -1209,11 +1438,10 @@ const server = http.createServer(async (req, res) => {
             status: status,
             statusLabel: statusLabel,
             isPrioritized: Boolean(
-              priorityState.active && (
-                priorityState.requestId === req.id ||
+              priorityState.active &&
+              (priorityState.requestId === req.id ||
                 (req.media && priorityState.tmdbId === req.media.tmdbId) ||
-                cleanTitle(title) === cleanTitle(priorityState.title)
-              )
+                cleanTitle(title) === cleanTitle(priorityState.title))
             ),
             progress: progress,
             downloadedBytes: downloadedBytes,
@@ -1222,11 +1450,11 @@ const server = http.createServer(async (req, res) => {
             etaSeconds: eta,
             failureReason: failureReason,
             torrentsCount: matchingTorrents.length,
-            torrents: matchingTorrents.map(t => ({
+            torrents: matchingTorrents.map((t) => ({
               hash: t.hash,
               name: t.name,
               progress: Math.round((t.progress || 0) * 100),
-              size: t.size > 0 ? t.size : (t.total_size > 0 ? t.total_size : 0),
+              size: t.size > 0 ? t.size : t.total_size > 0 ? t.total_size : 0,
               dlspeed: t.dlspeed || 0,
               state: t.state,
               seeds: t.num_seeds || 0,
@@ -1245,7 +1473,7 @@ const server = http.createServer(async (req, res) => {
   // --- API: Request Retry Action ---
   if (pathname === '/api/requests/retry' && req.method === 'POST') {
     let bodyData = '';
-    req.on('data', c => bodyData += c);
+    req.on('data', (c) => (bodyData += c));
     req.on('end', async () => {
       try {
         const { id, tmdbId, type } = JSON.parse(bodyData || '{}');
@@ -1256,23 +1484,29 @@ const server = http.createServer(async (req, res) => {
           try {
             const ctrl = new AbortController();
             const tId = setTimeout(() => ctrl.abort(), 3000);
-            const mRes = await fetchCandidate([
-              `http://alpha-prod-gluetun:7878/api/v3/movie?tmdbId=${encodeURIComponent(tmdbId)}`,
-              `http://127.0.0.1:7878/api/v3/movie?tmdbId=${encodeURIComponent(tmdbId)}`
-            ], { headers: { 'X-Api-Key': radarrKey }, signal: ctrl.signal });
+            const mRes = await fetchCandidate(
+              [
+                `http://alpha-prod-gluetun:7878/api/v3/movie?tmdbId=${encodeURIComponent(tmdbId)}`,
+                `http://127.0.0.1:7878/api/v3/movie?tmdbId=${encodeURIComponent(tmdbId)}`
+              ],
+              { headers: { 'X-Api-Key': radarrKey }, signal: ctrl.signal }
+            );
             clearTimeout(tId);
             if (mRes.ok) {
               const movies = await mRes.json();
               const movie = Array.isArray(movies) ? movies[0] : movies;
               if (movie && movie.id) {
-                await fetchCandidate([
-                  'http://alpha-prod-gluetun:7878/api/v3/command',
-                  'http://127.0.0.1:7878/api/v3/command'
-                ], {
-                  method: 'POST',
-                  headers: { 'X-Api-Key': radarrKey, 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ name: 'MoviesSearch', movieIds: [movie.id] })
-                });
+                await fetchCandidate(
+                  [
+                    'http://alpha-prod-gluetun:7878/api/v3/command',
+                    'http://127.0.0.1:7878/api/v3/command'
+                  ],
+                  {
+                    method: 'POST',
+                    headers: { 'X-Api-Key': radarrKey, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: 'MoviesSearch', movieIds: [movie.id] })
+                  }
+                );
                 triggered = true;
               }
             }
@@ -1281,17 +1515,24 @@ const server = http.createServer(async (req, res) => {
 
         // Also notify Quality Orchestrator retry if present
         try {
-          await fetchCandidate([
-            `http://alpha-prod-quality-orchestrator:8002/retry/${encodeURIComponent(id)}?tier=max`,
-            `http://127.0.0.1:8002/retry/${encodeURIComponent(id)}?tier=max`
-          ], {
-            method: 'POST',
-            headers: { 'X-Api-Key': SWITCHER_API_KEY }
-          });
+          await fetchCandidate(
+            [
+              `http://alpha-prod-quality-orchestrator:8002/retry/${encodeURIComponent(id)}?tier=max`,
+              `http://127.0.0.1:8002/retry/${encodeURIComponent(id)}?tier=max`
+            ],
+            {
+              method: 'POST',
+              headers: { 'X-Api-Key': SWITCHER_API_KEY }
+            }
+          );
           triggered = true;
         } catch (_) {}
 
-        return sendJSON(res, 200, { success: true, triggered, message: 'Re-search commanded for media' });
+        return sendJSON(res, 200, {
+          success: true,
+          triggered,
+          message: 'Re-search commanded for media'
+        });
       } catch (err) {
         return sendJSON(res, 500, { error: err.message });
       }
@@ -1312,10 +1553,13 @@ const server = http.createServer(async (req, res) => {
       const seerrKey = SEERR_API_KEY;
       let targetReq = null;
       try {
-        const sRes = await fetchCandidate([
-          `http://127.0.0.1:5055/api/v1/request/${reqId}`,
-          `http://alpha-prod-seerr:5055/api/v1/request/${reqId}`
-        ], { headers: { 'X-Api-Key': seerrKey } });
+        const sRes = await fetchCandidate(
+          [
+            `http://127.0.0.1:5055/api/v1/request/${reqId}`,
+            `http://alpha-prod-seerr:5055/api/v1/request/${reqId}`
+          ],
+          { headers: { 'X-Api-Key': seerrKey } }
+        );
         if (sRes.ok) targetReq = await sRes.json();
       } catch (_) {}
 
@@ -1335,17 +1579,17 @@ const server = http.createServer(async (req, res) => {
       let targetTorrents = [];
       if (targetTitle) {
         const cTarget = cleanTitle(targetTitle);
-        targetTorrents = allTorrents.filter(t => cleanTitle(t.name).includes(cTarget));
+        targetTorrents = allTorrents.filter((t) => cleanTitle(t.name).includes(cTarget));
       }
 
-      const targetHashes = targetTorrents.map(t => t.hash.toLowerCase());
+      const targetHashes = targetTorrents.map((t) => t.hash.toLowerCase());
 
-      const competing = allTorrents.filter(t => {
+      const competing = allTorrents.filter((t) => {
         const h = t.hash.toLowerCase();
         if (targetHashes.includes(h)) return false;
         return ['downloading', 'stalledDL', 'queuedDL', 'metaDL', 'forcedDL'].includes(t.state);
       });
-      const competingHashes = competing.map(t => t.hash);
+      const competingHashes = competing.map((t) => t.hash);
 
       if (competingHashes.length > 0) {
         await callQbit('torrents/pause', { hashes: competingHashes.join('|') });
@@ -1371,7 +1615,9 @@ const server = http.createServer(async (req, res) => {
       };
       savePriorityState();
 
-      console.log(`[PRIORITY] Turbo mode activated for '${priorityState.title}'. Paused ${competingHashes.length} background torrent(s).`);
+      console.log(
+        `[PRIORITY] Turbo mode activated for '${priorityState.title}'. Paused ${competingHashes.length} background torrent(s).`
+      );
 
       return sendJSON(res, 200, {
         success: true,
@@ -1416,7 +1662,7 @@ const server = http.createServer(async (req, res) => {
   // --- API: Gatekeeper Sanitization Ingestion Hook ---
   if (pathname === '/api/downloads/gatekeeper-complete' && req.method === 'POST') {
     let bodyData = '';
-    req.on('data', c => bodyData += c);
+    req.on('data', (c) => (bodyData += c));
     req.on('end', async () => {
       try {
         const { file } = JSON.parse(bodyData || '{}');
@@ -1468,7 +1714,7 @@ const server = http.createServer(async (req, res) => {
   // --- API: Media Request (Direct Seerr Profile Dispatch) ---
   if (pathname === '/api/media/request' && req.method === 'POST') {
     let bodyData = '';
-    req.on('data', c => bodyData += c);
+    req.on('data', (c) => (bodyData += c));
     req.on('end', async () => {
       try {
         const { tmdbId, mediaType, tier, title, year } = JSON.parse(bodyData || '{}');
@@ -1495,18 +1741,18 @@ const server = http.createServer(async (req, res) => {
 
         const ctrl = new AbortController();
         const tId = setTimeout(() => ctrl.abort(), 6000);
-        const sRes = await fetchCandidate([
-          'http://127.0.0.1:5055/api/v1/request',
-          'http://alpha-prod-seerr:5055/api/v1/request'
-        ], {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Api-Key': seerrKey
-          },
-          body: JSON.stringify(payload),
-          signal: ctrl.signal
-        });
+        const sRes = await fetchCandidate(
+          ['http://127.0.0.1:5055/api/v1/request', 'http://alpha-prod-seerr:5055/api/v1/request'],
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': seerrKey
+            },
+            body: JSON.stringify(payload),
+            signal: ctrl.signal
+          }
+        );
         clearTimeout(tId);
 
         if (sRes.ok) {
@@ -1544,17 +1790,22 @@ const server = http.createServer(async (req, res) => {
       const tId = setTimeout(() => ctrl.abort(), 5000);
 
       const pUrl = `http://alpha-prod-gluetun:9696/api/v1/search?query=${encodeURIComponent(searchTerm)}&indexerIds=2&indexerIds=5&indexerIds=1&type=search`;
-      const pRes = await fetchCandidate([
-        pUrl,
-        `http://127.0.0.1:9696/api/v1/search?query=${encodeURIComponent(searchTerm)}&indexerIds=2&indexerIds=5&indexerIds=1&type=search`
-      ], {
-        headers: { 'X-Api-Key': prowlarrKey },
-        signal: ctrl.signal
-      });
+      const pRes = await fetchCandidate(
+        [
+          pUrl,
+          `http://127.0.0.1:9696/api/v1/search?query=${encodeURIComponent(searchTerm)}&indexerIds=2&indexerIds=5&indexerIds=1&type=search`
+        ],
+        {
+          headers: { 'X-Api-Key': prowlarrKey },
+          signal: ctrl.signal
+        }
+      );
       clearTimeout(tId);
 
       if (!pRes.ok) {
-        return sendJSON(res, pRes.status, { error: 'Prowlarr search returned HTTP ' + pRes.status });
+        return sendJSON(res, pRes.status, {
+          error: 'Prowlarr search returned HTTP ' + pRes.status
+        });
       }
 
       const rawReleases = await pRes.json();
@@ -1563,7 +1814,7 @@ const server = http.createServer(async (req, res) => {
       const seen = new Set();
       const parsed = [];
 
-      for (const rel of (rawReleases || [])) {
+      for (const rel of rawReleases || []) {
         if (!rel.title || !rel.downloadUrl) continue;
         const infoHash = (rel.infoHash || rel.title).toLowerCase();
         if (seen.has(infoHash)) continue;
@@ -1601,10 +1852,12 @@ const server = http.createServer(async (req, res) => {
   // --- API: Advanced Grab Release (Direct Ingestion) ---
   if (pathname === '/api/media/releases/grab' && req.method === 'POST') {
     let bodyData = '';
-    req.on('data', c => bodyData += c);
+    req.on('data', (c) => (bodyData += c));
     req.on('end', async () => {
       try {
-        const { tmdbId, title, year, downloadUrl, releaseTitle, guid, indexerId } = JSON.parse(bodyData || '{}');
+        const { tmdbId, title, year, downloadUrl, releaseTitle, guid, indexerId } = JSON.parse(
+          bodyData || '{}'
+        );
         if (!downloadUrl) return sendJSON(res, 400, { error: 'Missing downloadUrl' });
 
         const radarrKey = RADARR_API_KEY;
@@ -1612,30 +1865,36 @@ const server = http.createServer(async (req, res) => {
         // 1. Ensure movie exists in Radarr
         if (tmdbId) {
           try {
-            const mRes = await fetchCandidate([
-              `http://alpha-prod-gluetun:7878/api/v3/movie?tmdbId=${encodeURIComponent(tmdbId)}`,
-              `http://127.0.0.1:7878/api/v3/movie?tmdbId=${encodeURIComponent(tmdbId)}`
-            ], { headers: { 'X-Api-Key': radarrKey } });
+            const mRes = await fetchCandidate(
+              [
+                `http://alpha-prod-gluetun:7878/api/v3/movie?tmdbId=${encodeURIComponent(tmdbId)}`,
+                `http://127.0.0.1:7878/api/v3/movie?tmdbId=${encodeURIComponent(tmdbId)}`
+              ],
+              { headers: { 'X-Api-Key': radarrKey } }
+            );
             const movies = mRes.ok ? await mRes.json() : [];
             const exists = Array.isArray(movies) && movies.length > 0;
 
             if (!exists) {
-              await fetchCandidate([
-                'http://alpha-prod-gluetun:7878/api/v3/movie',
-                'http://127.0.0.1:7878/api/v3/movie'
-              ], {
-                method: 'POST',
-                headers: { 'X-Api-Key': radarrKey, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  title: title || 'Movie',
-                  tmdbId: parseInt(tmdbId, 10),
-                  year: parseInt(year || '0', 10),
-                  qualityProfileId: 7,
-                  rootFolderPath: '/data/seerr/media/download/completed/Movies',
-                  monitored: true,
-                  addOptions: { searchForMovie: false }
-                })
-              });
+              await fetchCandidate(
+                [
+                  'http://alpha-prod-gluetun:7878/api/v3/movie',
+                  'http://127.0.0.1:7878/api/v3/movie'
+                ],
+                {
+                  method: 'POST',
+                  headers: { 'X-Api-Key': radarrKey, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    title: title || 'Movie',
+                    tmdbId: parseInt(tmdbId, 10),
+                    year: parseInt(year || '0', 10),
+                    qualityProfileId: 7,
+                    rootFolderPath: '/data/seerr/media/download/completed/Movies',
+                    monitored: true,
+                    addOptions: { searchForMovie: false }
+                  })
+                }
+              );
             }
           } catch (_) {}
         }
@@ -1665,12 +1924,14 @@ const server = http.createServer(async (req, res) => {
       let containerNames = [];
       if (resp.statusCode < 400) {
         const list = JSON.parse(resp.body);
-        containerNames = list.map(c => (c.Names && c.Names[0]) ? c.Names[0].replace(/^\//, '') : null).filter(Boolean);
+        containerNames = list
+          .map((c) => (c.Names && c.Names[0] ? c.Names[0].replace(/^\//, '') : null))
+          .filter(Boolean);
       }
       const logsDir = getLogsDir();
       let fileLogs = [];
       if (logsDir && fs.existsSync(logsDir)) {
-        fileLogs = fs.readdirSync(logsDir).filter(f => f.endsWith('.log'));
+        fileLogs = fs.readdirSync(logsDir).filter((f) => f.endsWith('.log'));
       }
       return sendJSON(res, 200, { containers: containerNames, fileLogs });
     } catch (err) {
@@ -1698,10 +1959,12 @@ const server = http.createServer(async (req, res) => {
           const content = fs.readFileSync(filePath, 'utf8');
           const allLines = content.split('\n');
           const sliced = allLines.slice(-tail);
-          rawLines = sliced.map(t => ({ stream: 'stdout', text: t }));
+          rawLines = sliced.map((t) => ({ stream: 'stdout', text: t }));
         }
       } else {
-        const resp = await requestPodman(`/v1.41/containers/${encodeURIComponent(container)}/logs?stdout=1&stderr=1&tail=${tail}`);
+        const resp = await requestPodman(
+          `/v1.41/containers/${encodeURIComponent(container)}/logs?stdout=1&stderr=1&tail=${tail}`
+        );
         rawLines = demuxDockerLogs(resp.rawBuffer);
       }
 
@@ -1727,9 +1990,9 @@ const server = http.createServer(async (req, res) => {
 
       let filtered = parsed;
       if (filter === 'error') {
-        filtered = parsed.filter(l => l.level === 'error');
+        filtered = parsed.filter((l) => l.level === 'error');
       } else if (filter === 'warn') {
-        filtered = parsed.filter(l => l.level === 'warn' || l.level === 'error');
+        filtered = parsed.filter((l) => l.level === 'warn' || l.level === 'error');
       }
 
       return sendJSON(res, 200, {
@@ -1748,13 +2011,16 @@ const server = http.createServer(async (req, res) => {
     try {
       const ctrl = new AbortController();
       const tId = setTimeout(() => ctrl.abort(), 2000);
-      const vRes = await fetchCandidate([
-        'http://alpha-prod-vpn-switcher:8001/api/v1/status',
-        'http://127.0.0.1:8001/api/v1/status'
-      ], {
-        headers: { 'X-Api-Key': SWITCHER_API_KEY },
-        signal: ctrl.signal
-      });
+      const vRes = await fetchCandidate(
+        [
+          'http://alpha-prod-vpn-switcher:8001/api/v1/status',
+          'http://127.0.0.1:8001/api/v1/status'
+        ],
+        {
+          headers: { 'X-Api-Key': SWITCHER_API_KEY },
+          signal: ctrl.signal
+        }
+      );
       clearTimeout(tId);
       if (vRes.ok) {
         const vData = await vRes.json();
@@ -1788,9 +2054,12 @@ const server = http.createServer(async (req, res) => {
     // Seerr fallback
     try {
       const seerrKey = SEERR_API_KEY;
-      const sRes = await fetch(`http://127.0.0.1:5055/api/v1/search?query=${encodeURIComponent(query)}`, {
-        headers: { 'X-Api-Key': seerrKey }
-      });
+      const sRes = await fetch(
+        `http://127.0.0.1:5055/api/v1/search?query=${encodeURIComponent(query)}`,
+        {
+          headers: { 'X-Api-Key': seerrKey }
+        }
+      );
       if (sRes.ok) {
         const sData = await sRes.json();
         return sendJSON(res, 200, sData);
@@ -1801,10 +2070,46 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // --- API: TMDB Read-Only Proxy (keeps TMDB_API_KEY server-side) ---
+  if (pathname === '/api/tmdb/proxy' && req.method === 'GET') {
+    const tmdbApiKey = process.env.TMDB_API_KEY;
+    if (!tmdbApiKey) {
+      return sendJSON(res, 503, { error: 'TMDB_API_KEY not configured on server' });
+    }
+
+    const tmdbPath = (searchParams.get('path') || '').replace(/^\/+/, '');
+    if (!TMDB_PROXY_PATH_RE.test(tmdbPath)) {
+      return sendJSON(res, 400, { error: 'Invalid or disallowed TMDb proxy path' });
+    }
+
+    const upstreamParams = new URLSearchParams();
+    for (const key of TMDB_PROXY_ALLOWED_PARAMS) {
+      if (searchParams.has(key)) {
+        upstreamParams.set(key, searchParams.get(key));
+      }
+    }
+    upstreamParams.set('api_key', tmdbApiKey);
+
+    const ctrl = new AbortController();
+    const tId = setTimeout(() => ctrl.abort(), 8000);
+    try {
+      const upstreamRes = await fetch(
+        `https://api.themoviedb.org/3/${tmdbPath}?${upstreamParams.toString()}`,
+        { signal: ctrl.signal }
+      );
+      const data = await upstreamRes.json();
+      return sendJSON(res, upstreamRes.status, data);
+    } catch (err) {
+      return sendJSON(res, 502, { error: err.message });
+    } finally {
+      clearTimeout(tId);
+    }
+  }
+
   // --- API: VPN Switch Profile ---
   if (pathname === '/api/vpn/switch' && req.method === 'POST') {
     let bodyData = '';
-    req.on('data', c => bodyData += c);
+    req.on('data', (c) => (bodyData += c));
     req.on('end', async () => {
       try {
         const { profile } = JSON.parse(bodyData || '{}');
@@ -1833,7 +2138,9 @@ const server = http.createServer(async (req, res) => {
   // --- Proxy: Seerr Avatar Proxy ---
   if (pathname.startsWith('/avatarproxy/')) {
     try {
-      const seerrRes = await fetch(`http://127.0.0.1:5055${pathname}${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`);
+      const seerrRes = await fetch(
+        `http://127.0.0.1:5055${pathname}${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`
+      );
       res.writeHead(seerrRes.status, {
         'Content-Type': seerrRes.headers.get('content-type') || 'image/png',
         'Cache-Control': 'public, max-age=86400'

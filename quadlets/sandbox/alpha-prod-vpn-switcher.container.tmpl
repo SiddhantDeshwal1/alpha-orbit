@@ -1,0 +1,26 @@
+[Unit]
+Description=Alpha Prod VPN Switcher API (Local Profile Switch Micro-Service)
+
+[Container]
+Image=docker.io/library/python:3.12-alpine
+ContainerName=alpha-prod-vpn-switcher
+Network=alpha_prod_sandbox_net.network
+Network=alpha_prod_default.network
+Entrypoint=python3
+Exec=/scripts/vpn_switcher.py
+PublishPort=127.0.0.1:8001:8001
+
+Environment=GLUETUN_API_URL=http://alpha-prod-gluetun:8000
+Environment=RATE_LIMIT_PER_MINUTE=3
+EnvironmentFile=__APP_DIR__/.env
+
+Volume=__APP_DIR__/sandbox:/scripts:ro,Z
+
+Tmpfs=/tmp:rw,noexec,nosuid,size=64M
+NoNewPrivileges=true
+SecurityLabelDisable=false
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=300
+MemoryMax=128M

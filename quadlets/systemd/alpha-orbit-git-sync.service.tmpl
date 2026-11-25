@@ -1,0 +1,16 @@
+[Unit]
+Description=Alpha Prod Orbit Automated Git Sync
+Documentation=file://__APP_DIR__/ARCHITECTURE.md
+After=network-online.target podman.socket
+Wants=network-online.target podman.socket
+
+[Service]
+Type=oneshot
+WorkingDirectory=__APP_DIR__
+EnvironmentFile=-__APP_DIR__/.env
+Environment=DOCKER_HOST=unix://%t/podman/podman.sock
+ExecStart=__APP_DIR__/quadlets/sync-host.sh
+TimeoutStartSec=180s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=alpha-orbit-git-sync

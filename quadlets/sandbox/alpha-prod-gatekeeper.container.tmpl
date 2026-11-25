@@ -1,0 +1,32 @@
+[Unit]
+Description=Alpha Prod Gatekeeper (Zero-Trust Media Sanitization Daemon)
+After=alpha-prod-clamav.service
+Requires=alpha-prod-clamav.service
+
+[Container]
+Image=docker.io/linuxserver/ffmpeg:latest
+ContainerName=alpha-prod-gatekeeper
+Network=alpha_prod_default.network
+Network=alpha_prod_sandbox_net.network
+Entrypoint=/bin/bash
+Exec=-c "while true; do /scripts/gatekeeper.sh; sleep 30; done"
+
+Environment=JELLYFIN_URL=http://alpha-prod-tailscale:8096
+Environment=CLAMAV_HOST=alpha-prod-clamav
+EnvironmentFile=__APP_DIR__/.env
+
+Volume=__APP_DIR__/sandbox:/scripts:ro,Z
+Volume=__DATA_DIR__/seerr/media/download/staging:/data/media/staging:z
+Volume=__DATA_DIR__/seerr/media/download/completed:/data/media/completed:z
+Volume=__DATA_DIR__/seerr/media/download/incomplete:/data/media/incomplete:ro,z
+Volume=__DATA_DIR__/sandbox/clamav/db:/var/lib/clamav:ro,Z
+Volume=__DATA_DIR__/sandbox/logs:/data/logs:z
+
+Tmpfs=/tmp:rw,noexec,nosuid,size=256M
+NoNewPrivileges=true
+SecurityLabelDisable=false
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=300
+MemoryMax=768M

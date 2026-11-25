@@ -11,6 +11,7 @@ name: alpha-prod-orbit
 networks:
   default:
     name: alpha_prod_default
+    external: true
 
 services:
   tailscale:

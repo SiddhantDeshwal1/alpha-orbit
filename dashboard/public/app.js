@@ -7,37 +7,123 @@
   // --- Services Architecture & Local Icons ---
   const APP_CATALOG = [
     {
-      category: "Media & Streaming",
+      category: 'Media & Streaming',
       items: [
-        { id: "jellyfin", name: "Jellyfin Cinema", icon: "/icons/jellyfin.png", port: 8096, desc: "Direct-Play cinema, movies, web series & anime.", container: "alpha-prod-jellyfin" },
-        { id: "seerr", name: "Seerr", icon: "/icons/seerr.png", port: 5055, desc: "Automated media discovery & requests pipeline.", container: "alpha-prod-seerr" }
+        {
+          id: 'jellyfin',
+          name: 'Jellyfin Cinema',
+          icon: '/icons/jellyfin.png',
+          port: 8096,
+          desc: 'Direct-Play cinema, movies, web series & anime.',
+          container: 'alpha-prod-jellyfin'
+        },
+        {
+          id: 'seerr',
+          name: 'Seerr',
+          icon: '/icons/seerr.png',
+          port: 5055,
+          desc: 'Automated media discovery & requests pipeline.',
+          container: 'alpha-prod-seerr'
+        }
       ]
     },
     {
-      category: "Download Pipeline (Sandbox)",
+      category: 'Download Pipeline (Sandbox)',
       items: [
-        { id: "qbittorrent", name: "qBittorrent", icon: "/icons/qbittorrent.png", port: 8081, desc: "Zero-upload download engine locked behind kill-switch.", container: "alpha-prod-qbittorrent" },
-        { id: "radarr", name: "Radarr", icon: "/icons/radarr.png", port: 7878, desc: "Automated movie library tracker & downloader.", container: "alpha-prod-radarr" },
-        { id: "sonarr", name: "Sonarr", icon: "/icons/sonarr.png", port: 8989, desc: "Automated TV show & web series tracker.", container: "alpha-prod-sonarr" },
-        { id: "prowlarr", name: "Prowlarr", icon: "/icons/prowlarr.png", port: 9696, desc: "Centralized torrent indexer proxy for Radarr & Sonarr.", container: "alpha-prod-prowlarr" }
+        {
+          id: 'qbittorrent',
+          name: 'qBittorrent',
+          icon: '/icons/qbittorrent.png',
+          port: 8081,
+          desc: 'Zero-upload download engine locked behind kill-switch.',
+          container: 'alpha-prod-qbittorrent'
+        },
+        {
+          id: 'radarr',
+          name: 'Radarr',
+          icon: '/icons/radarr.png',
+          port: 7878,
+          desc: 'Automated movie library tracker & downloader.',
+          container: 'alpha-prod-radarr'
+        },
+        {
+          id: 'sonarr',
+          name: 'Sonarr',
+          icon: '/icons/sonarr.png',
+          port: 8989,
+          desc: 'Automated TV show & web series tracker.',
+          container: 'alpha-prod-sonarr'
+        },
+        {
+          id: 'prowlarr',
+          name: 'Prowlarr',
+          icon: '/icons/prowlarr.png',
+          port: 9696,
+          desc: 'Centralized torrent indexer proxy for Radarr & Sonarr.',
+          container: 'alpha-prod-prowlarr'
+        }
       ]
     },
     {
-      category: "Network Gateway & Security",
+      category: 'Network Gateway & Security',
       items: [
-        { id: "gluetun", name: "Gluetun VPN", icon: "/icons/gluetun.png", port: 8000, desc: "Encrypted WireGuard gateway with hardware kill-switch.", container: "alpha-prod-gluetun" },
-        { id: "tailscale", name: "Tailscale Mesh", icon: "/icons/tailscale.png", port: 3000, desc: "Private WireGuard mesh network connecting laptop & phone.", container: "alpha-prod-tailscale" }
+        {
+          id: 'gluetun',
+          name: 'Gluetun VPN',
+          icon: '/icons/gluetun.png',
+          port: 8000,
+          desc: 'Encrypted WireGuard gateway with hardware kill-switch.',
+          container: 'alpha-prod-gluetun'
+        },
+        {
+          id: 'tailscale',
+          name: 'Tailscale Mesh',
+          icon: '/icons/tailscale.png',
+          port: 3000,
+          desc: 'Private WireGuard mesh network connecting laptop & phone.',
+          container: 'alpha-prod-tailscale'
+        }
       ]
     }
   ];
 
   // VPN Provider metadata with official brand logos
   const VPN_CATALOG = [
-    { id: "cloudflare", name: "Cloudflare WARP", icon: "/icons/cloudflare.png", tier: "FREE", desc: "Anycast WireGuard · High throughput · Zero credentials required" },
-    { id: "protonvpn", name: "ProtonVPN Free", icon: "/icons/protonvpn.png", tier: "FREE", desc: "Swiss jurisdiction · Strict no-logs policy · Unlimited free bandwidth" },
-    { id: "windscribe", name: "Windscribe Free", icon: "/icons/windscribe.png", tier: "FREE", desc: "Canadian privacy provider · Native WireGuard tunnel" },
-    { id: "mullvad", name: "Mullvad VPN", icon: "/icons/mullvad.png", tier: "PAID", desc: "Gold standard anonymity · Account number only, zero personal data" },
-    { id: "airvpn", name: "AirVPN", icon: "/icons/airvpn.png", tier: "PAID", desc: "Hacktivist-founded · P2P optimized with forwarded ports support" }
+    {
+      id: 'cloudflare',
+      name: 'Cloudflare WARP',
+      icon: '/icons/cloudflare.png',
+      tier: 'FREE',
+      desc: 'Anycast WireGuard · High throughput · Zero credentials required'
+    },
+    {
+      id: 'protonvpn',
+      name: 'ProtonVPN Free',
+      icon: '/icons/protonvpn.png',
+      tier: 'FREE',
+      desc: 'Swiss jurisdiction · Strict no-logs policy · Unlimited free bandwidth'
+    },
+    {
+      id: 'windscribe',
+      name: 'Windscribe Free',
+      icon: '/icons/windscribe.png',
+      tier: 'FREE',
+      desc: 'Canadian privacy provider · Native WireGuard tunnel'
+    },
+    {
+      id: 'mullvad',
+      name: 'Mullvad VPN',
+      icon: '/icons/mullvad.png',
+      tier: 'PAID',
+      desc: 'Gold standard anonymity · Account number only, zero personal data'
+    },
+    {
+      id: 'airvpn',
+      name: 'AirVPN',
+      icon: '/icons/airvpn.png',
+      tier: 'PAID',
+      desc: 'Hacktivist-founded · P2P optimized with forwarded ports support'
+    }
   ];
 
   const VALID_TABS = ['apps', 'downloads', 'logs', 'vpn', 'metrics', 'requests'];
@@ -56,7 +142,10 @@
     logSearch: '',
     logTail: 150,
     autoScroll: true,
-    tailscaleIp: window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.hostname : '127.0.0.1',
+    tailscaleIp:
+      window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+        ? window.location.hostname
+        : '127.0.0.1',
     metricsRange: localStorage.getItem('alpha_metrics_range') || '24h',
     metricsData: null,
     timerId: null,
@@ -74,7 +163,7 @@
     requestDiscoveredQualities: [],
     requestDiscoveryInProgress: false,
     orchestratorRequests: [],
-    discoveryHistory: [],
+    discoveryHistory: []
   };
 
   // Toast Notification
@@ -113,11 +202,14 @@
   window.copyLink = function (e, url) {
     e.stopPropagation();
     e.preventDefault();
-    navigator.clipboard.writeText(url).then(() => {
-      showToast(`Copied to clipboard: ${url}`, 'success');
-    }).catch(() => {
-      showToast('Failed to copy', 'error');
-    });
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        showToast(`Copied to clipboard: ${url}`, 'success');
+      })
+      .catch(() => {
+        showToast('Failed to copy', 'error');
+      });
   };
 
   // Jump to Logs with container preselected
@@ -158,7 +250,12 @@
 
   // VPN Hot-Swap Profile Switch
   window.switchVpnTunnel = async function (profileId) {
-    if (!confirm(`Switch active VPN tunnel to "${profileId}"? Running downloads will pause momentarily and resume via the new gateway.`)) return;
+    if (
+      !confirm(
+        `Switch active VPN tunnel to "${profileId}"? Running downloads will pause momentarily and resume via the new gateway.`
+      )
+    )
+      return;
     showToast(`Switching VPN tunnel to ${profileId}...`, 'info');
     try {
       const res = await fetch('/api/vpn/switch', {
@@ -215,11 +312,11 @@
     state.activeTab = tabId;
     localStorage.setItem('alpha_tab', tabId);
 
-    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+    document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
       btn.classList.toggle('active', btn.dataset.tab === tabId);
     });
 
-    document.querySelectorAll('.tab-pane').forEach(pane => {
+    document.querySelectorAll('.tab-pane').forEach((pane) => {
       pane.classList.toggle('active', pane.id === `tab-${tabId}`);
     });
 
@@ -251,8 +348,8 @@
       state.system = data;
 
       if (data.disk && data.disk.totalBytes > 0) {
-        const freeGB = Math.round(data.disk.freeBytes / (1024 ** 3));
-        const totalGB = Math.round(data.disk.totalBytes / (1024 ** 3));
+        const freeGB = Math.round(data.disk.freeBytes / 1024 ** 3);
+        const totalGB = Math.round(data.disk.totalBytes / 1024 ** 3);
         const freeEl = document.getElementById('val-storage-free');
         const fillEl = document.getElementById('val-storage-fill');
         if (freeEl) freeEl.textContent = `${freeGB} GB Free / ${totalGB} GB`;
@@ -268,7 +365,7 @@
       if (!res.ok) return;
       const data = await res.json();
       const pingsMap = {};
-      (data.services || []).forEach(s => {
+      (data.services || []).forEach((s) => {
         pingsMap[s.id] = s;
       });
       state.pings = pingsMap;
@@ -294,8 +391,11 @@
       if (data.transfer) {
         if (dlRate) dlRate.textContent = formatSpeed(data.transfer.downloadSpeed);
         if (upRate) upRate.textContent = formatSpeed(data.transfer.uploadSpeed);
-        if (dlSession) dlSession.textContent = `Session: ${formatBytes(data.transfer.totalDownloaded)}`;
-        if (guard) guard.textContent = data.transfer.connectionStatus === 'connected' ? 'Protected' : 'Firewalled';
+        if (dlSession)
+          dlSession.textContent = `Session: ${formatBytes(data.transfer.totalDownloaded)}`;
+        if (guard)
+          guard.textContent =
+            data.transfer.connectionStatus === 'connected' ? 'Protected' : 'Firewalled';
       }
 
       const torrentsCount = (data.torrents || []).length;
@@ -327,10 +427,13 @@
       const tunnelSub = document.getElementById('tunnel-ip-sub');
 
       if (actTitle) actTitle.textContent = data.display_name || data.active_profile;
-      if (actDesc) actDesc.textContent = `${data.description} · ${data.organization || 'VPN Gateway'}`;
+      if (actDesc)
+        actDesc.textContent = `${data.description} · ${data.organization || 'VPN Gateway'}`;
       if (actIp) actIp.textContent = data.public_ip;
-      if (actCountry) actCountry.textContent = `${data.ip_country} (${data.tier?.toUpperCase() || 'FREE'})`;
-      if (tunnelSub) tunnelSub.textContent = `Egress: ${data.public_ip} (${data.display_name || data.active_profile})`;
+      if (actCountry)
+        actCountry.textContent = `${data.ip_country} (${data.tier?.toUpperCase() || 'FREE'})`;
+      if (tunnelSub)
+        tunnelSub.textContent = `Egress: ${data.public_ip} (${data.display_name || data.active_profile})`;
 
       renderVpnCards(data.active_profile);
     } catch (_) {}
@@ -356,11 +459,11 @@
       let lines = data.lines || [];
       if (state.logSearch) {
         const query = state.logSearch.toLowerCase();
-        lines = lines.filter(l => l.text.toLowerCase().includes(query));
+        lines = lines.filter((l) => l.text.toLowerCase().includes(query));
       }
 
       const errBadge = document.getElementById('badge-err');
-      const errCount = lines.filter(l => l.level === 'error').length;
+      const errCount = lines.filter((l) => l.level === 'error').length;
       if (errBadge) {
         errBadge.textContent = errCount;
         errBadge.style.display = errCount > 0 ? 'inline-block' : 'none';
@@ -376,11 +479,11 @@
       }
 
       let html = '';
-      lines.forEach(l => {
+      lines.forEach((l) => {
         const isErr = l.level === 'error';
         const isWrn = l.level === 'warn';
         const rowClass = isErr ? 'row-error' : '';
-        const badgeClass = isErr ? 'badge-err' : (isWrn ? 'badge-wrn' : 'badge-inf');
+        const badgeClass = isErr ? 'badge-err' : isWrn ? 'badge-wrn' : 'badge-inf';
 
         html += `
           <div class="terminal-row ${rowClass}">
@@ -423,7 +526,7 @@
       let html = '';
       if (data.containers && data.containers.length > 0) {
         html += '<optgroup label="Server Containers">';
-        data.containers.forEach(c => {
+        data.containers.forEach((c) => {
           html += `<option value="${c}">${c}</option>`;
         });
         html += '</optgroup>';
@@ -431,7 +534,7 @@
 
       if (data.fileLogs && data.fileLogs.length > 0) {
         html += '<optgroup label="System Daemon Logs">';
-        data.fileLogs.forEach(f => {
+        data.fileLogs.forEach((f) => {
           html += `<option value="file:${f}">${f}</option>`;
         });
         html += '</optgroup>';
@@ -452,13 +555,17 @@
 
   function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   // In-place latency updates without destroying or re-animating cards
   function updatePingsUI() {
-    APP_CATALOG.forEach(cat => {
-      cat.items.forEach(item => {
+    APP_CATALOG.forEach((cat) => {
+      cat.items.forEach((item) => {
         const ping = state.pings[item.id];
         if (!ping) return;
         const pingEl = document.getElementById(`ping-${item.id}`);
@@ -493,21 +600,25 @@
     }
 
     let html = '';
-    APP_CATALOG.forEach(cat => {
+    APP_CATALOG.forEach((cat) => {
       html += `
         <div class="section-category">
           <div class="section-category-title">${cat.category}</div>
           <div class="app-grid">
       `;
 
-      cat.items.forEach(item => {
+      cat.items.forEach((item) => {
         const ping = state.pings[item.id];
         const isOnline = ping && ping.status === 'healthy';
         const latencyText = ping && ping.latencyMs !== null ? `${ping.latencyMs}ms` : 'Checking';
         const dotClass = isOnline ? 'dot-status-healthy' : 'dot-status-down';
 
-        const openUrl = item.path ? `http://localhost:${item.port}${item.path}` : `http://localhost:${item.port}`;
-        const tsUrl = item.path ? `http://${state.tailscaleIp}:${item.port}${item.path}` : `http://${state.tailscaleIp}:${item.port}`;
+        const openUrl = item.path
+          ? `http://localhost:${item.port}${item.path}`
+          : `http://localhost:${item.port}`;
+        const tsUrl = item.path
+          ? `http://${state.tailscaleIp}:${item.port}${item.path}`
+          : `http://${state.tailscaleIp}:${item.port}`;
 
         html += `
           <div class="app-card" onclick="window.open('${openUrl}', '_blank')">
@@ -572,7 +683,7 @@
     }
 
     let html = '';
-    torrents.forEach(t => {
+    torrents.forEach((t) => {
       const isPaused = t.state.includes('paused');
       html += `
         <div class="torrent-item">
@@ -616,14 +727,15 @@
     if (!container) return;
 
     if (requests.length === 0) {
-      container.innerHTML = '<div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">No pending media requests in queue.</div>';
+      container.innerHTML =
+        '<div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">No pending media requests in queue.</div>';
       return;
     }
 
     let html = '';
-    requests.forEach(r => {
+    requests.forEach((r) => {
       const isDone = r.status === 5;
-      const statusLabel = isDone ? 'Available' : (r.status === 4 ? 'Downloading' : 'Processing');
+      const statusLabel = isDone ? 'Available' : r.status === 4 ? 'Downloading' : 'Processing';
       const statusColor = isDone ? 'var(--accent-emerald)' : 'var(--accent-sky)';
 
       html += `
@@ -652,8 +764,8 @@
     state.lastVpnProfile = activeProfile;
 
     let html = '';
-    VPN_CATALOG.forEach(p => {
-      const isCurrent = (p.id === activeProfile);
+    VPN_CATALOG.forEach((p) => {
+      const isCurrent = p.id === activeProfile;
       html += `
         <div class="vpn-profile-card ${isCurrent ? 'active-tunnel' : ''}">
           <div>
@@ -688,7 +800,7 @@
   // ==============================================================================
   function setupEventListeners() {
     // Nav tabs
-    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+    document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
       btn.addEventListener('click', () => switchView(btn.dataset.tab));
     });
 
@@ -717,9 +829,11 @@
     }
 
     // Log filter buttons
-    document.querySelectorAll('.filter-btn[data-log-filter]').forEach(btn => {
+    document.querySelectorAll('.filter-btn[data-log-filter]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn[data-log-filter]').forEach(b => b.classList.remove('active', 'active-error'));
+        document
+          .querySelectorAll('.filter-btn[data-log-filter]')
+          .forEach((b) => b.classList.remove('active', 'active-error'));
         state.logFilter = btn.dataset.logFilter;
         if (state.logFilter === 'error') {
           btn.classList.add('active-error');
@@ -808,7 +922,7 @@
   window.setMetricsRange = function (range) {
     state.metricsRange = range;
     localStorage.setItem('alpha_metrics_range', range);
-    document.querySelectorAll('.metrics-range-btn').forEach(btn => {
+    document.querySelectorAll('.metrics-range-btn').forEach((btn) => {
       btn.classList.toggle('active', btn.dataset.range === range);
     });
     fetchMetrics(true);
@@ -816,12 +930,17 @@
 
   async function fetchMetrics(force = false) {
     // Zero CPU/GPU Dormancy: Suspend polling if browser tab is hidden or user is viewing another tab
-    if (document.hidden || (!force && state.activeTab !== 'metrics' && state.activeTab !== 'apps')) {
+    if (
+      document.hidden ||
+      (!force && state.activeTab !== 'metrics' && state.activeTab !== 'apps')
+    ) {
       return;
     }
 
     try {
-      const res = await fetch(`/api/metrics/history?range=${encodeURIComponent(state.metricsRange)}`);
+      const res = await fetch(
+        `/api/metrics/history?range=${encodeURIComponent(state.metricsRange)}`
+      );
       if (!res.ok) return;
       const data = await res.json();
       state.metricsData = data;
@@ -899,7 +1018,7 @@
 
     // Zero CPU Helper: Only draw onto canvases that are currently visible in the DOM
     function renderChartTo(ids, config) {
-      ids.forEach(id => {
+      ids.forEach((id) => {
         const canvas = document.getElementById(id);
         if (canvas && canvas.offsetParent !== null) {
           drawChart(canvas, config);
@@ -920,7 +1039,7 @@
           fill: true,
           showPeak: true,
           formatVal: (v) => formatSpeed(v),
-          data: pts.map(p => p.dl)
+          data: pts.map((p) => p.dl)
         },
         {
           label: 'Upload Speed',
@@ -928,7 +1047,7 @@
           fill: false,
           showPeak: false,
           formatVal: (v) => formatSpeed(v),
-          data: pts.map(p => p.ul)
+          data: pts.map((p) => p.ul)
         }
       ]
     });
@@ -947,7 +1066,7 @@
           fill: true,
           showPeak: true,
           formatVal: (v) => `${v} Streams`,
-          data: pts.map(p => p.streams)
+          data: pts.map((p) => p.streams)
         },
         {
           label: 'Active Users',
@@ -955,7 +1074,7 @@
           fill: false,
           showPeak: false,
           formatVal: (v) => `${v} Users`,
-          data: pts.map(p => p.users)
+          data: pts.map((p) => p.users)
         }
       ]
     });
@@ -975,7 +1094,7 @@
           fill: true,
           showPeak: false,
           formatVal: (v) => `${v} ms`,
-          data: pts.map(p => p.latency)
+          data: pts.map((p) => p.latency)
         }
       ]
     });
@@ -994,7 +1113,7 @@
           fill: true,
           showPeak: true,
           formatVal: (v) => `${v} Torrents`,
-          data: pts.map(p => p.torrents)
+          data: pts.map((p) => p.torrents)
         }
       ]
     });
@@ -1013,13 +1132,13 @@
           fill: true,
           showPeak: false,
           formatVal: (v) => `${v} ms`,
-          data: pts.map(p => p.vpnLatency)
+          data: pts.map((p) => p.vpnLatency)
         }
       ]
     });
 
     // 6. Alpha Storage Trajectory & Growth
-    const minFree = Math.min(...pts.map(p => p.freeGB || 461));
+    const minFree = Math.min(...pts.map((p) => p.freeGB || 461));
     renderChartTo(['canvas-storage', 'canvas-home-storage'], {
       points: pts,
       minY: Math.max(0, Math.floor(minFree - 5)),
@@ -1033,7 +1152,7 @@
           fill: true,
           showPeak: false,
           formatVal: (v) => `${v} GB`,
-          data: pts.map(p => p.freeGB)
+          data: pts.map((p) => p.freeGB)
         }
       ]
     });
@@ -1069,8 +1188,8 @@
     let minY = config.minY !== undefined ? config.minY : Infinity;
     let maxY = -Infinity;
 
-    series.forEach(s => {
-      s.data.forEach(v => {
+    series.forEach((s) => {
+      s.data.forEach((v) => {
         if (v > maxY) maxY = v;
         if (v < minY) minY = v;
       });
@@ -1081,7 +1200,7 @@
     if (config.minY === undefined && minY > 0) minY = 0;
 
     const span = maxY - minY || 1;
-    maxY = maxY + (span * 0.12); // 12% headroom
+    maxY = maxY + span * 0.12; // 12% headroom
 
     // Subtle horizontal grid lines & Y labels
     ctx.lineWidth = 1;
@@ -1093,8 +1212,8 @@
 
     const steps = 3;
     for (let i = 0; i <= steps; i++) {
-      const val = minY + ((maxY - minY) * (i / steps));
-      const yPos = padTop + plotH - (plotH * (i / steps));
+      const val = minY + (maxY - minY) * (i / steps);
+      const yPos = padTop + plotH - plotH * (i / steps);
 
       ctx.beginPath();
       ctx.moveTo(padLeft, Math.round(yPos) + 0.5);
@@ -1116,21 +1235,21 @@
         const d = new Date(pt.t * 1000);
         const hours = d.getHours().toString().padStart(2, '0');
         const mins = d.getMinutes().toString().padStart(2, '0');
-        const xPos = padLeft + (plotW * (i / numLabels));
+        const xPos = padLeft + plotW * (i / numLabels);
         ctx.fillText(`${hours}:${mins}`, xPos, h - padBottom + 8);
       }
     }
 
     // Draw curves
-    series.forEach(s => {
+    series.forEach((s) => {
       if (!s.data || s.data.length === 0) return;
       const n = s.data.length;
       const coords = [];
 
       for (let i = 0; i < n; i++) {
-        const x = padLeft + (plotW * (i / (n - 1 || 1)));
+        const x = padLeft + plotW * (i / (n - 1 || 1));
         const normY = Math.max(0, Math.min(1, (s.data[i] - minY) / (maxY - minY || 1)));
-        const y = padTop + plotH - (plotH * normY);
+        const y = padTop + plotH - plotH * normY;
         coords.push({ x, y, val: s.data[i] });
       }
 
@@ -1182,9 +1301,13 @@
 
       // Peak Highlight
       if (s.showPeak && coords.length > 0) {
-        let maxIdx = 0, maxVal = -Infinity;
+        let maxIdx = 0,
+          maxVal = -Infinity;
         coords.forEach((c, idx) => {
-          if (c.val > maxVal) { maxVal = c.val; maxIdx = idx; }
+          if (c.val > maxVal) {
+            maxVal = c.val;
+            maxIdx = idx;
+          }
         });
         if (maxVal > 0) {
           const p = coords[maxIdx];
@@ -1205,14 +1328,18 @@
 
     // Outage Incident Markers (Red Pins)
     if (config.outages && config.outages.length > 0) {
-      config.outages.forEach(outage => {
-        let nearestIdx = -1, minDiff = Infinity;
+      config.outages.forEach((outage) => {
+        let nearestIdx = -1,
+          minDiff = Infinity;
         points.forEach((p, idx) => {
           const diff = Math.abs(p.t - outage.t);
-          if (diff < minDiff) { minDiff = diff; nearestIdx = idx; }
+          if (diff < minDiff) {
+            minDiff = diff;
+            nearestIdx = idx;
+          }
         });
         if (nearestIdx !== -1 && minDiff < 180) {
-          const x = padLeft + (plotW * (nearestIdx / (points.length - 1 || 1)));
+          const x = padLeft + plotW * (nearestIdx / (points.length - 1 || 1));
           ctx.save();
           ctx.beginPath();
           ctx.setLineDash([3, 3]);
@@ -1235,8 +1362,14 @@
 
     // Attach Interactive Hover
     canvas._chartMeta = {
-      plotW, plotH, padLeft, padRight, padTop, padBottom,
-      points, series
+      plotW,
+      plotH,
+      padLeft,
+      padRight,
+      padTop,
+      padBottom,
+      points,
+      series
     };
     attachCanvasHover(canvas);
   }
@@ -1259,14 +1392,21 @@
       }
 
       const relX = (mouseX - meta.padLeft) / meta.plotW;
-      const idx = Math.max(0, Math.min(meta.points.length - 1, Math.round(relX * (meta.points.length - 1))));
+      const idx = Math.max(
+        0,
+        Math.min(meta.points.length - 1, Math.round(relX * (meta.points.length - 1)))
+      );
       const pt = meta.points[idx];
       if (!pt) return;
 
-      const timeStr = new Date(pt.t * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const timeStr = new Date(pt.t * 1000).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
 
       let tooltipHtml = `<div style="color: #a1a1aa; font-size: 0.7rem; margin-bottom: 4px;">Time: <strong style="color:#fff;">${timeStr}</strong></div>`;
-      meta.series.forEach(s => {
+      meta.series.forEach((s) => {
         const val = s.data[idx];
         const displayVal = s.formatVal ? s.formatVal(val) : val;
         tooltipHtml += `<div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
@@ -1340,14 +1480,17 @@
   function renderSearchResults(results) {
     const container = document.getElementById('request-search-results');
     if (!container) return;
-    
+
     if (results.length === 0) {
-      container.innerHTML = '<div style="padding: 20px; text-align: center; color: #71717a;">No results found</div>';
+      container.innerHTML =
+        '<div style="padding: 20px; text-align: center; color: #71717a;">No results found</div>';
       container.style.display = 'block';
       return;
     }
 
-    container.innerHTML = results.map(item => `
+    container.innerHTML = results
+      .map(
+        (item) => `
       <div class="search-result-item" style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; cursor: pointer; transition: background 0.2s; background: #121215; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px;" 
            onclick="selectMedia(${JSON.stringify(item).replace(/"/g, '"')})"
            onmouseover="this.style.background='#1a1a2e'" onmouseout="this.style.background='#121215'">
@@ -1363,23 +1506,25 @@
         </div>
         <span style="font-size: 0.7rem; color: #3b82f6; padding: 2px 8px; border: 1px solid rgba(59,130,246,0.3); border-radius: 4px;">Select</span>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
     container.style.display = 'block';
   }
 
-  window.selectMedia = function(media) {
+  window.selectMedia = function (media) {
     state.requestSelectedMedia = media;
     state.requestSearchResults = [];
     document.getElementById('request-search-results').style.display = 'none';
     document.getElementById('request-search-input').value = media.title || media.name;
-    
+
     // Move to quality selection step
     document.getElementById('request-step-search').style.display = 'none';
     document.getElementById('request-step-quality').style.display = 'block';
-    
+
     // Reset quality tier
     state.requestQualityTier = 'max';
-    document.querySelectorAll('.quality-tier-btn').forEach(btn => {
+    document.querySelectorAll('.quality-tier-btn').forEach((btn) => {
       btn.classList.toggle('active', btn.dataset.tier === 'max');
       if (btn.dataset.tier === 'max') {
         btn.style.borderColor = 'rgba(59, 130, 246, 0.5)';
@@ -1395,7 +1540,7 @@
     updateConfirmButton();
   };
 
-  window.backToSearch = function() {
+  window.backToSearch = function () {
     document.getElementById('request-step-quality').style.display = 'none';
     document.getElementById('request-step-search').style.display = 'block';
     state.requestSelectedMedia = null;
@@ -1407,18 +1552,24 @@
       const btn = e.target.closest('.quality-tier-btn');
       const tier = btn.dataset.tier;
       state.requestQualityTier = tier;
-      
-      document.querySelectorAll('.quality-tier-btn').forEach(b => {
+
+      document.querySelectorAll('.quality-tier-btn').forEach((b) => {
         b.classList.remove('active');
         b.style.borderColor = 'rgba(255,255,255,0.1)';
         b.style.background = '#121215';
         b.style.color = '#a1a1aa';
       });
       btn.classList.add('active');
-      btn.style.borderColor = tier === 'max' || tier === 'advanced' ? 'rgba(139, 92, 246, 0.5)' : 'rgba(59, 130, 246, 0.5)';
-      btn.style.background = tier === 'max' || tier === 'advanced' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(59, 130, 246, 0.15)';
+      btn.style.borderColor =
+        tier === 'max' || tier === 'advanced'
+          ? 'rgba(139, 92, 246, 0.5)'
+          : 'rgba(59, 130, 246, 0.5)';
+      btn.style.background =
+        tier === 'max' || tier === 'advanced'
+          ? 'rgba(139, 92, 246, 0.15)'
+          : 'rgba(59, 130, 246, 0.15)';
       btn.style.color = tier === 'max' || tier === 'advanced' ? '#8b5cf6' : '#3b82f6';
-      
+
       if (tier === 'advanced') {
         document.getElementById('request-advanced-discovery').style.display = 'block';
       } else {
@@ -1431,9 +1582,10 @@
   function updateConfirmButton() {
     const btn = document.getElementById('btn-confirm-request');
     if (!btn) return;
-    
+
     if (state.requestQualityTier === 'advanced') {
-      const hasSelected = state.selectedReleaseIndex !== undefined && state.selectedReleaseIndex !== null;
+      const hasSelected =
+        state.selectedReleaseIndex !== undefined && state.selectedReleaseIndex !== null;
       btn.disabled = !hasSelected;
       btn.textContent = 'Grab Selected Release';
     } else {
@@ -1443,46 +1595,56 @@
   }
 
   // Discover qualities (Advanced mode - Real-Time Prowlarr Swarm Inspector)
-  window.discoverQualities = async function() {
+  window.discoverQualities = async function () {
     if (!state.requestSelectedMedia) return;
-    
+
     const statusEl = document.getElementById('discovery-status');
     const gridEl = document.getElementById('quality-grid');
     const discoverBtn = document.getElementById('btn-discover-qualities');
     const rediscoverBtn = document.getElementById('btn-rediscover');
-    
+
     state.requestDiscoveryInProgress = true;
     if (discoverBtn) discoverBtn.disabled = true;
     if (rediscoverBtn) rediscoverBtn.disabled = true;
-    if (statusEl) statusEl.textContent = 'Inspecting live tracker swarms (LimeTorrents, Knaben, YTS)...';
-    if (gridEl) gridEl.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #71717a;"><div class="spinner-small" style="margin: 0 auto 12px;"></div> Querying indexers in real time...</div>';
-    
+    if (statusEl)
+      statusEl.textContent = 'Inspecting live tracker swarms (LimeTorrents, Knaben, YTS)...';
+    if (gridEl)
+      gridEl.innerHTML =
+        '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #71717a;"><div class="spinner-small" style="margin: 0 auto 12px;"></div> Querying indexers in real time...</div>';
+
     try {
       const media = state.requestSelectedMedia;
       const title = media.title || media.name || '';
       const year = (media.release_date || media.first_air_date || '').substring(0, 4);
 
-      const res = await fetch(`/api/media/releases/search?query=${encodeURIComponent(title)}&year=${encodeURIComponent(year)}&tmdbId=${media.id}`);
+      const res = await fetch(
+        `/api/media/releases/search?query=${encodeURIComponent(title)}&year=${encodeURIComponent(year)}&tmdbId=${media.id}`
+      );
       if (!res.ok) throw new Error('Search failed: HTTP ' + res.status);
       const data = await res.json();
 
       if (!data.releases || data.releases.length === 0) {
         if (statusEl) statusEl.textContent = 'No releases found for this title.';
-        if (gridEl) gridEl.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #71717a;">No active swarms found across indexers.</div>';
+        if (gridEl)
+          gridEl.innerHTML =
+            '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #71717a;">No active swarms found across indexers.</div>';
         return;
       }
 
       state.requestDiscoveredQualities = data.releases;
-      if (statusEl) statusEl.textContent = `Found ${data.total} swarms in ${data.tookMs}ms. Click a release to select.`;
+      if (statusEl)
+        statusEl.textContent = `Found ${data.total} swarms in ${data.tookMs}ms. Click a release to select.`;
 
       renderQualityGrid(data.releases);
-      
+
       if (discoverBtn) discoverBtn.style.display = 'none';
       if (rediscoverBtn) rediscoverBtn.style.display = 'inline-block';
     } catch (e) {
       console.error('Discovery failed:', e);
       if (statusEl) statusEl.textContent = 'Swarm inspection failed: ' + e.message;
-      if (gridEl) gridEl.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;">Failed to inspect swarms. Please retry.</div>';
+      if (gridEl)
+        gridEl.innerHTML =
+          '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;">Failed to inspect swarms. Please retry.</div>';
     } finally {
       state.requestDiscoveryInProgress = false;
       if (discoverBtn) discoverBtn.disabled = false;
@@ -1493,28 +1655,35 @@
   function renderQualityGrid(releases) {
     const gridEl = document.getElementById('quality-grid');
     if (!gridEl) return;
-    
+
     if (!releases || releases.length === 0) {
-      gridEl.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #71717a;">No releases found</div>';
+      gridEl.innerHTML =
+        '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #71717a;">No releases found</div>';
       return;
     }
 
-    gridEl.innerHTML = releases.slice(0, 24).map((rel, idx) => {
-      const attrs = rel.attributes || {};
-      const resPill = attrs.resolution || '1080p';
-      const hdrPills = (attrs.hdr || []).map(h => `<span class="release-pill hdr">${escapeHtml(h)}</span>`).join(' ');
-      const audioPill = attrs.audio ? `<span class="release-pill audio">${escapeHtml(attrs.audio)}</span>` : '';
-      const remuxPill = attrs.isRemux ? '<span class="release-pill remux">REMUX</span>' : '';
-      const imaxPill = attrs.isImax ? '<span class="release-pill imax">IMAX</span>' : '';
+    gridEl.innerHTML = releases
+      .slice(0, 24)
+      .map((rel, idx) => {
+        const attrs = rel.attributes || {};
+        const resPill = attrs.resolution || '1080p';
+        const hdrPills = (attrs.hdr || [])
+          .map((h) => `<span class="release-pill hdr">${escapeHtml(h)}</span>`)
+          .join(' ');
+        const audioPill = attrs.audio
+          ? `<span class="release-pill audio">${escapeHtml(attrs.audio)}</span>`
+          : '';
+        const remuxPill = attrs.isRemux ? '<span class="release-pill remux">REMUX</span>' : '';
+        const imaxPill = attrs.isImax ? '<span class="release-pill imax">IMAX</span>' : '';
 
-      return `
+        return `
         <div class="quality-card release-item-card" data-idx="${idx}" 
              style="background: #121215; border: 2px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; cursor: pointer; transition: all 0.2s; position: relative;"
              onclick="selectRelease(${idx})"
              onmouseover="this.style.borderColor='rgba(139,92,246,0.6)'; this.style.transform='translateY(-2px)'"
              onmouseout="if(!this.classList.contains('selected')) { this.style.borderColor='rgba(255,255,255,0.08)'; this.style.transform='translateY(0)'; }">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
-            <span class="release-pill res-${resPill.includes('2160') ? '4k' : (resPill.includes('720') ? '720' : '1080')}">${escapeHtml(resPill)}</span>
+            <span class="release-pill res-${resPill.includes('2160') ? '4k' : resPill.includes('720') ? '720' : '1080'}">${escapeHtml(resPill)}</span>
             <span style="font-size: 0.85rem; font-weight: 700; color: #fff;">${escapeHtml(rel.sizeFormatted)}</span>
           </div>
           <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
@@ -1530,13 +1699,14 @@
           <div style="position: absolute; top: 10px; right: 10px; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.2); border-radius: 50%;" class="quality-check"></div>
         </div>
       `;
-    }).join('');
+      })
+      .join('');
 
     addQualityCardStyles();
   }
 
-  window.selectRelease = function(idx) {
-    document.querySelectorAll('.quality-card').forEach(card => card.classList.remove('selected'));
+  window.selectRelease = function (idx) {
+    document.querySelectorAll('.quality-card').forEach((card) => card.classList.remove('selected'));
     const target = document.querySelector(`.quality-card[data-idx="${idx}"]`);
     if (target) target.classList.add('selected');
     state.selectedReleaseIndex = idx;
@@ -1565,16 +1735,16 @@
   }
 
   // Confirm request
-  window.confirmRequest = async function() {
+  window.confirmRequest = async function () {
     const btn = document.getElementById('btn-confirm-request');
     const media = state.requestSelectedMedia;
     const tier = state.requestQualityTier || 'max';
-    
+
     if (!media) return showToast('No media selected', 'error');
-    
+
     btn.disabled = true;
     btn.textContent = 'Dispatching...';
-    
+
     try {
       if (tier === 'advanced') {
         if (state.selectedReleaseIndex === undefined || state.selectedReleaseIndex === null) {
@@ -1619,10 +1789,9 @@
         }
         showToast(`✅ Request dispatched with ${tier.toUpperCase()} quality!`, 'success');
       }
-      
+
       closeRequestModal();
       setTimeout(() => fetchRequests(true), 1200);
-      
     } catch (e) {
       console.error('Request failed:', e);
       showToast('Failed to submit request: ' + e.message, 'error');
@@ -1632,7 +1801,7 @@
     }
   };
 
-  window.openRequestModal = function() {
+  window.openRequestModal = function () {
     document.getElementById('modal-request').style.display = 'flex';
     document.getElementById('request-step-search').style.display = 'block';
     document.getElementById('request-step-quality').style.display = 'none';
@@ -1640,14 +1809,14 @@
     document.getElementById('request-search-results').style.display = 'none';
     state.requestSelectedMedia = null;
     state.requestQualityTier = 'max';
-    document.querySelectorAll('.quality-tier-btn').forEach(b => {
+    document.querySelectorAll('.quality-tier-btn').forEach((b) => {
       b.classList.toggle('active', b.dataset.tier === 'max');
     });
     document.getElementById('request-advanced-discovery').style.display = 'none';
     updateConfirmButton();
   };
 
-  window.closeRequestModal = function() {
+  window.closeRequestModal = function () {
     document.getElementById('modal-request').style.display = 'none';
     state.currentDiscoveryRequestId = null;
     state.requestDiscoveredQualities = [];
@@ -1664,12 +1833,12 @@
           document.getElementById('request-search-results').style.display = 'none';
           return;
         }
-        
+
         const loadingEl = document.getElementById('request-search-loading');
         if (loadingEl) loadingEl.style.display = 'block';
-        
+
         const results = await searchTMDB(query);
-        
+
         if (loadingEl) loadingEl.style.display = 'none';
         renderSearchResults(results);
       }, 300);
@@ -1713,7 +1882,9 @@
       state.requests = Array.isArray(data) ? data : [];
 
       // Update Nav badge count (downloading + attention items)
-      const activeCount = state.requests.filter(r => r.status === 'downloading' || r.status === 'stalled' || r.status === 'failed').length;
+      const activeCount = state.requests.filter(
+        (r) => r.status === 'downloading' || r.status === 'stalled' || r.status === 'failed'
+      ).length;
       const badge = document.getElementById('badge-req');
       if (badge) {
         badge.textContent = activeCount;
@@ -1728,11 +1899,13 @@
 
       // Update Metrics Ribbon
       const totalCount = state.requests.length;
-      const downloadingItems = state.requests.filter(r => r.status === 'downloading');
+      const downloadingItems = state.requests.filter((r) => r.status === 'downloading');
       const downloadingCount = downloadingItems.length;
       const totalSpeed = downloadingItems.reduce((acc, r) => acc + (r.downloadSpeed || 0), 0);
-      const attentionCount = state.requests.filter(r => r.status === 'stalled' || r.status === 'failed').length;
-      const completedCount = state.requests.filter(r => r.status === 'completed').length;
+      const attentionCount = state.requests.filter(
+        (r) => r.status === 'stalled' || r.status === 'failed'
+      ).length;
+      const completedCount = state.requests.filter((r) => r.status === 'completed').length;
 
       const elTotal = document.getElementById('req-metric-total');
       if (elTotal) elTotal.textContent = totalCount;
@@ -1774,14 +1947,16 @@
     if (!select) return;
 
     const currentVal = state.reqFilterUser || 'all';
-    const users = Array.from(new Set(state.requests.map(r => r.requestedBy?.displayName).filter(Boolean)));
-    
-    const existingOptions = Array.from(select.options).map(o => o.value);
+    const users = Array.from(
+      new Set(state.requests.map((r) => r.requestedBy?.displayName).filter(Boolean))
+    );
+
+    const existingOptions = Array.from(select.options).map((o) => o.value);
     const newOptions = ['all', ...users];
     if (existingOptions.join(',') === newOptions.join(',')) return;
 
     let html = '<option value="all">All Requesters</option>';
-    users.forEach(u => {
+    users.forEach((u) => {
       html += `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`;
     });
     select.innerHTML = html;
@@ -1797,12 +1972,14 @@
     const statusFilter = state.reqFilterStatus || 'all';
     const userFilter = state.reqFilterUser || 'all';
 
-    const filtered = list.filter(r => {
+    const filtered = list.filter((r) => {
       // Status filter
       if (statusFilter === 'downloading' && r.status !== 'downloading') return false;
-      if (statusFilter === 'stalled' && r.status !== 'stalled' && r.status !== 'failed') return false;
+      if (statusFilter === 'stalled' && r.status !== 'stalled' && r.status !== 'failed')
+        return false;
       if (statusFilter === 'completed' && r.status !== 'completed') return false;
-      if (statusFilter === 'pending' && r.status !== 'pending' && r.status !== 'searching') return false;
+      if (statusFilter === 'pending' && r.status !== 'pending' && r.status !== 'searching')
+        return false;
 
       // User filter
       if (userFilter !== 'all' && (r.requestedBy?.displayName || '') !== userFilter) return false;
@@ -1827,7 +2004,7 @@
       return;
     }
 
-    grid.innerHTML = filtered.map(r => renderRequestCard(r)).join('');
+    grid.innerHTML = filtered.map((r) => renderRequestCard(r)).join('');
   }
 
   function renderRequestCard(r) {
@@ -1890,7 +2067,9 @@
             <span>⚠ ${escapeHtml(diag.summary)}</span>
             <span style="font-size: 0.72rem; text-decoration: underline;">${isDiagnosisExpanded ? 'Hide Details ▲' : 'Show Details ▼'}</span>
           </div>
-          ${isDiagnosisExpanded ? `
+          ${
+            isDiagnosisExpanded
+              ? `
             <div class="req-diagnosis-content">
               <p><strong>Root Cause:</strong> ${escapeHtml(diag.details || '')}</p>
               ${diag.suggestedFix ? `<p><strong>Suggested Action:</strong> ${escapeHtml(diag.suggestedFix)}</p>` : ''}
@@ -1901,7 +2080,9 @@
                 </button>
               </div>
             </div>
-          ` : ''}
+          `
+              : ''
+          }
         </div>
       `;
     }
@@ -1914,9 +2095,13 @@
           <button class="req-action-btn" onclick="toggleEpisodes(${id})" style="font-size: 0.72rem; padding: 3px 8px;">
             ${isEpisodesExpanded ? 'Hide Episodes (▲)' : `Show Episodes (${r.torrents.length}) ▼`}
           </button>
-          ${isEpisodesExpanded ? `
+          ${
+            isEpisodesExpanded
+              ? `
             <div class="req-episodes-drawer">
-              ${r.torrents.map(t => `
+              ${r.torrents
+                .map(
+                  (t) => `
                 <div class="req-episode-item">
                   <div style="min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff;">
                     ${escapeHtml(t.name)}
@@ -1924,13 +2109,17 @@
                   <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; color: #a1a1aa; font-family: var(--font-mono); font-size: 0.7rem;">
                     <span>${t.progress}%</span>
                     <span>${formatBytes(t.size)}</span>
-                    <span style="color: ${t.state === 'downloading' ? '#38bdf8' : (t.state === 'stalledDL' ? '#f59e0b' : '#71717a')};">${escapeHtml(t.state)}</span>
+                    <span style="color: ${t.state === 'downloading' ? '#38bdf8' : t.state === 'stalledDL' ? '#f59e0b' : '#71717a'};">${escapeHtml(t.state)}</span>
                     <span>🌱 ${t.seeds}</span>
                   </div>
                 </div>
-              `).join('')}
+              `
+                )
+                .join('')}
             </div>
-          ` : ''}
+          `
+              : ''
+          }
         </div>
       `;
     }
@@ -1970,10 +2159,12 @@
           </div>
 
           <!-- Progress Bar (shown when downloading, stalled, or completed) -->
-          ${(!isSearching && !isPending) || progress > 0 ? `
+          ${
+            (!isSearching && !isPending) || progress > 0
+              ? `
             <div class="req-progress-wrap">
               <div class="req-progress-track">
-                <div class="req-progress-fill ${isCompleted ? 'completed' : (isStalled ? 'stalled' : '')}" style="width: ${progress}%;"></div>
+                <div class="req-progress-fill ${isCompleted ? 'completed' : isStalled ? 'stalled' : ''}" style="width: ${progress}%;"></div>
               </div>
               <div class="req-progress-sub">
                 <div>
@@ -1987,7 +2178,9 @@
                 </div>
               </div>
             </div>
-          ` : ''}
+          `
+              : ''
+          }
 
           <!-- Diagnosis Banner (if stalled/failed) -->
           ${diagnosisHtml}
@@ -1997,30 +2190,46 @@
 
           <!-- Footer Actions -->
           <div class="req-card-actions">
-            ${isCompleted ? `
+            ${
+              isCompleted
+                ? `
               <a href="http://127.0.0.1:8096" target="_blank" class="req-action-btn success">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                 Watch in Jellyfin ↗
               </a>
-            ` : ''}
-            ${!isCompleted ? `
-              ${r.isPrioritized ? `
+            `
+                : ''
+            }
+            ${
+              !isCompleted
+                ? `
+              ${
+                r.isPrioritized
+                  ? `
                 <button class="req-action-btn req-btn-unprioritize" onclick="unprioritizeRequest(event, ${id})">
                   <span class="pulsing-bolt">⚡</span> <strong>PRIORITY ACTIVE</strong> &bull; Cancel ✕
                 </button>
-              ` : `
+              `
+                  : `
                 <button class="req-action-btn req-btn-prioritize" onclick="prioritizeRequest(event, ${id}, '${escapeHtml(r.title)}')">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                   ⚡ Prioritize Download
                 </button>
-              `}
-            ` : ''}
-            ${isStalled || isFailed || isSearching ? `
+              `
+              }
+            `
+                : ''
+            }
+            ${
+              isStalled || isFailed || isSearching
+                ? `
               <button class="req-action-btn primary" onclick="retrySingleRequest(event, ${id}, ${r.tmdbId}, '${escapeHtml(r.type)}')">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                 Retry Search
               </button>
-            ` : ''}
+            `
+                : ''
+            }
             <a href="http://127.0.0.1:5055/${r.type === 'tv' ? 'tv' : 'movie'}/${r.tmdbId}" target="_blank" class="req-action-btn" style="color: #a1a1aa;">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
               View in Seerr
@@ -2077,7 +2286,10 @@
       const res = await fetch(`/api/requests/${id}/prioritize`, { method: 'POST' });
       const data = await res.json();
       if (res.ok && data.success) {
-        showToast(`⚡ Priority Mode Activated: 100% bandwidth allocated to '${title}'! (${data.pausedCount} background downloads paused)`, 'success');
+        showToast(
+          `⚡ Priority Mode Activated: 100% bandwidth allocated to '${title}'! (${data.pausedCount} background downloads paused)`,
+          'success'
+        );
         fetchRequests(true);
       } else {
         showToast(data.error || 'Failed to prioritize request', 'error');
@@ -2094,7 +2306,10 @@
       const res = await fetch(`/api/requests/${id}/unprioritize`, { method: 'POST' });
       const data = await res.json();
       if (res.ok && data.success) {
-        showToast(`✔ Priority mode disabled. Resumed ${data.resumedCount || 0} background download(s).`, 'success');
+        showToast(
+          `✔ Priority mode disabled. Resumed ${data.resumedCount || 0} background download(s).`,
+          'success'
+        );
         fetchRequests(true);
       } else {
         showToast(data.error || 'Failed to unprioritize request', 'error');
@@ -2108,9 +2323,11 @@
     // Status Filter Tabs
     const filterTabs = document.getElementById('req-status-filters');
     if (filterTabs) {
-      filterTabs.querySelectorAll('.req-filter-btn').forEach(btn => {
+      filterTabs.querySelectorAll('.req-filter-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
-          filterTabs.querySelectorAll('.req-filter-btn').forEach(b => b.classList.remove('active'));
+          filterTabs
+            .querySelectorAll('.req-filter-btn')
+            .forEach((b) => b.classList.remove('active'));
           btn.classList.add('active');
           state.reqFilterStatus = btn.dataset.filter || 'all';
           renderRequests();
@@ -2182,5 +2399,4 @@
   } else {
     init();
   }
-
 })();

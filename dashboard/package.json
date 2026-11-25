@@ -4,7 +4,10 @@
   "description": "Orbit Server: High-Performance Developer Mission Control & Operations Cockpit",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "check": "node --check server.js && node --check public/app.js",
+    "format": "npx --yes prettier --write \"**/*.{js,css,html,json}\"",
+    "format:check": "npx --yes prettier --check \"**/*.{js,css,html,json}\""
   },
   "dependencies": {}
 }

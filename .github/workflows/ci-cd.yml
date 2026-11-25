@@ -1,0 +1,253 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/alpha-prod-dashboard
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install and run ShellCheck
+        run: |
+          if ! command -v shellcheck >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y shellcheck
+          fi
+          shellcheck -S warning start.sh stop.sh restart.sh sandbox/*.sh quadlets/*.sh
+
+      - name: Check JS syntax & Prettier formatting
+        run: |
+          for file in \
+            dashboard/server.js \
+            dashboard/public/app.js \
+            jellyfin/custom-discover-request.js \
+            jellyfin/custom-hover-preview.js \
+            jellyfin/custom-details-hero.js \
+            jellyfin/test-state-machine.js; do
+            echo "Checking syntax: $file"
+            node --check "$file"
+          done
+          npx --yes prettier --check "dashboard/**/*.{js,css,html,json}"
+
+      - name: Run Jellyfin unit test suite
+        run: node jellyfin/test-state-machine.js
+
+      - name: Check Python syntax & Ruff lint
+        run: |
+          python3 -m py_compile sandbox/*.py
+          python3 -m pip install --no-cache-dir ruff
+          ruff check --select E9,F63,F7,F82 sandbox/*.py
+
+      - name: Validate Quadlet templates
+        run: |
+          RENDER_DIR="/tmp/quadlets-ci-test"
+          CI_ENV_FILE="/tmp/quadlets-ci.env"
+          rm -rf "$RENDER_DIR"
+          mkdir -p "$RENDER_DIR"
+
+          cat > "$CI_ENV_FILE" <<'EOF'
+          SERVER_DATA_DIR=/tmp/alpha-ci-data
+          ALPHA_MOUNT_POINT=/tmp/alpha-ci-mount
+          GHCR_DASHBOARD_IMAGE=ghcr.io/ci-test/alpha-prod-dashboard:latest
+          FLARESOLVERR_IMAGE=ghcr.io/flaresolverr/flaresolverr:latest
+          TS_HOSTNAME=alpha-ci-orbit
+          TS_AUTHKEY=tskey-auth-ci-dummy
+          TS_EXTRA_ARGS=
+          TS_USERSPACE=true
+          SWITCHER_API_KEY=ci-dummy-switcher-key
+          GLUETUN_VPN_PROVIDER=custom
+          GLUETUN_VPN_TYPE=wireguard
+          WARP_PRIVATE_KEY=ci-dummy-warp-private-key
+          WARP_ADDRESS=172.16.0.2/32
+          WARP_PUBLIC_KEY=bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=
+          WARP_ENDPOINT_IP=162.159.192.5
+          WARP_ENDPOINT_PORT=2408
+          TMDB_API_KEY=ci-dummy-tmdb-key
+          SEERR_API_KEY=ci-dummy-seerr-key
+          SEERR_URL=http://127.0.0.1:5055
+          JELLYFIN_API_KEY=ci-dummy-jellyfin-key
+          JELLYFIN_URL=http://127.0.0.1:8096
+          QBIT_USER=admin
+          QBIT_PASS=ci-dummy-pass
+          RADARR_API_KEY=ci-dummy-radarr-key
+          SONARR_API_KEY=ci-dummy-sonarr-key
+          PROWLARR_API_KEY=ci-dummy-prowlarr-key
+          NTFY_TOPIC=alpha-ci-alerts
+          NTFY_URL=https://ntfy.sh
+          NTFY_TOKEN=ci-dummy-ntfy-token
+          TZ=UTC
+          PUID=1000
+          PGID=1000
+          EOF
+
+          set -a
+          # shellcheck disable=SC1090
+          . "$CI_ENV_FILE"
+          set +a
+
+          CREATED_TEMP_ENV=0
+          cleanup() {
+            if [ "$CREATED_TEMP_ENV" -eq 1 ]; then
+              rm -f .env
+            fi
+            rm -rf "$RENDER_DIR" "$CI_ENV_FILE"
+          }
+          trap cleanup EXIT
+
+          if [ ! -f .env ]; then
+            cp "$CI_ENV_FILE" .env
+            CREATED_TEMP_ENV=1
+          fi
+
+          HELP_OUT=$(bash quadlets/install-quadlets.sh --help 2>&1 || true)
+          EXTRA_ARGS=()
+          if printf '%s' "$HELP_OUT" | grep -q -- '--env-file'; then
+            EXTRA_ARGS+=(--env-file "$CI_ENV_FILE")
+          fi
+          if printf '%s' "$HELP_OUT" | grep -q -- '--render-only'; then
+            EXTRA_ARGS+=(--render-only)
+          elif printf '%s' "$HELP_OUT" | grep -q -- '--dry-run'; then
+            EXTRA_ARGS+=(--dry-run)
+          fi
+
+          if printf '%s' "$HELP_OUT" | grep -q -- '--render-dir'; then
+            bash quadlets/install-quadlets.sh "${EXTRA_ARGS[@]}" --render-dir "$RENDER_DIR"
+          else
+            bash quadlets/install-quadlets.sh "${EXTRA_ARGS[@]}"
+          fi
+
+          python3 - "$RENDER_DIR" <<'PYEOF'
+          import configparser
+          import pathlib
+          import re
+          import sys
+
+          render_dir = pathlib.Path(sys.argv[1])
+          unit_suffixes = {
+              '.container',
+              '.network',
+              '.volume',
+              '.pod',
+              '.kube',
+              '.service',
+              '.timer',
+              '.target',
+              '.conf'
+          }
+          files = sorted(
+              p for p in render_dir.rglob('*')
+              if p.is_file() and p.suffix in unit_suffixes
+          )
+          if not files:
+              raise SystemExit(f'No rendered Quadlet/systemd unit files found in {render_dir}')
+
+          token_re = re.compile(r'__[A-Z0-9_]+__')
+          for path in files:
+              text = path.read_text(encoding='utf-8')
+              unreplaced = token_re.findall(text)
+              if unreplaced:
+                  raise SystemExit(
+                      f'{path}: unreplaced placeholders found: {sorted(set(unreplaced))}'
+                  )
+              cp = configparser.ConfigParser(strict=False, interpolation=None)
+              cp.read_string(text, source=str(path))
+              if not cp.sections():
+                  raise SystemExit(f'{path}: parsed INI has no sections')
+              print(f'OK: {path.relative_to(render_dir)} ({len(cp.sections())} sections)')
+          PYEOF
+
+          QUADLET_BIN=""
+          for candidate in /usr/libexec/podman/quadlet /usr/lib/podman/quadlet; do
+            if [ -x "$candidate" ]; then
+              QUADLET_BIN="$candidate"
+              break
+            fi
+          done
+          QUADLET_DIR="$RENDER_DIR/containers/systemd"
+          if [ ! -d "$QUADLET_DIR" ]; then
+            QUADLET_DIR="$RENDER_DIR"
+          fi
+          if [ -n "$QUADLET_BIN" ] && [ -n "$(find "$QUADLET_DIR" -maxdepth 1 -type f 2>/dev/null)" ]; then
+            echo "Running Podman Quadlet dry-run via $QUADLET_BIN ($(podman --version 2>/dev/null || echo 'podman'))..."
+            QUADLET_UNIT_DIRS="$QUADLET_DIR" "$QUADLET_BIN" -dryrun -user -no-kmsg-log || {
+              echo "::warning::Podman quadlet -dryrun reported diagnostics (runner Podman version may differ from host)"
+            }
+          fi
+
+  build-and-push:
+    name: Build & Push Dashboard Image
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=
+
+      - name: Build and push Dashboard Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./dashboard
+          file: ./dashboard/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

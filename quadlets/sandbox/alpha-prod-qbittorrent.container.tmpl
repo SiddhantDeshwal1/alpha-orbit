@@ -1,0 +1,34 @@
+[Unit]
+Description=Alpha Prod qBittorrent (VPN-Gated Download Engine)
+After=alpha-prod-gluetun.service
+BindsTo=alpha-prod-gluetun.service
+
+[Container]
+Image=lscr.io/linuxserver/qbittorrent:latest
+ContainerName=alpha-prod-qbittorrent
+Network=alpha-prod-gluetun.container
+
+Environment=PUID=1000
+Environment=PGID=1000
+Environment=TZ=Asia/Kolkata
+Environment=WEBUI_PORT=8080
+Environment=TORRENTING_PORT=6881
+
+Volume=__APP_DIR__/sandbox/qbittorrent:/config:Z
+Volume=__DATA_DIR__/seerr/media/download/incomplete:/data/media/incomplete:z
+Volume=__DATA_DIR__/seerr/media/download/staging:/data/media/staging:z
+
+Tmpfs=/tmp:rw,noexec,nosuid,size=128M
+NoNewPrivileges=true
+SecurityLabelDisable=false
+
+HealthCmd=curl -s -f http://127.0.0.1:8080/ >/dev/null || exit 1
+HealthInterval=15s
+HealthTimeout=5s
+HealthRetries=5
+HealthStartPeriod=20s
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=300
+MemoryMax=512M

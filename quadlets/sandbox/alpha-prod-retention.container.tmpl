@@ -1,0 +1,29 @@
+[Unit]
+Description=Alpha Prod Retention Engine (Jellyfin-Aware Automated Media Purge)
+
+[Container]
+Image=docker.io/linuxserver/ffmpeg:latest
+ContainerName=alpha-prod-retention
+Network=alpha_prod_default.network
+Network=alpha_prod_sandbox_net.network
+Entrypoint=/bin/bash
+Exec=-c "while true; do /scripts/retention.sh; sleep 3600; done"
+
+Environment=JELLYFIN_URL=http://alpha-prod-tailscale:8096
+Environment=COMPLETED_DIR=/data/media/completed
+Environment=WATCHED_MAX_AGE_DAYS=7
+Environment=UNWATCHED_MAX_AGE_DAYS=30
+EnvironmentFile=__APP_DIR__/.env
+
+Volume=__APP_DIR__/sandbox:/scripts:ro,Z
+Volume=__DATA_DIR__/seerr/media/download/completed:/data/media/completed:z
+Volume=__DATA_DIR__/sandbox/logs:/data/logs:z
+
+Tmpfs=/tmp:rw,noexec,nosuid,size=64M
+NoNewPrivileges=true
+SecurityLabelDisable=false
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=300
+MemoryMax=128M

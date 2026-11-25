@@ -1,0 +1,13 @@
+[Unit]
+Description=Alpha Prod Orbit Git Auto-Sync Timer (Every 2 Minutes)
+Documentation=file://__APP_DIR__/ARCHITECTURE.md
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=2min
+RandomizedDelaySec=10s
+Persistent=true
+Unit=alpha-orbit-git-sync.service
+
+[Install]
+WantedBy=timers.target

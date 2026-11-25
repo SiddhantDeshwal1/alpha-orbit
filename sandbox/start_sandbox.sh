@@ -35,6 +35,12 @@ if [[ "$SERVER_DATA_DIR" != /* ]]; then
     SERVER_DATA_DIR="$(cd "$CONFIG_DIR" && cd "$SERVER_DATA_DIR" 2>/dev/null && pwd || echo "$CONFIG_DIR/data")"
 fi
 
+QUADLET_SYSTEMD_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/containers/systemd"
+QUADLET_MODE=false
+if [ -f "$QUADLET_SYSTEMD_DIR/alpha-prod-qbittorrent.container" ]; then
+    QUADLET_MODE=true
+fi
+
 echo "=============================================================="
 echo " Starting Orbit Server: Sandbox Download Stack               "
 echo "=============================================================="
@@ -131,7 +137,12 @@ if ! systemctl --user is-active --quiet podman.socket 2>/dev/null; then
 fi
 
 # Guarantee default inter-stack network exists
-if ! podman network exists alpha_prod_default 2>/dev/null; then
+if [ "$QUADLET_MODE" = true ]; then
+    systemctl --user daemon-reload
+    for net_unit in alpha_prod_default-network.service alpha_prod_sandbox_net-network.service; do
+        systemctl --user start "$net_unit" >/dev/null 2>&1 || true
+    done
+elif ! podman network exists alpha_prod_default 2>/dev/null; then
     podman network create alpha_prod_default >/dev/null 2>&1 || true
 fi
 echo "[+] Podman socket & network ready."
@@ -141,27 +152,58 @@ echo "[+] Podman socket & network ready."
 # ------------------------------------------------------------------------------
 echo "[4/5] Starting sandbox containers..."
 
-if command -v podman-compose >/dev/null 2>&1; then
-    COMPOSE_CMD="podman-compose -f $SANDBOX_COMPOSE"
-else
-    COMPOSE_CMD="podman compose --project-directory $CONFIG_DIR -f $SANDBOX_COMPOSE"
-fi
-
+export PODMAN_COMPOSE_WARNING_LOGS=false
 export DOCKER_HOST="unix:///run/user/$(id -u)/podman/podman.sock"
 
-COMPOSE_ERR=$(mktemp)
-if ! $COMPOSE_CMD up -d 2>"$COMPOSE_ERR"; then
-    echo "    Detected sandbox container conflicts. Re-aligning sandbox namespaces..."
-    podman ps -a --filter "name=alpha-prod-" --format "{{.Names}}" 2>/dev/null | grep -E "alpha-prod-(qbittorrent|radarr|sonarr|prowlarr|clamav|gatekeeper|retention|vpn-switcher|ntfy|flaresolverr)" | xargs -r podman rm -f 2>/dev/null || true
-    podman rm -f alpha-prod-gluetun 2>/dev/null || true
-    if ! $COMPOSE_CMD up -d 2>"$COMPOSE_ERR"; then
-        echo "[!] ERROR: Failed to materialize sandbox stack."
-        cat "$COMPOSE_ERR"
-        rm -f "$COMPOSE_ERR"
-        exit 1
+if [ "$QUADLET_MODE" = true ]; then
+    systemctl --user daemon-reload
+    for unit in \
+        alpha-prod-gluetun \
+        alpha-prod-flaresolverr \
+        alpha-prod-qbittorrent \
+        alpha-prod-radarr \
+        alpha-prod-sonarr \
+        alpha-prod-prowlarr \
+        alpha-prod-clamav \
+        alpha-prod-gatekeeper \
+        alpha-prod-retention \
+        alpha-prod-vpn-switcher \
+        alpha-prod-ntfy; do
+        if [ "$unit" = "alpha-prod-flaresolverr" ] && [ ! -f "$QUADLET_SYSTEMD_DIR/alpha-prod-flaresolverr.container" ]; then
+            echo "    [!] Skipping $unit (Quadlet unit not installed)"
+            continue
+        fi
+        if ! systemctl --user start "${unit}.service"; then
+            if [ "$unit" = "alpha-prod-flaresolverr" ]; then
+                echo "    [!] WARNING: Optional unit ${unit}.service failed to start; continuing sandbox startup."
+            else
+                echo "[!] ERROR: Failed to start Quadlet unit ${unit}.service"
+                exit 1
+            fi
+        fi
+    done
+else
+    if command -v podman-compose >/dev/null 2>&1; then
+        COMPOSE_CMD="podman-compose -f $SANDBOX_COMPOSE"
+    else
+        COMPOSE_CMD="podman compose --project-directory $CONFIG_DIR -f $SANDBOX_COMPOSE"
     fi
+
+    COMPOSE_ERR=$(mktemp)
+    if ! $COMPOSE_CMD up -d 2>"$COMPOSE_ERR"; then
+        echo "    Detected sandbox container conflicts. Re-aligning sandbox namespaces..."
+        podman ps -a --format "{{.Names}}" 2>/dev/null | grep -E "^(alpha-prod|sandbox)-(qbittorrent|radarr|sonarr|prowlarr|clamav|gatekeeper|retention|vpn-switcher|ntfy|flaresolverr)$" | xargs -r podman rm -f >/dev/null 2>&1 || true
+        podman rm -f alpha-prod-gluetun sandbox-gluetun >/dev/null 2>&1 || true
+        sleep 1
+        if ! $COMPOSE_CMD up -d 2>"$COMPOSE_ERR"; then
+            echo "[!] ERROR: Failed to materialize sandbox stack."
+            cat "$COMPOSE_ERR"
+            rm -f "$COMPOSE_ERR"
+            exit 1
+        fi
+    fi
+    rm -f "$COMPOSE_ERR"
 fi
-rm -f "$COMPOSE_ERR"
 
 echo "[+] Sandbox containers started."
 
