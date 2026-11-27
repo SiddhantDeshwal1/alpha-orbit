@@ -44,6 +44,9 @@ sandbox/sonarr/MediaCover/
 sandbox/sonarr/config.xml
 sandbox/prowlarr/prowlarr.db*
 sandbox/prowlarr/config.xml
+sandbox/*/logs.db*
+sandbox/*/Sentry/
+sandbox/*/asp/
 sandbox/qbittorrent/
 sandbox/qbittorrent/**
 sandbox/gluetun/servers/

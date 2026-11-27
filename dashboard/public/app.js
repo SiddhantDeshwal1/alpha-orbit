@@ -154,7 +154,7 @@
     }
   ];
 
-  const VALID_TABS = ['home', 'downloads', 'requests', 'access', 'logs', 'vpn', 'metrics'];
+  const VALID_TABS = ['home', 'downloads', 'access', 'observability', 'vpn'];
 
   /**
    * Normalize legacy `sandbox-*` log container names to `alpha-prod-*` while preserving `file:*`.
@@ -172,10 +172,18 @@
    */
   function resolveTabName(tabId) {
     if (tabId === 'apps') return 'home';
+    if (tabId === 'requests') return 'downloads';
+    if (tabId === 'metrics' || tabId === 'logs') return 'observability';
     return VALID_TABS.includes(tabId) ? tabId : 'home';
   }
 
-  const savedTab = resolveTabName(localStorage.getItem('alpha_tab'));
+  const pathSlug =
+    typeof window !== 'undefined'
+      ? window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase()
+      : '';
+  const savedTab = resolveTabName(
+    VALID_TABS.includes(pathSlug) ? pathSlug : localStorage.getItem('alpha_tab')
+  );
   const rawStoredLogSource = localStorage.getItem('alpha_log_source');
   const initialLogSource = normalizeLogSource(rawStoredLogSource || 'alpha-prod-seerr');
   if (rawStoredLogSource && rawStoredLogSource !== initialLogSource) {
@@ -185,7 +193,7 @@
   // --- Global Application State ---
   const state = {
     activeTab: savedTab,
-    accent: localStorage.getItem('dxbi.accent') || 'red',
+    accent: 'red',
     auth: {
       checked: false,
       authenticated: false,
@@ -316,16 +324,17 @@
 
   /**
    * Apply and persist a dx.bi accent preset across DOM, CSS variables, and Metrics Canvas charts.
+   * Locked permanently to 'red' per interface requirements.
    */
-  function applyAccent(accentName, rerenderCharts = true) {
-    const key = DX_ACCENTS[accentName] ? accentName : 'red';
-    const hex = DX_ACCENTS[key];
-    state.accent = key;
-    document.documentElement.dataset.dxAccent = key;
+  function applyAccent(_accentName = 'red', rerenderCharts = true) {
+    const key = 'red';
+    const hex = DX_ACCENTS.red || '#e50914';
+    state.accent = 'red';
+    document.documentElement.dataset.dxAccent = 'red';
     document.documentElement.style.setProperty('--dx-accent', hex);
     document.documentElement.style.setProperty('--dx-accent-soft', hexToRgba(hex, 0.18));
     try {
-      localStorage.setItem('dxbi.accent', key);
+      localStorage.setItem('dxbi.accent', 'red');
     } catch (_) {}
 
     document.querySelectorAll('.dx-swatch-btn').forEach((btn) => {
@@ -398,14 +407,7 @@
 
   function updateAdminPillUI() {
     const pill = document.getElementById('admin-user-pill');
-    const label = document.getElementById('admin-username-label');
-    if (!pill || !label) return;
-    if (state.auth.authenticated) {
-      label.textContent = state.auth.username || 'admin';
-      pill.style.display = 'inline-flex';
-    } else {
-      pill.style.display = 'none';
-    }
+    if (pill) pill.style.display = 'none';
   }
 
   function switchAuthMode(mode) {
@@ -481,7 +483,10 @@
     else if (viewParam === 'status' || hash === 'status' || tokenParam) authMode = 'status';
 
     let requestedTab = null;
-    if (VALID_TABS.includes(tabParam) || tabParam === 'apps') {
+    const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+    if (VALID_TABS.includes(pathSlug) || pathSlug === 'apps') {
+      requestedTab = resolveTabName(pathSlug);
+    } else if (VALID_TABS.includes(tabParam) || tabParam === 'apps') {
       requestedTab = resolveTabName(tabParam);
     } else if (VALID_TABS.includes(hash) || hash === 'apps') {
       requestedTab = resolveTabName(hash);
@@ -947,7 +952,7 @@
     state.lastLogsFingerprint = '';
     localStorage.setItem('alpha_log_source', normalized);
     syncLogSourceControls(normalized);
-    switchView('logs');
+    switchView('observability');
   };
 
   window.restartService = async function (e, containerName) {
@@ -1015,10 +1020,17 @@
     } catch (_) {}
   };
 
-  window.switchView = function (tabId) {
+  window.switchView = function (tabId, updateHistory = true) {
     const resolved = resolveTabName(tabId);
     state.activeTab = resolved;
     localStorage.setItem('alpha_tab', resolved);
+
+    if (updateHistory && typeof window !== 'undefined' && window.history) {
+      const targetPath = `/${resolved}`;
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState({ tab: resolved }, '', targetPath);
+      }
+    }
 
     document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
       btn.classList.toggle('active', btn.dataset.tab === resolved);
@@ -1034,21 +1046,30 @@
 
     if (!state.auth.authenticated) return;
 
-    if (resolved === 'logs') {
+    if (resolved === 'observability') {
+      fetchSystem();
+      fetchMetrics(true);
       loadLogSources();
       fetchLogs();
     } else if (resolved === 'downloads') {
       fetchDownloads();
+      fetchRequests(true);
     } else if (resolved === 'vpn') {
       fetchVpnStatus();
-    } else if (resolved === 'metrics' || resolved === 'home') {
+    } else if (resolved === 'home') {
+      fetchSystem();
       fetchMetrics(true);
-    } else if (resolved === 'requests') {
-      fetchRequests(true);
     } else if (resolved === 'access') {
       fetchAccessOverview();
     }
   };
+
+  window.addEventListener('popstate', (e) => {
+    const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+    const targetTab =
+      (e.state && e.state.tab) || (VALID_TABS.includes(pathSlug) ? pathSlug : 'home');
+    window.switchView(targetTab, false);
+  });
 
   // ==============================================================================
   // API DATA SYNC (TELEMETRY, LOGS, VPN, DOWNLOADS)
@@ -1061,13 +1082,86 @@
       const data = await res.json();
       state.system = data;
 
+      // Update Header Telemetry Pills
+      const cpuPill = document.getElementById('val-cpu-pill');
+      if (cpuPill && data.cpu) {
+        cpuPill.textContent = `${Math.round(data.cpu.percentUsed ?? 0)}%`;
+      }
+
+      const gpuPill = document.getElementById('val-gpu-pill');
+      if (gpuPill) {
+        gpuPill.textContent = data.gpu?.model || 'VirtIO';
+      }
+
+      const ramPill = document.getElementById('val-ram-pill');
+      if (ramPill && data.memory) {
+        const usedGB = (data.memory.used / 1024 ** 3).toFixed(1);
+        const totalGB = Math.round(data.memory.total / 1024 ** 3);
+        ramPill.textContent = `${usedGB}/${totalGB} GB`;
+      }
+
       if (data.disk && data.disk.totalBytes > 0) {
         const freeGB = Math.round(data.disk.freeBytes / 1024 ** 3);
         const totalGB = Math.round(data.disk.totalBytes / 1024 ** 3);
         const freeEl = document.getElementById('val-storage-free');
         const fillEl = document.getElementById('val-storage-fill');
-        if (freeEl) freeEl.textContent = `${freeGB} GB Free / ${totalGB} GB`;
+        if (freeEl) freeEl.textContent = `${freeGB} GB Free`;
         if (fillEl) fillEl.style.width = `${data.disk.percentUsed}%`;
+      }
+
+      // Update Observability Hardware Grid Cards
+      const obsCpuVal = document.getElementById('obs-cpu-val');
+      const obsCpuSub = document.getElementById('obs-cpu-sub');
+      const obsCpuBar = document.getElementById('obs-cpu-bar');
+      const obsCpuLoad = document.getElementById('obs-cpu-load');
+      if (obsCpuVal && data.cpu) {
+        const cpuPct = Math.round(data.cpu.percentUsed ?? 0);
+        obsCpuVal.textContent = `${cpuPct}%`;
+        if (obsCpuSub)
+          obsCpuSub.textContent = `${data.cpu.cores || 4} Cores · ${data.cpu.model || 'ARM64'}`;
+        if (obsCpuBar) obsCpuBar.style.width = `${Math.min(100, cpuPct)}%`;
+        if (obsCpuLoad && Array.isArray(data.cpu.loadAvg))
+          obsCpuLoad.textContent = data.cpu.loadAvg.join(', ');
+      }
+
+      const obsGpuVal = document.getElementById('obs-gpu-val');
+      const obsGpuSub = document.getElementById('obs-gpu-sub');
+      const obsGpuTrans = document.getElementById('obs-gpu-transcode');
+      if (obsGpuVal && data.gpu) {
+        obsGpuVal.textContent = data.gpu.model || 'VirtIO GPU';
+        if (obsGpuSub)
+          obsGpuSub.textContent = `${data.gpu.vendor || 'Red Hat'} · ${data.gpu.drmNode || 'renderD128'}`;
+        if (obsGpuTrans)
+          obsGpuTrans.textContent = `Transcode: ${data.gpu.transcode || 'CPU Multi-thread fallback'}`;
+      }
+
+      const obsRamVal = document.getElementById('obs-ram-val');
+      const obsRamSub = document.getElementById('obs-ram-sub');
+      const obsRamBar = document.getElementById('obs-ram-bar');
+      const obsRamFree = document.getElementById('obs-ram-free');
+      if (obsRamVal && data.memory) {
+        const usedGB = (data.memory.used / 1024 ** 3).toFixed(1);
+        const totalGB = (data.memory.total / 1024 ** 3).toFixed(1);
+        const freeGB = (data.memory.free / 1024 ** 3).toFixed(1);
+        obsRamVal.textContent = `${usedGB} / ${totalGB} GB`;
+        if (obsRamSub) obsRamSub.textContent = `${data.memory.percentUsed}% System RAM allocated`;
+        if (obsRamBar) obsRamBar.style.width = `${data.memory.percentUsed}%`;
+        if (obsRamFree) obsRamFree.textContent = `${freeGB} GB Free`;
+      }
+
+      const obsStorageVal = document.getElementById('obs-storage-val');
+      const obsStorageSub = document.getElementById('obs-storage-sub');
+      const obsStorageBar = document.getElementById('obs-storage-bar');
+      const obsStorageMount = document.getElementById('obs-storage-mount');
+      if (obsStorageVal && data.disk && data.disk.totalBytes > 0) {
+        const freeGB = Math.round(data.disk.freeBytes / 1024 ** 3);
+        const totalGB = Math.round(data.disk.totalBytes / 1024 ** 3);
+        obsStorageVal.textContent = `${freeGB} GB Free / ${totalGB} GB`;
+        if (obsStorageSub)
+          obsStorageSub.textContent = `Pool Utilization: ${data.disk.percentUsed}% Used`;
+        if (obsStorageBar) obsStorageBar.style.width = `${data.disk.percentUsed}%`;
+        if (obsStorageMount)
+          obsStorageMount.textContent = `Mount: ${data.disk.mount || '/media/alpha'}`;
       }
     } catch (_) {}
   }
@@ -1114,7 +1208,7 @@
       const torrentsCount = (data.torrents || []).length;
       if (badgeDl) {
         badgeDl.textContent = torrentsCount;
-        badgeDl.style.display = torrentsCount > 0 ? 'inline-block' : 'none';
+        badgeDl.style.display = torrentsCount > 0 ? 'inline-flex' : 'none';
       }
 
       renderTorrents(data.torrents || []);
@@ -1231,7 +1325,7 @@
       const errCount = lines.filter((l) => l.level === 'error').length;
       if (errBadge) {
         errBadge.textContent = errCount;
-        errBadge.style.display = errCount > 0 ? 'inline-block' : 'none';
+        errBadge.style.display = errCount > 0 ? 'inline-flex' : 'none';
       }
 
       if (lines.length === 0) {
@@ -1646,7 +1740,7 @@
     const badge = document.getElementById('badge-access');
     if (badge) {
       badge.textContent = pendingCount;
-      badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+      badge.style.display = pendingCount > 0 ? 'inline-flex' : 'none';
     }
 
     const setVal = (id, v) => {
@@ -2383,11 +2477,9 @@
       }
       if (e.key === '1') switchView('home');
       else if (e.key === '2') switchView('downloads');
-      else if (e.key === '3') switchView('requests');
-      else if (e.key === '4') switchView('access');
-      else if (e.key === '5') switchView('logs');
-      else if (e.key === '6') switchView('vpn');
-      else if (e.key === '7') switchView('metrics');
+      else if (e.key === '3') switchView('access');
+      else if (e.key === '4') switchView('observability');
+      else if (e.key === '5') switchView('vpn');
       else if (e.key === 'r' || e.key === 'R') {
         fetchSystem();
         fetchPings();
@@ -2395,7 +2487,7 @@
         fetchVpnStatus();
       } else if (e.key === '/') {
         e.preventDefault();
-        switchView('logs');
+        switchView('observability');
         document.getElementById('log-search-box')?.focus();
       }
     });
@@ -2420,7 +2512,7 @@
     if (
       !state.auth.authenticated ||
       document.hidden ||
-      (!force && state.activeTab !== 'metrics' && state.activeTab !== 'home')
+      (!force && state.activeTab !== 'observability' && state.activeTab !== 'home')
     ) {
       return;
     }
@@ -2908,11 +3000,16 @@
       state.syncTick += 1;
       fetchSystem();
       fetchPings();
-      if (state.activeTab === 'downloads') fetchDownloads();
+      if (state.activeTab === 'downloads') {
+        fetchDownloads();
+        if (state.syncTick % 2 === 0) fetchRequests();
+      }
       if (state.activeTab === 'vpn') fetchVpnStatus();
-      if (state.activeTab === 'logs') fetchLogs();
-      if (state.activeTab === 'metrics' || state.activeTab === 'home') fetchMetrics();
-      if (state.activeTab === 'requests') fetchRequests();
+      if (state.activeTab === 'observability') {
+        fetchLogs();
+        fetchMetrics();
+      }
+      if (state.activeTab === 'home') fetchMetrics();
       if (state.activeTab === 'access') {
         fetchAccessRequests();
       } else if (state.syncTick % 3 === 0) {
@@ -2925,7 +3022,10 @@
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      if ((state.activeTab === 'metrics' || state.activeTab === 'home') && state.metricsData) {
+      if (
+        (state.activeTab === 'observability' || state.activeTab === 'home') &&
+        state.metricsData
+      ) {
         renderAllCharts(state.metricsData);
       }
     }, 120);
@@ -3384,7 +3484,7 @@
       const badge = document.getElementById('badge-req');
       if (badge) {
         badge.textContent = activeCount;
-        badge.style.display = activeCount > 0 ? 'inline-block' : 'none';
+        badge.style.display = activeCount > 0 ? 'inline-flex' : 'none';
       }
 
       const headerPill = document.getElementById('req-header-pill');
@@ -3829,6 +3929,192 @@
   }
 
   // ==============================================================================
+  // RESTART CONTAINERS MODAL HANDLERS
+  // ==============================================================================
+
+  const RESTARTABLE_SERVICES = [
+    {
+      id: 'alpha-prod-jellyfin',
+      name: 'Jellyfin Cinema',
+      desc: 'Direct streaming & hardware transcoding',
+      icon: '🎬'
+    },
+    {
+      id: 'alpha-prod-seerr',
+      name: 'Seerr Discovery',
+      desc: 'Media requests & automation hub',
+      icon: '🍿'
+    },
+    {
+      id: 'alpha-prod-qbittorrent',
+      name: 'qBittorrent Engine',
+      desc: 'Protected torrent download client',
+      icon: '⚡'
+    },
+    {
+      id: 'alpha-prod-radarr',
+      name: 'Radarr',
+      desc: 'Movie catalog & quality management',
+      icon: '🎞️'
+    },
+    {
+      id: 'alpha-prod-sonarr',
+      name: 'Sonarr',
+      desc: 'TV series automation & indexers',
+      icon: '📺'
+    },
+    {
+      id: 'alpha-prod-prowlarr',
+      name: 'Prowlarr',
+      desc: 'Torrents & Usenet indexer proxy',
+      icon: '🔍'
+    },
+    {
+      id: 'alpha-prod-gluetun',
+      name: 'Gluetun VPN',
+      desc: 'Wireguard encrypted killswitch tunnel',
+      icon: '🛡️'
+    },
+    {
+      id: 'alpha-prod-tailscale',
+      name: 'Tailscale Mesh',
+      desc: 'Secure mesh networking & routing',
+      icon: '🌐'
+    },
+    {
+      id: 'alpha-prod-dashboard',
+      name: 'Orbit Dashboard',
+      desc: 'Core UI & monitoring daemon',
+      icon: '🚀'
+    }
+  ];
+
+  window.openRestartContainersModal = function () {
+    const modal = document.getElementById('modal-restart-containers');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    window.renderRestartContainersList();
+  };
+
+  window.closeRestartContainersModal = function () {
+    const modal = document.getElementById('modal-restart-containers');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.renderRestartContainersList = async function () {
+    const containerEl = document.getElementById('restart-containers-list');
+    if (!containerEl) return;
+    containerEl.innerHTML =
+      '<div style="color: var(--dx-text-3); font-size: 0.85rem; padding: 12px 0;">Loading container telemetry...</div>';
+
+    let liveContainers = [];
+    try {
+      const res = await apiFetch('/api/containers');
+      if (res.ok) {
+        const data = await res.json();
+        liveContainers = data.containers || [];
+      }
+    } catch (_) {}
+
+    const liveMap = new Map(liveContainers.map((c) => [c.name, c]));
+
+    const html = RESTARTABLE_SERVICES.map((item) => {
+      const live = liveMap.get(item.id);
+      const isUp = live ? live.state === 'running' : true;
+      const statusText = live ? live.status : 'Active';
+      const statusColor = isUp ? '#10b981' : '#f59e0b';
+
+      return `
+        <div class="restart-container-card" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 1.3rem;">${item.icon}</div>
+            <div>
+              <div style="font-size: 0.92rem; font-weight: 600; color: #fff;">${escapeHtml(item.name)} <code style="font-size: 0.72rem; color: #8a8a96; font-weight: normal;">${escapeHtml(item.id)}</code></div>
+              <div style="font-size: 0.75rem; color: #8a8a96; display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${statusColor};"></span>
+                <span>${escapeHtml(statusText)}</span>
+                <span>•</span>
+                <span>${escapeHtml(item.desc)}</span>
+              </div>
+            </div>
+          </div>
+          <button
+            class="dx-btn dx-btn-sm"
+            onclick="triggerContainerRestart(this, '${escapeHtml(item.id)}')"
+            style="display: inline-flex; align-items: center; gap: 5px; background: rgba(229,9,20,0.15); border: 1px solid rgba(229,9,20,0.4); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+          >
+            <span>⟳</span>
+            <span>Restart</span>
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    containerEl.innerHTML = html;
+  };
+
+  window.triggerContainerRestart = async function (btn, containerName) {
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      btn.innerHTML = '<span class="animate-spin">⟳</span> Restarting...';
+    }
+    showToast(`Restarting ${containerName}...`, 'info');
+    try {
+      const res = await apiFetch('/api/containers/restart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: containerName })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast(`${containerName} restarted successfully!`, 'success');
+        setTimeout(window.renderRestartContainersList, 1500);
+      } else {
+        showToast(data.error || 'Failed to restart container', 'error');
+      }
+    } catch (err) {
+      showToast(`Error: ${err.message}`, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.innerHTML = '<span>⟳</span> Restart';
+      }
+    }
+  };
+
+  window.restartAllContainers = async function () {
+    if (
+      !confirm(
+        'Restart all Orbit service containers? Network traffic and streaming will briefly pause.'
+      )
+    )
+      return;
+    const btn = document.getElementById('btn-restart-all-containers');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="animate-spin">⟳</span> Restarting All...';
+    }
+    showToast('Triggering batch restart of containers...', 'info');
+    for (const item of RESTARTABLE_SERVICES) {
+      try {
+        await apiFetch('/api/containers/restart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: item.id })
+        });
+      } catch (_) {}
+    }
+    showToast('All containers restarted successfully!', 'success');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '⟳ Restart All Containers';
+    }
+    setTimeout(window.renderRestartContainersList, 1500);
+  };
+
+  // ==============================================================================
   // SESSION STARTUP & INITIALIZATION
   // ==============================================================================
 
@@ -3842,7 +4128,7 @@
     fetchVpnStatus();
     window.fetchRequests();
     fetchAccessRequests();
-    if (state.activeTab === 'metrics' || state.activeTab === 'home') {
+    if (state.activeTab === 'observability' || state.activeTab === 'home') {
       fetchMetrics(true);
     }
     startSyncTimer();
@@ -3869,4 +4155,52 @@
   } else {
     init();
   }
+
+  // ==============================================================================
+  // POWER MENU DROPDOWN & HOST SYSTEM REBOOT / SHUTDOWN
+  // ==============================================================================
+  window.togglePowerMenu = function (e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const menu = document.getElementById('power-dropdown-menu');
+    if (!menu) return;
+    const isShown = menu.style.display === 'block';
+    menu.style.display = isShown ? 'none' : 'block';
+  };
+
+  window.hidePowerMenu = function () {
+    const menu = document.getElementById('power-dropdown-menu');
+    if (menu) menu.style.display = 'none';
+  };
+
+  document.addEventListener('click', (e) => {
+    const wrapper = document.querySelector('.power-menu-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      window.hidePowerMenu();
+    }
+  });
+
+  window.triggerHostPower = async function (action) {
+    const confirmPrompt =
+      action === 'reboot'
+        ? 'Are you sure you want to REBOOT the server? Active downloads will pause and Orbit will briefly go offline.'
+        : 'Are you sure you want to SHUT DOWN the server? The host machine will power off completely.';
+
+    if (!confirm(confirmPrompt)) return;
+
+    try {
+      showToast(`Initiating server ${action}...`, 'warning');
+      const res = await apiFetch(`/api/system/${action}`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(data.message || `Server ${action} scheduled`, 'success');
+      } else {
+        showToast(data.error || `Failed to initiate ${action}`, 'error');
+      }
+    } catch (err) {
+      showToast(`Error: ${err.message}`, 'error');
+    }
+  };
 })();

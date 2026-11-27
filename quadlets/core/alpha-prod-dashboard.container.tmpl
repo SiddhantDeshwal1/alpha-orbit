@@ -18,6 +18,7 @@ Environment=SERVER_DATA_DIR=/data
 Environment=PODMAN_SOCKET=/run/podman/podman.sock
 Environment=DASHBOARD_DATA_DIR=/data/dashboard
 SecurityLabelDisable=true
+Volume=__APP_DIR__/dashboard:/app:ro,Z
 Volume=%t/podman:/run/podman:ro
 Volume=__DATA_DIR__/dashboard:/data/dashboard:Z
 Volume=__MOUNT_POINT__:/media/alpha:ro

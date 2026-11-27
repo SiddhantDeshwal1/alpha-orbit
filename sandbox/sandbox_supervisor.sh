@@ -368,5 +368,18 @@ while true; do
         LAST_CLEANER_RUN=$now_ts
     fi
 
+    # Check for dashboard power action triggers (reboot / shutdown)
+    if [ -f "$SERVER_DATA_DIR/dashboard/power_action" ]; then
+        POWER_ACTION=$(grep -o '"action":"[^"]*"' "$SERVER_DATA_DIR/dashboard/power_action" 2>/dev/null | cut -d'"' -f4 || true)
+        rm -f "$SERVER_DATA_DIR/dashboard/power_action"
+        if [ "$POWER_ACTION" = "reboot" ]; then
+            log "WARN" "[SUPERVISOR] Host reboot requested from dashboard. Initiating sudo reboot..."
+            sudo /sbin/reboot || sudo systemctl reboot || reboot
+        elif [ "$POWER_ACTION" = "shutdown" ]; then
+            log "WARN" "[SUPERVISOR] Host shutdown requested from dashboard. Initiating sudo poweroff..."
+            sudo /sbin/poweroff || sudo systemctl poweroff || poweroff
+        fi
+    fi
+
     sleep "$POLL_INTERVAL"
 done

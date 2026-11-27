@@ -26,16 +26,18 @@
   <DEFAULT_PROVIDERS />
   <IGNORE_PROVIDERS />
   <ElsewhereSeasonProviders>true</ElsewhereSeasonProviders>
+  <ElsewhereUseSeerrRegion>false</ElsewhereUseSeerrRegion>
   <ElsewhereCustomBrandingText />
   <ElsewhereCustomBrandingImageUrl />
   <ClearLocalStorageTimestamp>0</ClearLocalStorageTimestamp>
-  <ClearTranslationCacheTimestamp>1794675753605</ClearTranslationCacheTimestamp>
+  <ClearTranslationCacheTimestamp>1795714450746</ClearTranslationCacheTimestamp>
   <AutoPauseEnabled>true</AutoPauseEnabled>
   <AutoResumeEnabled>false</AutoResumeEnabled>
   <AutoPipEnabled>false</AutoPipEnabled>
   <AutoSkipIntro>true</AutoSkipIntro>
   <AutoSkipOutro>true</AutoSkipOutro>
   <LongPress2xEnabled>false</LongPress2xEnabled>
+  <SubtitleSyncButtonEnabled>false</SubtitleSyncButtonEnabled>
   <RandomButtonEnabled>true</RandomButtonEnabled>
   <RandomIncludeMovies>true</RandomIncludeMovies>
   <RandomIncludeShows>true</RandomIncludeShows>
@@ -77,6 +79,12 @@
   <ShowUserRatingOnPosters>false</ShowUserRatingOnPosters>
   <ShowUserRatingDash>true</ShowUserRatingDash>
   <Shortcuts>
+    <Shortcut>
+      <Name>SubtitleSync</Name>
+      <Key>Shift+S</Key>
+      <Label>Sync Subtitles</Label>
+      <Category>Player</Category>
+    </Shortcut>
     <Shortcut>
       <Name>DecreaseSubtitleOffset</Name>
       <Key>[</Key>
@@ -317,14 +325,30 @@
   <StatusTagsMilestones>true</StatusTagsMilestones>
   <StatusTagsSeriesStatus>false</StatusTagsSeriesStatus>
   <StatusTagsScenes>false</StatusTagsScenes>
+  <StatusTagsOnCollections>true</StatusTagsOnCollections>
   <StatusTagsJustAddedDays>7</StatusTagsJustAddedDays>
   <StatusTagsNewReleaseDays>30</StatusTagsNewReleaseDays>
   <StatusTagsLeaving>false</StatusTagsLeaving>
   <StatusTagsDirectPlay>false</StatusTagsDirectPlay>
   <LeavingSoonMaintainerrUrl />
   <LeavingSoonMaintainerrApiKey />
+  <LeavingSoonMaintainerrEnabled>true</LeavingSoonMaintainerrEnabled>
+  <ReclaimerrEnabled>false</ReclaimerrEnabled>
+  <ReclaimerrUrl />
+  <ReclaimerrToken />
+  <ReclaimerrUserRequests>false</ReclaimerrUserRequests>
+  <ReclaimerrUserHeader>Remote-User</ReclaimerrUserHeader>
   <LeavingSoonCollections />
   <LeavingSoonRefreshHours>6</LeavingSoonRefreshHours>
+  <LeavingSoonMaintainerrActions>true</LeavingSoonMaintainerrActions>
+  <LeavingSoonHomeRow>true</LeavingSoonHomeRow>
+  <LeavingSoonHideWatched>false</LeavingSoonHideWatched>
+  <LeavingSoonPageEnabled>false</LeavingSoonPageEnabled>
+  <LeavingSoonPageUsePluginPages>false</LeavingSoonPageUsePluginPages>
+  <LeavingSoonPageUseCustomTabs>false</LeavingSoonPageUseCustomTabs>
+  <LeavingSoonPageUseNativeTab>false</LeavingSoonPageUseNativeTab>
+  <LeavingSoonPageAutoCreateCustomTab>false</LeavingSoonPageAutoCreateCustomTab>
+  <LeavingSoonPageCustomTabJeOwned>false</LeavingSoonPageCustomTabJeOwned>
   <TagLayout>corners</TagLayout>
   <TagGroupOrder />
   <TagLabelDensity>full</TagLabelDensity>
@@ -355,6 +379,16 @@
   <JellyseerrShowRecommended>true</JellyseerrShowRecommended>
   <JellyseerrShowRequestMoreOnSeries>true</JellyseerrShowRequestMoreOnSeries>
   <JellyseerrShowNetworkDiscovery>true</JellyseerrShowNetworkDiscovery>
+  <JellyseerrFilterYear>true</JellyseerrFilterYear>
+  <JellyseerrFilterScore>true</JellyseerrFilterScore>
+  <JellyseerrFilterVotes>true</JellyseerrFilterVotes>
+  <JellyseerrFilterRuntime>true</JellyseerrFilterRuntime>
+  <JellyseerrFilterGenres>true</JellyseerrFilterGenres>
+  <JellyseerrFilterLanguage>true</JellyseerrFilterLanguage>
+  <JellyseerrFilterContentRating>true</JellyseerrFilterContentRating>
+  <JellyseerrFilterStreaming>true</JellyseerrFilterStreaming>
+  <JellyseerrFilterKeywords>true</JellyseerrFilterKeywords>
+  <JellyseerrFilterRole>true</JellyseerrFilterRole>
   <JellyseerrShowGenreDiscovery>true</JellyseerrShowGenreDiscovery>
   <JellyseerrShowTagDiscovery>true</JellyseerrShowTagDiscovery>
   <JellyseerrShowPersonDiscovery>true</JellyseerrShowPersonDiscovery>
@@ -367,7 +401,7 @@
   <JellyseerrUseMoreInfoModal>true</JellyseerrUseMoreInfoModal>
   <JellyseerrAvailablePosterLinksToJellyfin>false</JellyseerrAvailablePosterLinksToJellyfin>
   <JellyseerrUrls>http://127.0.0.1:5055</JellyseerrUrls>
-  <JellyseerrApiKey></JellyseerrApiKey>
+  <JellyseerrApiKey />
   <JellyseerrUrlMappings />
   <TriggerSeerrScanOnItemAdded>false</TriggerSeerrScanOnItemAdded>
   <SeerrScanDebounceSeconds>60</SeerrScanDebounceSeconds>
@@ -422,10 +456,12 @@
   <AutoMovieRequestCustomProfileId>0</AutoMovieRequestCustomProfileId>
   <AutoMovieRequestCustomRootFolder />
   <AutoMovieRequestFallbackOn4k>true</AutoMovieRequestFallbackOn4k>
+  <AutoRequestRemovalEnabled>false</AutoRequestRemovalEnabled>
   <AddRequestedMediaToWatchlist>false</AddRequestedMediaToWatchlist>
   <SyncJellyseerrWatchlist>false</SyncJellyseerrWatchlist>
   <SyncJellyfinWatchlistToSeerr>false</SyncJellyfinWatchlistToSeerr>
   <PreventWatchlistReAddition>true</PreventWatchlistReAddition>
+  <WatchlistRemovalSync>jellyfin</WatchlistRemovalSync>
   <WatchlistMemoryRetentionDays>365</WatchlistMemoryRetentionDays>
   <JellyseerrAutoImportUsers>true</JellyseerrAutoImportUsers>
   <JellyseerrImportBlockedUsers />

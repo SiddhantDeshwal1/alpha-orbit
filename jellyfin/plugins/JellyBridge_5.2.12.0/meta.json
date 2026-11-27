@@ -1,0 +1,18 @@
+{
+  "category": "Metadata",
+  "changelog": "JellyBridge v5.2 - New features by @MoFaye: Jellyfin global search shows results from Jellyseerr (#78), use media artwork for promo videos (#79 and #82), add filters on discover import for TMDB ratings (#81). See github page for upcoming changes in JellyBridge v6.",
+  "description": "",
+  "guid": "8ecc808c-d6e9-432f-9219-b638fbfb37e6",
+  "name": "JellyBridge",
+  "overview": "",
+  "owner": "kinggeorges12",
+  "targetAbi": "12.0.0",
+  "timestamp": "2026-11-23T19:04:34.838Z",
+  "version": "5.2.12.0",
+  "status": "Active",
+  "autoUpdate": true,
+  "imagePath": "/config/plugins/JellyBridge_5.2.12.0/Icon.svg",
+  "assemblies": [
+    "JellyBridge.dll"
+  ]
+}

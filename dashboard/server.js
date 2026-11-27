@@ -372,6 +372,43 @@ const MONITORED_SERVICES = [
   }
 ];
 
+let lastCpuTimes = null;
+function getCpuUsagePercent() {
+  const cpus = os.cpus();
+  let totalIdle = 0;
+  let totalTick = 0;
+  for (const cpu of cpus) {
+    for (const type in cpu.times) {
+      totalTick += cpu.times[type];
+    }
+    totalIdle += cpu.times.idle;
+  }
+  if (!lastCpuTimes) {
+    lastCpuTimes = { totalIdle, totalTick };
+    const load = os.loadavg()[0];
+    return Math.min(100, Math.max(1, Math.round((load / (cpus.length || 1)) * 100)));
+  }
+  const idleDiff = totalIdle - lastCpuTimes.totalIdle;
+  const totalDiff = totalTick - lastCpuTimes.totalTick;
+  lastCpuTimes = { totalIdle, totalTick };
+  if (totalDiff <= 0) return 0;
+  return Math.min(100, Math.max(0, Math.round((1 - idleDiff / totalDiff) * 100)));
+}
+
+function getGpuInfo() {
+  let hasRenderD128 = false;
+  try {
+    hasRenderD128 =
+      fs.existsSync('/dev/dri/renderD128') || fs.existsSync('/sys/class/drm/renderD128');
+  } catch (_) {}
+  return {
+    name: 'VirtIO GPU',
+    device: hasRenderD128 ? 'renderD128' : 'Virtual VGA',
+    transcode: 'CPU-Assisted (Software Transcode)',
+    status: 'Online'
+  };
+}
+
 // Helper to fetch with multiple candidate URLs
 async function fetchCandidate(urls, options = {}) {
   let lastErr = null;
@@ -1300,7 +1337,14 @@ const server = http.createServer(async (req, res) => {
           platform: os.platform(),
           uptimeSeconds: os.uptime(),
           cpuCores: cpus.length,
-          cpuModel: cpus[0]?.model || 'Generic CPU',
+          cpuModel: cpus[0]?.model || 'ARM Neoverse',
+          cpu: {
+            percentUsed: getCpuUsagePercent(),
+            cores: cpus.length,
+            model: cpus[0]?.model || 'ARM Neoverse',
+            loadAvg: os.loadavg().map((l) => Number(l.toFixed(2)))
+          },
+          gpu: getGpuInfo(),
           memory: {
             total: memTotal,
             free: memFree,
@@ -1368,6 +1412,49 @@ const server = http.createServer(async (req, res) => {
         }
       });
       return;
+    }
+
+    // --- API: Host Power (Reboot & Shutdown) ---
+    if (pathname === '/api/system/reboot' && req.method === 'POST') {
+      try {
+        console.log('[POWER] Reboot requested by authenticated session');
+        try {
+          fs.writeFileSync(
+            '/data/dashboard/power_action',
+            JSON.stringify({ action: 'reboot', time: Date.now() })
+          );
+        } catch (_) {}
+        setTimeout(() => {
+          try {
+            require('child_process').exec('sudo /sbin/reboot || sudo systemctl reboot || reboot');
+          } catch (_) {}
+        }, 800);
+        return sendJSON(res, 200, { success: true, message: 'Server reboot initiated.' });
+      } catch (err) {
+        return sendJSON(res, 500, { error: err.message });
+      }
+    }
+
+    if (pathname === '/api/system/shutdown' && req.method === 'POST') {
+      try {
+        console.log('[POWER] Shutdown requested by authenticated session');
+        try {
+          fs.writeFileSync(
+            '/data/dashboard/power_action',
+            JSON.stringify({ action: 'shutdown', time: Date.now() })
+          );
+        } catch (_) {}
+        setTimeout(() => {
+          try {
+            require('child_process').exec(
+              'sudo /sbin/poweroff || sudo systemctl poweroff || poweroff'
+            );
+          } catch (_) {}
+        }, 800);
+        return sendJSON(res, 200, { success: true, message: 'Server shutdown initiated.' });
+      } catch (err) {
+        return sendJSON(res, 500, { error: err.message });
+      }
     }
 
     // --- API: Live Pings ---
@@ -2566,9 +2653,28 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    // --- Static Asset Serving from public/ ---
+    // --- Static Asset Serving from public/ (with SPA Routing Fallback) ---
+    const SPA_ROUTES = new Set([
+      '/',
+      '/home',
+      '/downloads',
+      '/requests',
+      '/access',
+      '/logs',
+      '/vpn',
+      '/metrics',
+      '/observability'
+    ]);
+
     let safePath = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
-    if (safePath === '/' || safePath === '') safePath = '/index.html';
+    if (
+      SPA_ROUTES.has(pathname) ||
+      safePath === '/' ||
+      safePath === '' ||
+      (!path.extname(safePath) && !pathname.startsWith('/api/'))
+    ) {
+      safePath = '/index.html';
+    }
     const filePath = path.join(__dirname, 'public', safePath);
 
     fs.stat(filePath, (err, stats) => {

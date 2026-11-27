@@ -90,8 +90,9 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
-        flex-wrap: wrap;
+        gap: 12px;
+        flex-wrap: nowrap !important;
+        overflow: visible !important;
       }
       .brand-wrap {
         display: flex;
@@ -116,8 +117,9 @@
       .nav-tabs {
         display: flex;
         align-items: center;
-        gap: 1.5rem;
-        overflow-x: auto;
+        gap: 1.15rem;
+        flex-shrink: 0;
+        white-space: nowrap;
       }
       .nav-tab-btn {
         position: relative;
@@ -137,20 +139,182 @@
         color: #fff;
         font-weight: 700;
       }
+      .badge-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        padding: 0 0.35rem;
+        border-radius: 999px;
+        background: var(--dx-accent, #e50914);
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 700;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+        box-sizing: border-box;
+        transform: translateY(-1px);
+      }
+      .top-bar-inner,
+      .header-inner {
+        flex-wrap: nowrap !important;
+        overflow: visible !important;
+      }
       .telemetry-group {
         display: flex;
         align-items: center;
+        gap: 6px;
+        flex-wrap: nowrap !important;
+        flex-shrink: 0;
+      }
+      .nav-tabs {
+        flex-shrink: 0;
+        white-space: nowrap;
+      }
+      .pill-item {
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .power-menu-wrapper {
+        position: relative;
+        display: inline-flex;
+      }
+      .power-menu-btn {
+        cursor: pointer;
+        background: rgba(229, 9, 20, 0.12) !important;
+        border: 1px solid rgba(229, 9, 20, 0.4) !important;
+        color: #fff !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0 10px;
+        height: 32px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+      }
+      .power-menu-btn:hover {
+        background: rgba(229, 9, 20, 0.25) !important;
+        border-color: rgba(229, 9, 20, 0.6) !important;
+      }
+      .power-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 270px;
+        background: #141418;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 10px;
+        box-shadow: 0 14px 35px rgba(0, 0, 0, 0.8);
+        padding: 6px;
+        z-index: 1000;
+        display: none;
+      }
+      .power-dropdown-header {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #71717a;
+        padding: 8px 10px 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        margin-bottom: 4px;
+      }
+      .power-menu-item {
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
         gap: 10px;
+        padding: 8px 10px;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        color: #e4e4e7;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .power-menu-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .power-menu-item.power-item-danger:hover {
+        background: rgba(239, 68, 68, 0.14);
+      }
+      .power-item-icon {
+        font-size: 1.1rem;
+        line-height: 1.2;
+      }
+      .power-item-title {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #fff;
+      }
+      .power-item-desc {
+        font-size: 0.72rem;
+        color: #8a8a96;
+        margin-top: 2px;
+        line-height: 1.3;
+      }
+      .obs-hardware-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 14px;
+        margin-bottom: 24px;
+      }
+      .obs-hardware-card {
+        background: #121215;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 16px 18px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      }
+      .obs-card-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #8a8a96;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .obs-card-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #fff;
+        margin: 6px 0 2px;
+        font-family: var(--font-display, inherit);
+        letter-spacing: -0.02em;
+      }
+      .obs-card-sub {
+        font-size: 0.74rem;
+        color: #71717a;
+      }
+      .obs-gauge-bar {
+        width: 100%;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        margin-top: 10px;
+        overflow: hidden;
+      }
+      .obs-gauge-fill {
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.4s ease;
       }
       .pill-item {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 5px 12px;
+        gap: 6px;
+        padding: 4px 10px;
+        height: 32px;
         background: #131317;
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 8px;
-        font-size: 0.8rem;
+        font-size: 0.76rem;
         color: #a1a1aa;
         font-family: monospace;
       }
@@ -220,7 +384,7 @@
         }
       }
     </style>
-    <link rel="stylesheet" href="style.css?v=3.0" />
+    <link rel="stylesheet" href="style.css?v=3.2" />
   </head>
   <body class="auth-pending">
     <!-- ======================================================================
@@ -433,7 +597,7 @@
           </div>
         </div>
 
-        <!-- Underline Navigation Tabs -->
+        <!-- Underline Navigation Tabs: Home, Downloads, Access, Observability, VPN -->
         <nav class="nav-tabs" id="main-nav">
           <button class="nav-tab-btn active" data-tab="home" onclick="switchView('home')">
             Home
@@ -442,137 +606,114 @@
             Downloads
             <span id="badge-downloads" class="badge-count" style="display: none">0</span>
           </button>
-          <button class="nav-tab-btn" data-tab="requests" onclick="switchView('requests')">
-            Requests
-            <span id="badge-req" class="badge-count" style="display: none">0</span>
-          </button>
           <button class="nav-tab-btn" data-tab="access" onclick="switchView('access')">
             Access
             <span id="badge-access" class="badge-count" style="display: none">0</span>
           </button>
-          <button class="nav-tab-btn" data-tab="logs" onclick="switchView('logs')">
-            Logs
-            <span id="badge-err" class="badge-count" style="display: none">0</span>
+          <button
+            class="nav-tab-btn"
+            data-tab="observability"
+            onclick="switchView('observability')"
+          >
+            Observability
           </button>
           <button class="nav-tab-btn" data-tab="vpn" onclick="switchView('vpn')">VPN</button>
-          <button class="nav-tab-btn" data-tab="metrics" onclick="switchView('metrics')">
-            Metrics
-          </button>
         </nav>
 
-        <!-- Clean Telemetry Pills + Accent Switcher + Admin Session -->
+        <!-- Clean Telemetry Pills (CPU, GPU, RAM, Storage) + Power Menu (Restart/Shutdown) -->
         <div class="telemetry-group">
+          <div class="pill-item" title="Live CPU Usage">
+            <span>CPU:</span>
+            <strong id="val-cpu-pill">--%</strong>
+          </div>
+
+          <div class="pill-item" title="GPU Hardware Acceleration">
+            <span>GPU:</span>
+            <strong id="val-gpu-pill">VirtIO</strong>
+          </div>
+
+          <div class="pill-item" title="System RAM Usage">
+            <span>RAM:</span>
+            <strong id="val-ram-pill">-- GB</strong>
+          </div>
+
           <div class="pill-item" title="Alpha Hard Drive Free Space">
             <span>Storage:</span>
-            <strong id="val-storage-free">461 GB Free</strong>
+            <strong id="val-storage-free">-- GB Free</strong>
             <div class="storage-mini-bar">
               <div class="storage-mini-fill" id="val-storage-fill" style="width: 50%"></div>
             </div>
           </div>
 
-          <div class="pill-item" title="Active VPN Tunnel Profile">
-            <span style="color: #10b981">●</span>
-            <span id="val-vpn-label">VPN:</span>
-            <strong id="val-vpn-active">Cloudflare WARP</strong>
-          </div>
-
-          <button id="btn-refresh" class="btn-orbit-action" title="Refresh (R)">
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-            </svg>
-          </button>
-
-          <!-- dx.bi Accent Switcher -->
-          <div class="dx-accent-wrap">
+          <!-- Power Menu Button with Dropdown -->
+          <div class="power-menu-wrapper" style="position: relative">
             <button
+              id="btn-power-menu"
+              class="pill-item power-menu-btn"
+              onclick="togglePowerMenu(event)"
+              title="Power &amp; Service Controls"
               type="button"
-              id="btn-accent-picker"
-              class="dx-round"
-              title="Theme Accent"
-              aria-haspopup="true"
-              aria-expanded="false"
             >
-              <span class="dx-accent-dot-preview"></span>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                <line x1="12" y1="2" x2="12" y2="12"></line>
+              </svg>
+              <span style="font-size: 0.72rem; margin-left: 1px">▾</span>
             </button>
-            <div id="accent-popover" class="dx-accent-popover" style="display: none">
-              <div class="dx-popover-title">Accent Theme</div>
-              <div class="dx-swatch-grid">
-                <button
-                  type="button"
-                  class="dx-swatch-btn"
-                  data-accent="red"
-                  title="Netflix Red"
-                  style="--swatch: #e50914"
-                ></button>
-                <button
-                  type="button"
-                  class="dx-swatch-btn"
-                  data-accent="crimson"
-                  title="Crimson"
-                  style="--swatch: #d81f3c"
-                ></button>
-                <button
-                  type="button"
-                  class="dx-swatch-btn"
-                  data-accent="blue"
-                  title="Electric Blue"
-                  style="--swatch: #2f80ff"
-                ></button>
-                <button
-                  type="button"
-                  class="dx-swatch-btn"
-                  data-accent="purple"
-                  title="Violet"
-                  style="--swatch: #8b5cf6"
-                ></button>
-                <button
-                  type="button"
-                  class="dx-swatch-btn"
-                  data-accent="green"
-                  title="Emerald"
-                  style="--swatch: #1db954"
-                ></button>
-                <button
-                  type="button"
-                  class="dx-swatch-btn"
-                  data-accent="amber"
-                  title="Amber"
-                  style="--swatch: #f5a524"
-                ></button>
-                <button
-                  type="button"
-                  class="dx-swatch-btn"
-                  data-accent="pink"
-                  title="Magenta"
-                  style="--swatch: #ec4899"
-                ></button>
-                <button
-                  type="button"
-                  class="dx-swatch-btn"
-                  data-accent="white"
-                  title="Pure White"
-                  style="--swatch: #f4f4f5"
-                ></button>
-              </div>
+            <div id="power-dropdown-menu" class="power-dropdown-menu">
+              <div class="power-dropdown-header">Power &amp; Control</div>
+              <button
+                type="button"
+                class="power-menu-item"
+                onclick="
+                  openRestartContainersModal();
+                  hidePowerMenu();
+                "
+              >
+                <span class="power-item-icon" style="color: #38bdf8">⟳</span>
+                <div>
+                  <div class="power-item-title">Restart Containers...</div>
+                  <div class="power-item-desc">Restart individual or all Orbit Podman services</div>
+                </div>
+              </button>
+              <button
+                type="button"
+                class="power-menu-item"
+                onclick="
+                  triggerHostPower('reboot');
+                  hidePowerMenu();
+                "
+              >
+                <span class="power-item-icon" style="color: #f59e0b">🔄</span>
+                <div>
+                  <div class="power-item-title">Reboot Server</div>
+                  <div class="power-item-desc">Gracefully reboot host system</div>
+                </div>
+              </button>
+              <button
+                type="button"
+                class="power-menu-item power-item-danger"
+                onclick="
+                  triggerHostPower('shutdown');
+                  hidePowerMenu();
+                "
+              >
+                <span class="power-item-icon" style="color: #ef4444">⏻</span>
+                <div>
+                  <div class="power-item-title">Shut Down Server</div>
+                  <div class="power-item-desc">Gracefully power off host machine</div>
+                </div>
+              </button>
             </div>
-          </div>
-
-          <!-- Admin Session Pill -->
-          <div id="admin-user-pill" class="dx-admin-pill" style="display: none">
-            <span class="dx-admin-dot"></span>
-            <span id="admin-username-label">admin</span>
-            <button type="button" id="btn-admin-logout" class="dx-logout-btn" title="Sign Out">
-              Logout
-            </button>
           </div>
         </div>
       </div>
@@ -580,22 +721,12 @@
 
     <!-- Main Viewport Panes -->
     <main>
-      <!-- VIEW 1: HOME (LIVE OBSERVABILITY + APPS LAUNCHPAD) -->
+      <!-- VIEW 1: HOME (APPS LAUNCHPAD) -->
       <section id="tab-home" class="tab-pane active" data-tab="home">
         <!-- OBSERVABILITY & MONITORING TELEMETRY (HOME TOP) -->
         <div class="home-observability-wrap">
           <div class="metrics-toolbar" style="margin-bottom: 16px">
             <div class="metrics-summary-strip">
-              <div
-                class="section-category-title"
-                style="margin-bottom: 0; border: none; text-transform: uppercase"
-              >
-                <span
-                  class="status-breathing-dot"
-                  style="background: #10b981; margin-right: 6px"
-                ></span>
-                Live Observability
-              </div>
               <div class="metrics-stat-item" style="padding: 6px 12px; min-width: auto">
                 <span class="stat-label">Peak DL</span>
                 <span class="stat-value" id="home-stat-peak-dl" style="font-size: 0.95rem">--</span>
@@ -1191,7 +1322,119 @@
 
       <!-- VIEW 2: LIVE DOWNLOADS & BANDWIDTH -->
       <section id="tab-downloads" class="tab-pane" data-tab="downloads">
-        <div class="bandwidth-row">
+        <!-- Section Header -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+          "
+        >
+          <div>
+            <h1
+              style="
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: #fff;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+              "
+            >
+              <span>Media Requests &amp; Downloads</span>
+              <span
+                id="req-header-pill"
+                style="
+                  font-size: 0.72rem;
+                  padding: 2px 8px;
+                  border-radius: 9999px;
+                  background: rgba(56, 189, 248, 0.15);
+                  color: #38bdf8;
+                  font-weight: 600;
+                  border: 1px solid rgba(56, 189, 248, 0.3);
+                "
+                >Loading...</span
+              >
+            </h1>
+            <p style="font-size: 0.85rem; color: #71717a; margin: 4px 0 0">
+              Unified Seerr requests pipeline, qBittorrent torrent swarm metrics &amp; automated
+              downloads
+            </p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center">
+            <button
+              id="btn-refresh-requests"
+              class="btn-orbit-action"
+              onclick="
+                fetchRequests(true);
+                fetchDownloads();
+              "
+              style="
+                padding: 8px 14px;
+                border-radius: 8px;
+                font-size: 0.85rem;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                width: auto;
+              "
+            >
+              <svg
+                id="icon-refresh-req"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+              </svg>
+              Refresh
+            </button>
+            <button
+              id="btn-new-request"
+              class="btn-primary"
+              style="
+                background: var(--dx-accent);
+                border: none;
+                color: #fff;
+                padding: 9px 18px;
+                border-radius: 9px;
+                font-weight: 600;
+                cursor: pointer;
+                font-size: 0.85rem;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              "
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              New Request
+            </button>
+          </div>
+        </div>
+
+        <!-- Bandwidth & Pipeline Summary Strip -->
+        <div class="bandwidth-row" style="margin-bottom: 24px">
           <div class="bandwidth-card">
             <div class="bandwidth-label">Download Rate</div>
             <div class="bandwidth-speed" id="dl-rate-val" style="color: #10b981">0.0 KB/s</div>
@@ -1221,8 +1464,40 @@
               Egress via WireGuard
             </div>
           </div>
+
+          <div class="bandwidth-card">
+            <div class="bandwidth-label">Total Requests</div>
+            <div class="bandwidth-speed" id="req-metric-total" style="color: #fff">0</div>
+            <div
+              style="font-size: 0.78rem; color: #71717a; margin-top: 4px"
+              id="req-metric-sub-total"
+            >
+              Seerr pipeline ledger
+            </div>
+          </div>
+
+          <div class="bandwidth-card">
+            <div class="bandwidth-label">Active Swarm</div>
+            <div class="bandwidth-speed" id="req-metric-active" style="color: #38bdf8">0</div>
+            <div style="font-size: 0.78rem; color: #71717a; margin-top: 4px" id="req-metric-speed">
+              ↓ 0 KB/s in swarm
+            </div>
+          </div>
+
+          <div class="bandwidth-card">
+            <div class="bandwidth-label">Attention Needed</div>
+            <div class="bandwidth-speed" id="req-metric-attention" style="color: #f59e0b">0</div>
+            <div
+              style="font-size: 0.78rem; color: #71717a; margin-top: 4px"
+              id="req-metric-attention-sub"
+            >
+              Stalled / Dead swarms
+            </div>
+          </div>
+          <span id="req-metric-completed" style="display: none">0</span>
         </div>
 
+        <!-- Active Swarm Pipeline Downloads (qBittorrent) -->
         <div style="margin-bottom: 28px">
           <div
             style="
@@ -1232,9 +1507,15 @@
               letter-spacing: 0.08em;
               color: #71717a;
               margin-bottom: 14px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
             "
           >
-            Active Pipeline Downloads
+            <span>Active Pipeline Downloads (qBittorrent)</span>
+            <span style="font-size: 0.75rem; text-transform: none; color: #a1a1aa"
+              >Kill switch: <strong style="color: #10b981">Active</strong></span
+            >
           </div>
           <div id="torrent-items-container">
             <div
@@ -1258,25 +1539,62 @@
           </div>
         </div>
 
-        <div>
+        <!-- Seerr Requests Ledger & Controls -->
+        <div class="req-toolbar">
+          <div class="req-search-wrap">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#71717a"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="req-search-icon"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              id="req-filter-search"
+              class="req-search-input"
+              placeholder="Filter requests by title, year, or user..."
+            />
+          </div>
+          <div class="req-filter-tabs" id="req-status-filters">
+            <button class="req-filter-btn active" data-filter="all">All</button>
+            <button class="req-filter-btn" data-filter="downloading">Downloading</button>
+            <button class="req-filter-btn" data-filter="stalled">Stalled / Attention</button>
+            <button class="req-filter-btn" data-filter="completed">Completed</button>
+            <button class="req-filter-btn" data-filter="pending">Queued / Searching</button>
+          </div>
+          <div class="req-user-filter-wrap">
+            <select id="req-user-select" class="req-user-select">
+              <option value="all">All Requesters</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Requests Cards List / Grid -->
+        <div id="requests-grid" class="requests-grid">
           <div
             style="
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              margin-bottom: 14px;
+              background: var(--bg-surface);
+              border: 1px solid var(--border-subtle);
+              border-radius: 14px;
+              padding: 48px 24px;
+              text-align: center;
+              color: var(--text-muted);
             "
           >
             <div
-              style="
-                font-size: 0.8rem;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.08em;
-                color: #71717a;
-              "
-            >
-              Media Requests Queue (Seerr)
+              class="spinner-small"
+              style="margin: 0 auto 14px auto; width: 24px; height: 24px"
+            ></div>
+            <div style="font-size: 0.95rem; font-weight: 600; color: #fff; margin-bottom: 8px">
+              Connecting to Seerr &amp; Torrent Subsystems...
             </div>
             <a
               id="seerr-browse-link"
@@ -1290,128 +1608,247 @@
               >Browse Seerr ↗</a
             >
           </div>
-          <div id="seerr-items-container">
-            <!-- Requests rendered dynamically -->
+        </div>
+
+        <!-- NEW REQUEST MODAL -->
+
+        <!-- Backward compatibility anchor -->
+        <div id="seerr-items-container" style="display: none"></div>
+
+        <!-- Request Modals -->
+        <div id="modal-request" class="modal-overlay" style="display: none">
+          <div class="modal-content" style="max-width: 760px; width: 92%">
+            <div class="modal-header">
+              <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0">
+                Request Media
+              </h2>
+              <button class="modal-close" onclick="closeRequestModal()" title="Close">
+                &times;
+              </button>
+            </div>
+            <div class="modal-body" style="padding: 20px 24px">
+              <!-- Step 1: Search -->
+              <div id="request-step-search">
+                <div style="margin-bottom: 16px">
+                  <label
+                    style="
+                      display: block;
+                      font-size: 0.75rem;
+                      font-weight: 600;
+                      text-transform: uppercase;
+                      color: #71717a;
+                      margin-bottom: 8px;
+                      letter-spacing: 0.06em;
+                    "
+                    >Search Movie / Series</label
+                  >
+                  <div style="position: relative">
+                    <input
+                      type="text"
+                      id="request-search-input"
+                      class="input-terminal"
+                      placeholder="Type to search TMDB (e.g., The Matrix, Breaking Bad)..."
+                      style="width: 100%; padding-right: 40px"
+                      autocomplete="off"
+                    />
+                    <div
+                      id="request-search-loading"
+                      class="spinner-small"
+                      style="
+                        position: absolute;
+                        right: 12px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        display: none;
+                      "
+                    ></div>
+                  </div>
+                  <div
+                    id="request-search-results"
+                    style="margin-top: 12px; max-height: 300px; overflow-y: auto; display: none"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Step 2: Quality Selection -->
+              <div id="request-step-quality" style="display: none">
+                <div style="margin-bottom: 16px">
+                  <label
+                    style="
+                      display: block;
+                      font-size: 0.75rem;
+                      font-weight: 600;
+                      text-transform: uppercase;
+                      color: #71717a;
+                      margin-bottom: 8px;
+                      letter-spacing: 0.06em;
+                    "
+                    >Quality Preference</label
+                  >
+                  <div
+                    class="quality-tier-buttons"
+                    style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px"
+                  >
+                    <button
+                      class="quality-tier-btn active"
+                      data-tier="max"
+                      style="
+                        flex: 1;
+                        min-width: 100px;
+                        padding: 12px 16px;
+                        border: 1px solid rgba(59, 130, 246, 0.5);
+                        background: rgba(59, 130, 246, 0.15);
+                        color: #3b82f6;
+                        border-radius: 10px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                      "
+                    >
+                      <div style="font-size: 0.8rem">MAX</div>
+                      <div style="font-size: 0.65rem; opacity: 0.8">Best available NOW</div>
+                    </button>
+                    <button
+                      class="quality-tier-btn"
+                      data-tier="high"
+                      style="
+                        flex: 1;
+                        min-width: 100px;
+                        padding: 12px 16px;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        background: #121215;
+                        color: #a1a1aa;
+                        border-radius: 10px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                      "
+                    >
+                      <div style="font-size: 0.8rem">HIGH</div>
+                      <div style="font-size: 0.65rem; opacity: 0.8">1080p+ only</div>
+                    </button>
+                    <button
+                      class="quality-tier-btn"
+                      data-tier="med"
+                      style="
+                        flex: 1;
+                        min-width: 100px;
+                        padding: 12px 16px;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        background: #121215;
+                        color: #a1a1aa;
+                        border-radius: 10px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                      "
+                    >
+                      <div style="font-size: 0.8rem">MED</div>
+                      <div style="font-size: 0.65rem; opacity: 0.8">720p+ only</div>
+                    </button>
+                    <button
+                      class="quality-tier-btn"
+                      data-tier="advanced"
+                      style="
+                        flex: 1;
+                        min-width: 100px;
+                        padding: 12px 16px;
+                        border: 1px solid rgba(139, 92, 246, 0.5);
+                        background: rgba(139, 92, 246, 0.15);
+                        color: #8b5cf6;
+                        border-radius: 10px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                      "
+                    >
+                      <div style="font-size: 0.8rem">ADVANCED</div>
+                      <div style="font-size: 0.65rem; opacity: 0.8">Pick exact quality</div>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Advanced: Quality Discovery Grid -->
+                <div id="request-advanced-discovery" style="display: none">
+                  <div style="margin-bottom: 12px">
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        margin-bottom: 12px;
+                      "
+                    >
+                      <span style="font-size: 0.8rem; font-weight: 600; color: #fff"
+                        >Discovered Qualities</span
+                      >
+                      <div style="display: flex; gap: 8px">
+                        <button
+                          id="btn-discover-qualities"
+                          class="btn-primary"
+                          style="font-size: 0.75rem; padding: 8px 16px"
+                          onclick="discoverQualities()"
+                        >
+                          Discover Qualities
+                        </button>
+                        <button
+                          id="btn-rediscover"
+                          class="btn-orbit-action"
+                          style="font-size: 0.75rem; width: auto; padding: 0 12px; display: none"
+                          onclick="discoverQualities()"
+                        >
+                          Rediscover
+                        </button>
+                      </div>
+                    </div>
+                    <div
+                      id="discovery-status"
+                      style="font-size: 0.8rem; color: #71717a; margin-bottom: 12px"
+                    >
+                      Click "Discover Qualities" to search indexers for available releases...
+                    </div>
+                    <div
+                      id="quality-grid"
+                      style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                        gap: 12px;
+                        max-height: 400px;
+                        overflow-y: auto;
+                      "
+                    >
+                      <!-- Quality cards rendered here -->
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style="
+                    display: flex;
+                    gap: 12px;
+                    justify-content: flex-end;
+                    margin-top: 20px;
+                    padding-top: 16px;
+                    border-top: 1px solid rgba(255, 255, 255, 0.08);
+                  "
+                >
+                  <button class="btn-secondary" onclick="backToSearch()">Back</button>
+                  <button
+                    id="btn-confirm-request"
+                    class="btn-primary"
+                    style="background: var(--dx-accent)"
+                    disabled
+                  >
+                    Request
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       <!-- VIEW 3: DEVELOPER TERMINAL & LOGS (.dx-split-layout) -->
-      <section id="tab-logs" class="tab-pane" data-tab="logs">
-        <div class="dx-split-layout">
-          <aside class="dx-rail">
-            <div class="dx-rail-header">
-              <span>Log Sources</span>
-              <button
-                type="button"
-                class="dx-rail-refresh"
-                onclick="loadLogSources()"
-                title="Reload Sources"
-              >
-                ⟳
-              </button>
-            </div>
-            <div id="logs-rail-sources" class="dx-rail-nav">
-              <div class="dx-muted-hint">Loading sources...</div>
-            </div>
-          </aside>
-
-          <div class="dx-panel">
-            <div class="terminal-window">
-              <div class="terminal-header">
-                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
-                  <select id="select-log-target" class="input-terminal" style="cursor: pointer">
-                    <option value="alpha-prod-seerr">alpha-prod-seerr</option>
-                    <option value="alpha-prod-jellyfin">alpha-prod-jellyfin</option>
-                    <option value="alpha-prod-dashboard">alpha-prod-dashboard</option>
-                    <option value="alpha-prod-gatekeeper">alpha-prod-gatekeeper</option>
-                    <option value="alpha-prod-gluetun">alpha-prod-gluetun</option>
-                    <option value="alpha-prod-qbittorrent">alpha-prod-qbittorrent</option>
-                    <option value="alpha-prod-radarr">alpha-prod-radarr</option>
-                    <option value="alpha-prod-sonarr">alpha-prod-sonarr</option>
-                    <option value="alpha-prod-prowlarr">alpha-prod-prowlarr</option>
-                    <option value="alpha-prod-tailscale">alpha-prod-tailscale</option>
-                  </select>
-
-                  <div class="filter-btn-group">
-                    <button class="filter-btn active" data-log-filter="all" id="filter-all-btn">
-                      ALL
-                    </button>
-                    <button class="filter-btn" data-log-filter="error" id="filter-error-btn">
-                      🚨 ERRORS ONLY
-                    </button>
-                    <button class="filter-btn" data-log-filter="warn" id="filter-warn-btn">
-                      ⚠️ WARNINGS
-                    </button>
-                  </div>
-
-                  <select
-                    id="select-log-count"
-                    class="input-terminal"
-                    style="padding: 4px 8px; font-size: 0.75rem"
-                  >
-                    <option value="50">50 lines</option>
-                    <option value="150" selected>150 lines</option>
-                    <option value="300">300 lines</option>
-                    <option value="500">500 lines</option>
-                  </select>
-                </div>
-
-                <div style="display: flex; align-items: center; gap: 8px">
-                  <input
-                    type="text"
-                    id="log-search-box"
-                    class="input-terminal"
-                    placeholder="Search filter (/)..."
-                  />
-
-                  <button
-                    id="btn-autoscroll"
-                    class="btn-orbit-action"
-                    style="width: auto; padding: 0 10px; font-size: 0.75rem"
-                    title="Auto-Scroll"
-                  >
-                    Scroll: ON
-                  </button>
-
-                  <button id="btn-copy-log" class="btn-orbit-action" title="Copy Visible Logs">
-                    <svg
-                      width="13"
-                      height="13"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                    </svg>
-                  </button>
-
-                  <button id="btn-reload-log" class="btn-orbit-action" title="Reload Logs">
-                    <svg
-                      width="13"
-                      height="13"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <div class="terminal-logs-viewport" id="terminal-screen">
-                <div style="color: #71717a; text-align: center; padding: 40px">
-                  Select a container to stream live error logs...
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- VIEW 4: VPN & SECURITY GATEWAY (.dx-split-layout) -->
       <section id="tab-vpn" class="tab-pane" data-tab="vpn">
@@ -1455,7 +1892,134 @@
       </section>
 
       <!-- VIEW 5: OBSERVABILITY & METRICS DASHBOARD (6 ZERO-OVERHEAD HTML5 GRAPHS) -->
-      <section id="tab-metrics" class="tab-pane" data-tab="metrics">
+      <section id="tab-observability" class="tab-pane" data-tab="observability">
+        <!-- Section Header -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+          "
+        >
+          <div>
+            <h1
+              style="
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: #fff;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+              "
+            >
+              <span>System Observability</span>
+              <span class="badge-count is-ok" style="font-size: 0.72rem; padding: 2px 8px"
+                >Live</span
+              >
+            </h1>
+            <p style="font-size: 0.85rem; color: #71717a; margin: 4px 0 0">
+              Real-time hardware telemetry, 24-hour time series metrics &amp; container diagnostic
+              logs
+            </p>
+          </div>
+
+          <div class="metrics-range-group">
+            <button class="metrics-range-btn" data-range="1h" onclick="setMetricsRange('1h')">
+              1H
+            </button>
+            <button class="metrics-range-btn" data-range="6h" onclick="setMetricsRange('6h')">
+              6H
+            </button>
+            <button
+              class="metrics-range-btn active"
+              data-range="24h"
+              onclick="setMetricsRange('24h')"
+            >
+              24H
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Hardware Telemetry Cards Grid -->
+        <div class="obs-hardware-grid">
+          <div class="obs-hardware-card">
+            <div class="obs-card-label">
+              <span>CPU Utilization</span>
+              <span style="color: #ef4444; font-size: 0.9rem">⚡</span>
+            </div>
+            <div class="obs-card-value" id="obs-cpu-val">--%</div>
+            <div class="obs-card-sub" id="obs-cpu-sub">4 Cores · ARM64 Neoverse-N1</div>
+            <div class="obs-gauge-bar">
+              <div
+                class="obs-gauge-fill"
+                id="obs-cpu-bar"
+                style="width: 0%; background: var(--dx-accent, #e50914)"
+              ></div>
+            </div>
+            <div style="font-size: 0.75rem; color: #71717a; margin-top: 8px">
+              Load Avg: <span id="obs-cpu-load" style="color: #ccc">--</span>
+            </div>
+          </div>
+
+          <div class="obs-hardware-card">
+            <div class="obs-card-label">
+              <span>GPU Engine</span>
+              <span style="color: #a78bfa; font-size: 0.9rem">🎮</span>
+            </div>
+            <div class="obs-card-value" id="obs-gpu-val" style="color: #a78bfa">VirtIO GPU</div>
+            <div class="obs-card-sub" id="obs-gpu-sub">Red Hat Virtio DRM (renderD128)</div>
+            <div class="obs-gauge-bar">
+              <div class="obs-gauge-fill" style="width: 100%; background: #a78bfa"></div>
+            </div>
+            <div style="font-size: 0.75rem; color: #71717a; margin-top: 8px" id="obs-gpu-transcode">
+              Transcode: CPU Multi-thread fallback
+            </div>
+          </div>
+
+          <div class="obs-hardware-card">
+            <div class="obs-card-label">
+              <span>Memory Allocation</span>
+              <span style="color: #38bdf8; font-size: 0.9rem">💾</span>
+            </div>
+            <div class="obs-card-value" id="obs-ram-val" style="color: #38bdf8">-- GB</div>
+            <div class="obs-card-sub" id="obs-ram-sub">Used / Total System RAM</div>
+            <div class="obs-gauge-bar">
+              <div
+                class="obs-gauge-fill"
+                id="obs-ram-bar"
+                style="width: 0%; background: #38bdf8"
+              ></div>
+            </div>
+            <div style="font-size: 0.75rem; color: #71717a; margin-top: 8px">
+              Available: <span id="obs-ram-free" style="color: #ccc">--</span>
+            </div>
+          </div>
+
+          <div class="obs-hardware-card">
+            <div class="obs-card-label">
+              <span>Primary Storage Pool</span>
+              <span style="color: #10b981; font-size: 0.9rem">💿</span>
+            </div>
+            <div class="obs-card-value" id="obs-storage-val" style="color: #10b981">-- GB</div>
+            <div class="obs-card-sub" id="obs-storage-sub">Root / Alpha Drive Available</div>
+            <div class="obs-gauge-bar">
+              <div
+                class="obs-gauge-fill"
+                id="obs-storage-bar"
+                style="width: 0%; background: #10b981"
+              ></div>
+            </div>
+            <div style="font-size: 0.75rem; color: #71717a; margin-top: 8px" id="obs-storage-mount">
+              Mount: / (Btrfs root)
+            </div>
+          </div>
+        </div>
+
+        <!-- 24-Hour Metrics Graphs -->
         <!-- Top Metrics Ribbon & Range Switcher -->
         <div class="metrics-toolbar">
           <div class="metrics-summary-strip">
@@ -1736,448 +2300,159 @@
 
         <!-- Floating Canvas Tooltip -->
         <div id="metrics-tooltip" class="metrics-tooltip" style="display: none"></div>
+
+        <!-- Merged System & Container Diagnostic Logs -->
+        <div
+          style="
+            margin-top: 36px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+          "
+        >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 16px;
+            "
+          >
+            <div>
+              <h2
+                style="
+                  font-size: 1.15rem;
+                  font-weight: 700;
+                  color: #fff;
+                  margin: 0;
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                "
+              >
+                <span>System &amp; Container Diagnostic Logs</span>
+              </h2>
+              <p style="font-size: 0.8rem; color: #71717a; margin: 4px 0 0">
+                Live error, warning and operational stream from Podman services
+              </p>
+            </div>
+          </div>
+          <div class="dx-split-layout">
+            <aside class="dx-rail">
+              <div class="dx-rail-header">
+                <span>Log Sources</span>
+                <button
+                  type="button"
+                  class="dx-rail-refresh"
+                  onclick="loadLogSources()"
+                  title="Reload Sources"
+                >
+                  ⟳
+                </button>
+              </div>
+              <div id="logs-rail-sources" class="dx-rail-nav">
+                <div class="dx-muted-hint">Loading sources...</div>
+              </div>
+            </aside>
+
+            <div class="dx-panel">
+              <div class="terminal-window">
+                <div class="terminal-header">
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+                    <select id="select-log-target" class="input-terminal" style="cursor: pointer">
+                      <option value="alpha-prod-seerr">alpha-prod-seerr</option>
+                      <option value="alpha-prod-jellyfin">alpha-prod-jellyfin</option>
+                      <option value="alpha-prod-dashboard">alpha-prod-dashboard</option>
+                      <option value="alpha-prod-gatekeeper">alpha-prod-gatekeeper</option>
+                      <option value="alpha-prod-gluetun">alpha-prod-gluetun</option>
+                      <option value="alpha-prod-qbittorrent">alpha-prod-qbittorrent</option>
+                      <option value="alpha-prod-radarr">alpha-prod-radarr</option>
+                      <option value="alpha-prod-sonarr">alpha-prod-sonarr</option>
+                      <option value="alpha-prod-prowlarr">alpha-prod-prowlarr</option>
+                      <option value="alpha-prod-tailscale">alpha-prod-tailscale</option>
+                    </select>
+
+                    <div class="filter-btn-group">
+                      <button class="filter-btn active" data-log-filter="all" id="filter-all-btn">
+                        ALL
+                      </button>
+                      <button class="filter-btn" data-log-filter="error" id="filter-error-btn">
+                        🚨 ERRORS ONLY
+                      </button>
+                      <button class="filter-btn" data-log-filter="warn" id="filter-warn-btn">
+                        ⚠️ WARNINGS
+                      </button>
+                    </div>
+
+                    <select
+                      id="select-log-count"
+                      class="input-terminal"
+                      style="padding: 4px 8px; font-size: 0.75rem"
+                    >
+                      <option value="50">50 lines</option>
+                      <option value="150" selected>150 lines</option>
+                      <option value="300">300 lines</option>
+                      <option value="500">500 lines</option>
+                    </select>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 8px">
+                    <input
+                      type="text"
+                      id="log-search-box"
+                      class="input-terminal"
+                      placeholder="Search filter (/)..."
+                    />
+
+                    <button
+                      id="btn-autoscroll"
+                      class="btn-orbit-action"
+                      style="width: auto; padding: 0 10px; font-size: 0.75rem"
+                      title="Auto-Scroll"
+                    >
+                      Scroll: ON
+                    </button>
+
+                    <button id="btn-copy-log" class="btn-orbit-action" title="Copy Visible Logs">
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+
+                    <button id="btn-reload-log" class="btn-orbit-action" title="Reload Logs">
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="terminal-logs-viewport" id="terminal-screen">
+                  <div style="color: #71717a; text-align: center; padding: 40px">
+                    Select a container to stream live error logs...
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- VIEW 6: MEDIA REQUESTS & DOWNLOAD PIPELINE -->
-      <section id="tab-requests" class="tab-pane" data-tab="requests">
-        <!-- Section Header -->
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 24px;
-          "
-        >
-          <div>
-            <h1
-              style="
-                font-size: 1.5rem;
-                font-weight: 700;
-                color: #fff;
-                margin: 0;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-              "
-            >
-              <span>Media Requests &amp; Downloads</span>
-              <span
-                id="req-header-pill"
-                style="
-                  font-size: 0.72rem;
-                  padding: 2px 8px;
-                  border-radius: 9999px;
-                  background: rgba(56, 189, 248, 0.15);
-                  color: #38bdf8;
-                  font-weight: 600;
-                  border: 1px solid rgba(56, 189, 248, 0.3);
-                "
-                >Loading...</span
-              >
-            </h1>
-            <p style="font-size: 0.85rem; color: #71717a; margin: 4px 0 0">
-              Unified Seerr requests pipeline, qBittorrent torrent swarm metrics &amp; automated
-              diagnosis
-            </p>
-          </div>
-          <div style="display: flex; gap: 10px; align-items: center">
-            <button
-              id="btn-refresh-requests"
-              class="btn-orbit-action"
-              onclick="fetchRequests(true)"
-              style="
-                padding: 8px 14px;
-                border-radius: 8px;
-                font-size: 0.85rem;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                width: auto;
-              "
-            >
-              <svg
-                id="icon-refresh-req"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-              </svg>
-              Refresh
-            </button>
-            <button
-              id="btn-new-request"
-              class="btn-primary"
-              style="
-                background: var(--dx-accent);
-                border: none;
-                color: #fff;
-                padding: 9px 18px;
-                border-radius: 9px;
-                font-weight: 600;
-                cursor: pointer;
-                font-size: 0.85rem;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-              "
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              New Request
-            </button>
-          </div>
-        </div>
-
-        <!-- Top Metrics Ribbon -->
-        <div class="bandwidth-row" style="margin-bottom: 24px">
-          <div class="bandwidth-card">
-            <div class="bandwidth-label">Total Requests</div>
-            <div class="bandwidth-speed" id="req-metric-total" style="color: #fff">0</div>
-            <div
-              style="font-size: 0.78rem; color: #71717a; margin-top: 4px"
-              id="req-metric-sub-total"
-            >
-              Seerr pipeline ledger
-            </div>
-          </div>
-          <div class="bandwidth-card">
-            <div class="bandwidth-label">Active Downloads</div>
-            <div class="bandwidth-speed" id="req-metric-active" style="color: #38bdf8">0</div>
-            <div style="font-size: 0.78rem; color: #71717a; margin-top: 4px" id="req-metric-speed">
-              ↓ 0 KB/s in swarm
-            </div>
-          </div>
-          <div class="bandwidth-card">
-            <div class="bandwidth-label">Attention Needed</div>
-            <div class="bandwidth-speed" id="req-metric-attention" style="color: #f59e0b">0</div>
-            <div
-              style="font-size: 0.78rem; color: #71717a; margin-top: 4px"
-              id="req-metric-attention-sub"
-            >
-              Stalled / Dead swarms
-            </div>
-          </div>
-          <div class="bandwidth-card">
-            <div class="bandwidth-label">Completed &amp; Available</div>
-            <div class="bandwidth-speed" id="req-metric-completed" style="color: #10b981">0</div>
-            <div style="font-size: 0.78rem; color: #71717a; margin-top: 4px">
-              Ready to play in Jellyfin
-            </div>
-          </div>
-        </div>
-
-        <!-- Filter & Search Toolbar -->
-        <div class="req-toolbar">
-          <div class="req-search-wrap">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#71717a"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="req-search-icon"
-            >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input
-              type="text"
-              id="req-filter-search"
-              class="req-search-input"
-              placeholder="Filter requests by title, year, or user..."
-            />
-          </div>
-          <div class="req-filter-tabs" id="req-status-filters">
-            <button class="req-filter-btn active" data-filter="all">All</button>
-            <button class="req-filter-btn" data-filter="downloading">Downloading</button>
-            <button class="req-filter-btn" data-filter="stalled">Stalled / Attention</button>
-            <button class="req-filter-btn" data-filter="completed">Completed</button>
-            <button class="req-filter-btn" data-filter="pending">Queued / Searching</button>
-          </div>
-          <div class="req-user-filter-wrap">
-            <select id="req-user-select" class="req-user-select">
-              <option value="all">All Requesters</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Requests Cards List / Grid -->
-        <div id="requests-grid" class="requests-grid">
-          <div
-            style="
-              background: var(--bg-surface);
-              border: 1px solid var(--border-subtle);
-              border-radius: 14px;
-              padding: 48px 24px;
-              text-align: center;
-              color: var(--text-muted);
-            "
-          >
-            <div
-              class="spinner-small"
-              style="margin: 0 auto 14px auto; width: 24px; height: 24px"
-            ></div>
-            <div style="font-size: 0.95rem; font-weight: 600; color: #fff">
-              Connecting to Seerr &amp; Torrent Subsystems...
-            </div>
-          </div>
-        </div>
-
-        <!-- NEW REQUEST MODAL -->
-        <div id="modal-request" class="modal-overlay" style="display: none">
-          <div class="modal-content" style="max-width: 760px; width: 92%">
-            <div class="modal-header">
-              <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0">
-                Request Media
-              </h2>
-              <button class="modal-close" onclick="closeRequestModal()" title="Close">
-                &times;
-              </button>
-            </div>
-            <div class="modal-body" style="padding: 20px 24px">
-              <!-- Step 1: Search -->
-              <div id="request-step-search">
-                <div style="margin-bottom: 16px">
-                  <label
-                    style="
-                      display: block;
-                      font-size: 0.75rem;
-                      font-weight: 600;
-                      text-transform: uppercase;
-                      color: #71717a;
-                      margin-bottom: 8px;
-                      letter-spacing: 0.06em;
-                    "
-                    >Search Movie / Series</label
-                  >
-                  <div style="position: relative">
-                    <input
-                      type="text"
-                      id="request-search-input"
-                      class="input-terminal"
-                      placeholder="Type to search TMDB (e.g., The Matrix, Breaking Bad)..."
-                      style="width: 100%; padding-right: 40px"
-                      autocomplete="off"
-                    />
-                    <div
-                      id="request-search-loading"
-                      class="spinner-small"
-                      style="
-                        position: absolute;
-                        right: 12px;
-                        top: 50%;
-                        transform: translateY(-50%);
-                        display: none;
-                      "
-                    ></div>
-                  </div>
-                  <div
-                    id="request-search-results"
-                    style="margin-top: 12px; max-height: 300px; overflow-y: auto; display: none"
-                  ></div>
-                </div>
-              </div>
-
-              <!-- Step 2: Quality Selection -->
-              <div id="request-step-quality" style="display: none">
-                <div style="margin-bottom: 16px">
-                  <label
-                    style="
-                      display: block;
-                      font-size: 0.75rem;
-                      font-weight: 600;
-                      text-transform: uppercase;
-                      color: #71717a;
-                      margin-bottom: 8px;
-                      letter-spacing: 0.06em;
-                    "
-                    >Quality Preference</label
-                  >
-                  <div
-                    class="quality-tier-buttons"
-                    style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px"
-                  >
-                    <button
-                      class="quality-tier-btn active"
-                      data-tier="max"
-                      style="
-                        flex: 1;
-                        min-width: 100px;
-                        padding: 12px 16px;
-                        border: 1px solid rgba(59, 130, 246, 0.5);
-                        background: rgba(59, 130, 246, 0.15);
-                        color: #3b82f6;
-                        border-radius: 10px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                      "
-                    >
-                      <div style="font-size: 0.8rem">MAX</div>
-                      <div style="font-size: 0.65rem; opacity: 0.8">Best available NOW</div>
-                    </button>
-                    <button
-                      class="quality-tier-btn"
-                      data-tier="high"
-                      style="
-                        flex: 1;
-                        min-width: 100px;
-                        padding: 12px 16px;
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        background: #121215;
-                        color: #a1a1aa;
-                        border-radius: 10px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                      "
-                    >
-                      <div style="font-size: 0.8rem">HIGH</div>
-                      <div style="font-size: 0.65rem; opacity: 0.8">1080p+ only</div>
-                    </button>
-                    <button
-                      class="quality-tier-btn"
-                      data-tier="med"
-                      style="
-                        flex: 1;
-                        min-width: 100px;
-                        padding: 12px 16px;
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        background: #121215;
-                        color: #a1a1aa;
-                        border-radius: 10px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                      "
-                    >
-                      <div style="font-size: 0.8rem">MED</div>
-                      <div style="font-size: 0.65rem; opacity: 0.8">720p+ only</div>
-                    </button>
-                    <button
-                      class="quality-tier-btn"
-                      data-tier="advanced"
-                      style="
-                        flex: 1;
-                        min-width: 100px;
-                        padding: 12px 16px;
-                        border: 1px solid rgba(139, 92, 246, 0.5);
-                        background: rgba(139, 92, 246, 0.15);
-                        color: #8b5cf6;
-                        border-radius: 10px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                      "
-                    >
-                      <div style="font-size: 0.8rem">ADVANCED</div>
-                      <div style="font-size: 0.65rem; opacity: 0.8">Pick exact quality</div>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Advanced: Quality Discovery Grid -->
-                <div id="request-advanced-discovery" style="display: none">
-                  <div style="margin-bottom: 12px">
-                    <div
-                      style="
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        margin-bottom: 12px;
-                      "
-                    >
-                      <span style="font-size: 0.8rem; font-weight: 600; color: #fff"
-                        >Discovered Qualities</span
-                      >
-                      <div style="display: flex; gap: 8px">
-                        <button
-                          id="btn-discover-qualities"
-                          class="btn-primary"
-                          style="font-size: 0.75rem; padding: 8px 16px"
-                          onclick="discoverQualities()"
-                        >
-                          Discover Qualities
-                        </button>
-                        <button
-                          id="btn-rediscover"
-                          class="btn-orbit-action"
-                          style="font-size: 0.75rem; width: auto; padding: 0 12px; display: none"
-                          onclick="discoverQualities()"
-                        >
-                          Rediscover
-                        </button>
-                      </div>
-                    </div>
-                    <div
-                      id="discovery-status"
-                      style="font-size: 0.8rem; color: #71717a; margin-bottom: 12px"
-                    >
-                      Click "Discover Qualities" to search indexers for available releases...
-                    </div>
-                    <div
-                      id="quality-grid"
-                      style="
-                        display: grid;
-                        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-                        gap: 12px;
-                        max-height: 400px;
-                        overflow-y: auto;
-                      "
-                    >
-                      <!-- Quality cards rendered here -->
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  style="
-                    display: flex;
-                    gap: 12px;
-                    justify-content: flex-end;
-                    margin-top: 20px;
-                    padding-top: 16px;
-                    border-top: 1px solid rgba(255, 255, 255, 0.08);
-                  "
-                >
-                  <button class="btn-secondary" onclick="backToSearch()">Back</button>
-                  <button
-                    id="btn-confirm-request"
-                    class="btn-primary"
-                    style="background: var(--dx-accent)"
-                    disabled
-                  >
-                    Request
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- VIEW 7: ADMIN ACCESS REQUESTS & USERS DIRECTORY (#view-access) -->
       <section id="view-access" class="tab-pane" data-tab="access">
@@ -2423,11 +2698,103 @@
             </div>
           </div>
         </div>
+
+        <!-- RESTART CONTAINERS MODAL -->
+        <div id="modal-restart-containers" class="modal-overlay" style="display: none">
+          <div class="modal-content" style="max-width: 600px; width: 92%">
+            <div class="modal-header">
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span style="color: var(--dx-accent, #e50914); font-size: 1.2rem">⟳</span>
+                <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0">
+                  Restart Containers
+                </h2>
+              </div>
+              <button
+                type="button"
+                class="modal-close"
+                onclick="closeRestartContainersModal()"
+                title="Close"
+              >
+                &times;
+              </button>
+            </div>
+            <div class="modal-body" style="padding: 20px 24px">
+              <p
+                style="
+                  font-size: 0.85rem;
+                  color: var(--dx-text-2, #a1a1aa);
+                  margin-top: 0;
+                  margin-bottom: 16px;
+                "
+              >
+                Select an Orbit service container below to trigger a 1-click graceful restart.
+              </p>
+
+              <div
+                id="restart-containers-list"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 10px;
+                  max-height: 380px;
+                  overflow-y: auto;
+                  padding-right: 4px;
+                "
+              >
+                <!-- Dynamically populated by app.js -->
+              </div>
+
+              <div
+                style="
+                  margin-top: 20px;
+                  padding-top: 16px;
+                  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                "
+              >
+                <button
+                  type="button"
+                  class="btn-secondary"
+                  onclick="closeRestartContainersModal()"
+                  style="
+                    padding: 8px 16px;
+                    background: transparent;
+                    border: 1px solid var(--border-subtle, #333);
+                    color: #ccc;
+                    border-radius: 6px;
+                    cursor: pointer;
+                  "
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  class="dx-btn-primary"
+                  id="btn-restart-all-containers"
+                  onclick="restartAllContainers()"
+                  style="
+                    padding: 8px 16px;
+                    background: var(--dx-accent, #e50914);
+                    border: none;
+                    color: #fff;
+                    font-weight: 600;
+                    border-radius: 6px;
+                    cursor: pointer;
+                  "
+                >
+                  ⟳ Restart All Containers
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
 
     <div class="toast-shelf" id="toast-shelf"></div>
 
-    <script src="app.js?v=3.0"></script>
+    <script src="app.js?v=3.2"></script>
   </body>
 </html>
